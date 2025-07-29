@@ -1,5 +1,11 @@
 {
-  "name": "Privy Auth Demo",
+  "name": "Fort Worth DAO",
+  "short_name": "FWTX DAO",
+  "description": "Digital Sovereignty is Mission Critical - Civic Innovation Lab for North Texas",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#7c3aed",
+  "background_color": "#0a0a0a",
   "icons": [
     {"src": "/favicons/android-chrome-192x192.png", "type": "image/png", "sizes": "192x192"},
     {"src": "/favicons/android-chrome-512x512.png", "type": "image/png", "sizes": "512x512"}

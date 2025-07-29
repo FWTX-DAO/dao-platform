@@ -74,3 +74,24 @@ The dashboard (`pages/dashboard.tsx`) demonstrates:
 - Authentication state is checked in `useEffect` to handle client-side redirects
 - The app prevents unlinking the last authentication method
 - Custom fonts are preloaded in `_app.tsx` for performance
+
+## Database Architecture
+
+- **ORM**: Drizzle ORM with Turso (distributed SQLite)
+- **Schema**: Located in `src/db/schema.ts`
+- **User Sync**: Users are automatically created from Privy authentication
+- **Type Safety**: Full TypeScript support with auto-generated types
+
+### Database Commands
+```bash
+npm run db:push      # Apply schema to database
+npm run db:generate  # Generate migrations
+npm run db:studio    # Open database GUI
+npm run db:seed      # Add sample data
+```
+
+### Key Features
+- Auto user creation on first API call
+- Forum posts with voting system
+- Civic Innovation Lab projects (requires GitHub repo)
+- Meeting notes tracker with tags and search

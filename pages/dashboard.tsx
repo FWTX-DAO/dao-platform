@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { getAccessToken, usePrivy } from "@privy-io/react-auth";
-import Head from "next/head";
+import AppLayout from "../components/AppLayout";
 import WalletList from "../components/WalletList";
 
 async function verifyToken() {
@@ -56,23 +56,13 @@ export default function DashboardPage() {
   const discordSubject = user?.discord?.subject || null;
 
   return (
-    <>
-      <Head>
-        <title>Privy Auth Demo</title>
-      </Head>
-
-      <main className="flex flex-col min-h-screen px-4 sm:px-20 py-6 sm:py-10 bg-privy-light-blue">
-        {ready && authenticated ? (
-          <>
-            <div className="flex flex-row justify-between">
-              <h1 className="text-2xl font-semibold">Privy Auth Demo</h1>
-              <button
-                onClick={logout}
-                className="text-sm bg-violet-200 hover:text-violet-900 py-2 px-4 rounded-md text-violet-700"
-              >
-                Logout
-              </button>
-            </div>
+    <AppLayout title="Dashboard - Fort Worth TX DAO">
+      {ready && authenticated ? (
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-2 text-gray-600">Welcome to Fort Worth TX DAO</p>
+          </div>
             <div className="mt-12 flex gap-4 flex-wrap">
               {googleSubject ? (
                 <button
@@ -214,15 +204,16 @@ export default function DashboardPage() {
               <h2 className="text-xl font-bold">Your Wallet</h2>
               <WalletList />
             </div>
-            <p className="mt-6 font-bold uppercase text-sm text-gray-600">
-              User object
-            </p>
-            <pre className="max-w-4xl bg-slate-700 text-slate-50 font-mono p-4 text-xs sm:text-sm rounded-md mt-2">
-              {JSON.stringify(user, null, 2)}
-            </pre>
-          </>
+            <details className="mt-6">
+              <summary className="font-bold uppercase text-sm text-gray-600 cursor-pointer">
+                User object (debug)
+              </summary>
+              <pre className="max-w-4xl bg-slate-700 text-slate-50 font-mono p-4 text-xs sm:text-sm rounded-md mt-2">
+                {JSON.stringify(user, null, 2)}
+              </pre>
+            </details>
+          </div>
         ) : null}
-      </main>
-    </>
+      </AppLayout>
   );
 }
