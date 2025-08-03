@@ -113,13 +113,10 @@ export default function LoginPage() {
               <p className="text-xl md:text-2xl text-gray-100 mb-4 drop-shadow-md">
                 Growing Web3 Civic Excellence
               </p>
-              <p className="text-lg md:text-xl text-gray-200 leading-relaxed max-w-3xl mx-auto drop-shadow-md">
-                Educating on Emerging Tech, and paying forward thought leadership on Cryptographic Governance and Civil & Property Rights, social impacts of AI, and how Fort Worth can protect our Constituency in the information age
-              </p>
             </div>
             <div className="flex justify-center mb-8">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl p-6">
-                <Portal style={{ maxWidth: "100%", height: "auto" }} />
+              <div className="w-64 h-64">
+                <Portal style={{ width: "100%", height: "100%" }} />
               </div>
             </div>
             <div className="flex flex-col items-center gap-4">
@@ -133,10 +130,13 @@ export default function LoginPage() {
                 href="https://constitution.fwtx.city"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white hover:text-gray-200 underline text-sm drop-shadow-md"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 py-2 px-4 text-white rounded-lg text-base font-medium shadow-lg transform transition hover:scale-105"
               >
-                Read our Whitepaper and Constitution
+                📜 Read our Whitepaper and Constitution
               </a>
+              <p className="text-sm text-gray-300 max-w-2xl mx-auto text-center mt-2 drop-shadow-md">
+                Educating on Emerging Tech, and paying forward thought leadership on Cryptographic Governance and Civil & Property Rights, social impacts of AI, and how Fort Worth can protect our Constituency in the information age
+              </p>
             </div>
           </div>
         </div>
