@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Exclude public environment variables from secrets scanning
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_PRIVY_APP_ID,NEXT_PUBLIC_SESSION_SIGNER_ID,SESSION_SIGNER_SECRET"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    cache-control = '''
+    public,
+    max-age=31536000,
+    immutable'''
