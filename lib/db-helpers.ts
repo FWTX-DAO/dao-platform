@@ -12,9 +12,11 @@ export async function getOrCreateUser(claims: AuthTokenClaims): Promise<User> {
   
   if (!user) {
     // Create new user if doesn't exist
+    // The email might be in different formats depending on the auth method
+    const email = (claims as any).email?.address || (claims as any).email || undefined;
     user = await dbOperations.users.upsertFromPrivy(
       claims.userId,
-      claims.email?.address
+      email
     );
     
     if (!user) {

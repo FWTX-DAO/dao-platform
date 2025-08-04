@@ -9,7 +9,7 @@ export default async function handler(
   try {
     const claims = await authenticateRequest(req);
     const privyDid = claims.userId;
-    const email = claims.email || undefined;
+    const email = (claims as any).email || undefined;
 
     if (req.method === "GET") {
       // Get or create user profile

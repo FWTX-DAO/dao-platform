@@ -18,9 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         if (!user) {
           // Create user if doesn't exist
+          const email = (claims as any).email?.address || (claims as any).email || undefined;
           const newUser = await dbOperations.users.upsertFromPrivy(
             claims.userId,
-            claims.email?.address
+            email
           );
           
           return res.status(200).json({
@@ -30,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
         }
 
-        const membership = await dbOperations.members.getMembershipStatus(user.id);
+        const membership = await dbOperations.members.getMembershipStatus(user!.id);
         
         return res.status(200).json({
           user,
@@ -53,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Update profile
-        await dbOperations.users.updateProfile(user.id, {
+        await dbOperations.users.updateProfile(user!.id, {
           username,
           bio,
           avatarUrl

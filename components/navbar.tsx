@@ -24,7 +24,14 @@ import {
   LogOut,
 } from "lucide-react";
 
-const navigationItems = [
+export type NavbarItem = {
+  id: string;
+  name: string;
+  href: string;
+  icon: any;
+};
+
+const navigationItems: NavbarItem[] = [
   { id: "dashboard", name: "Dashboard", href: "/dashboard", icon: Home },
   { id: "forums", name: "Forums", href: "/forums", icon: MessageSquare },
   { id: "innovation-lab", name: "Innovation Lab", href: "/innovation-lab", icon: Lightbulb },

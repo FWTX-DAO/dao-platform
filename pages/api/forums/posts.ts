@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest, generateId } from "../../../lib/api-helpers";
 import { getOrCreateUser } from "../../../src/db/queries/users";
-import { db, forumPosts, users, forumVotes } from "../../../src/db";
-import { eq, sql, isNull, and } from "drizzle-orm";
+import { db, forumPosts, users } from "../../../src/db";
+import { eq, sql, isNull } from "drizzle-orm";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,7 +11,7 @@ export default async function handler(
   try {
     const claims = await authenticateRequest(req);
     const privyDid = claims.userId;
-    const email = claims.email || undefined;
+    const email = (claims as any).email || undefined;
 
     // Get or create user
     const user = await getOrCreateUser(privyDid, email);
@@ -37,7 +37,7 @@ export default async function handler(
           // Check if current user has upvoted
           has_upvoted: sql<number>`COALESCE(
             (SELECT vote_type FROM forum_votes 
-             WHERE post_id = ${forumPosts.id} AND user_id = ${user.id}), 
+             WHERE post_id = ${forumPosts.id} AND user_id = ${user!.id}), 
             0
           )`,
           // Count replies
@@ -66,7 +66,7 @@ export default async function handler(
       const postId = generateId();
       const newPost = await db.insert(forumPosts).values({
         id: postId,
-        authorId: user.id,
+        authorId: user!.id,
         title,
         content,
         category: category || "General",
@@ -76,8 +76,8 @@ export default async function handler(
       // Return the created post with author info
       const postWithAuthor = {
         ...newPost[0],
-        author_name: user.username,
-        author_avatar: user.avatarUrl,
+        author_name: user!.username,
+        author_avatar: user!.avatarUrl,
         upvotes: 0,
         reply_count: 0,
         has_upvoted: 0,

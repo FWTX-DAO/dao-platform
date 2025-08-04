@@ -15,7 +15,7 @@ export default async function handler(
   try {
     const claims = await authenticateRequest(req);
     const privyDid = claims.userId;
-    const email = claims.email || undefined;
+    const email = (claims as any).email || undefined;
 
     const { postId, voteType } = req.body;
 
@@ -33,7 +33,7 @@ export default async function handler(
       .where(
         and(
           eq(forumVotes.postId, postId),
-          eq(forumVotes.userId, user.id)
+          eq(forumVotes.userId, user!.id)
         )
       )
       .limit(1);
@@ -46,7 +46,7 @@ export default async function handler(
           .where(
             and(
               eq(forumVotes.postId, postId),
-              eq(forumVotes.userId, user.id)
+              eq(forumVotes.userId, user!.id)
             )
           );
       } else {
@@ -57,7 +57,7 @@ export default async function handler(
           .where(
             and(
               eq(forumVotes.postId, postId),
-              eq(forumVotes.userId, user.id)
+              eq(forumVotes.userId, user!.id)
             )
           );
       }
@@ -65,7 +65,7 @@ export default async function handler(
       // Create new vote
       await db.insert(forumVotes).values({
         postId,
-        userId: user.id,
+        userId: user!.id,
         voteType,
       });
     }
