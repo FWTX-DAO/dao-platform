@@ -38,7 +38,7 @@ async function seed() {
     const samplePosts = await db.insert(forumPosts).values([
       {
         id: generateId(),
-        authorId: sampleUsers[0].id,
+        authorId: sampleUsers[0]!.id,
         title: 'Welcome to Fort Worth DAO!',
         content: 'This is our community forum where we discuss ideas, proposals, and collaborate on making Fort Worth a leader in Web3 civic innovation. Feel free to introduce yourself and share your ideas!',
         category: 'General',
@@ -46,7 +46,7 @@ async function seed() {
       },
       {
         id: generateId(),
-        authorId: sampleUsers[1].id,
+        authorId: sampleUsers[1]!.id,
         title: 'Proposal: Blockchain-based Voting System for Local Elections',
         content: 'I propose we develop a transparent, secure voting system using blockchain technology for Fort Worth municipal elections. This would increase voter confidence and participation while ensuring tamper-proof results.',
         category: 'Governance',
@@ -54,7 +54,7 @@ async function seed() {
       },
       {
         id: generateId(),
-        authorId: sampleUsers[2].id,
+        authorId: sampleUsers[2]!.id,
         title: 'Technical Workshop: Smart Contract Development',
         content: 'Join us for a hands-on workshop on smart contract development using Solidity. We\'ll cover the basics and build a simple DAO contract together.',
         category: 'Education',
@@ -69,7 +69,7 @@ async function seed() {
     const sampleProjects = await db.insert(projects).values([
       {
         id: generateId(),
-        creatorId: sampleUsers[1].id,
+        creatorId: sampleUsers[1]!.id,
         title: 'Fort Worth Transit DAO',
         description: 'A decentralized platform for community-driven public transit improvements',
         githubRepo: 'https://github.com/fwtx-dao/transit-dao',
@@ -80,7 +80,7 @@ async function seed() {
       },
       {
         id: generateId(),
-        creatorId: sampleUsers[2].id,
+        creatorId: sampleUsers[2]!.id,
         title: 'Civic NFT Rewards',
         description: 'NFT-based rewards system for civic participation',
         githubRepo: 'https://github.com/fwtx-dao/civic-nft',
@@ -98,7 +98,7 @@ async function seed() {
     const sampleMeetingNotes = await db.insert(meetingNotes).values([
       {
         id: generateId(),
-        authorId: sampleUsers[0].id,
+        authorId: sampleUsers[0]!.id,
         title: 'Q1 2024 Community Planning Session',
         date: '2024-01-15',
         attendees: 'FortWorthAdmin,CivicInnovator,Web3Developer',
@@ -109,7 +109,7 @@ async function seed() {
       },
       {
         id: generateId(),
-        authorId: sampleUsers[2].id,
+        authorId: sampleUsers[2]!.id,
         title: 'Technical Infrastructure Meeting',
         date: '2024-01-18',
         attendees: 'Web3Developer,TechLead,SecurityExpert',

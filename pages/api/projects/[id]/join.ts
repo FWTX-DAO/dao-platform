@@ -32,7 +32,7 @@ export default async function handler(
       .where(
         and(
           eq(projectCollaborators.projectId, projectId),
-          eq(projectCollaborators.userId, user.id)
+          eq(projectCollaborators.userId, user!.id)
         )
       )
       .limit(1);
@@ -44,7 +44,7 @@ export default async function handler(
     // Add as collaborator
     await db.insert(projectCollaborators).values({
       projectId,
-      userId: user.id,
+      userId: user!.id,
       role: "contributor",
       joinedAt: new Date().toISOString(),
     });
@@ -53,22 +53,22 @@ export default async function handler(
     const memberRecord = await db
       .select()
       .from(members)
-      .where(eq(members.userId, user.id))
+      .where(eq(members.userId, user!.id))
       .limit(1);
 
     if (memberRecord.length > 0) {
       await db
         .update(members)
         .set({
-          contributionPoints: memberRecord[0].contributionPoints + 10,
+          contributionPoints: memberRecord[0]!.contributionPoints + 10,
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(members.userId, user.id));
+        .where(eq(members.userId, user!.id));
     } else {
       // Create member record if doesn't exist
       await db.insert(members).values({
         id: crypto.randomUUID(),
-        userId: user.id,
+        userId: user!.id,
         membershipType: "basic",
         contributionPoints: 10,
         votingPower: 1,

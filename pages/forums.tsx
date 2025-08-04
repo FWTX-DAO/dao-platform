@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { usePrivy, getAccessToken } from "@privy-io/react-auth";
 import AppLayout from "../components/AppLayout";
 import { 
-  ChatBubbleLeftRightIcon, 
   HeartIcon,
   ChatBubbleBottomCenterTextIcon,
   PlusIcon 
@@ -27,7 +26,7 @@ const categories = ["General", "Governance", "Technical", "Events", "Education"]
 
 export default function ForumsPage() {
   const router = useRouter();
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated } = usePrivy();
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [showCreatePost, setShowCreatePost] = useState(false);

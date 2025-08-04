@@ -23,7 +23,6 @@ export default function DashboardPage() {
     ready,
     authenticated,
     user,
-    logout,
     linkEmail,
     linkWallet,
     unlinkEmail,

@@ -7,7 +7,6 @@ import {
   PlusIcon,
   CalendarIcon,
   UserGroupIcon,
-  TagIcon,
   MagnifyingGlassIcon
 } from "@heroicons/react/24/outline";
 
@@ -27,7 +26,7 @@ interface MeetingNote {
 
 export default function MeetingNotesPage() {
   const router = useRouter();
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated } = usePrivy();
   const [notes, setNotes] = useState<MeetingNote[]>([]);
   const [showCreateNote, setShowCreateNote] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");

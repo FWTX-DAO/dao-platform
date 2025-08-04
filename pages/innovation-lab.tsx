@@ -6,8 +6,7 @@ import {
   BeakerIcon,
   PlusIcon,
   LinkIcon,
-  UserGroupIcon,
-  TagIcon
+  UserGroupIcon
 } from "@heroicons/react/24/outline";
 
 interface Project {
@@ -33,7 +32,7 @@ const statusColors = {
 
 export default function InnovationLabPage() {
   const router = useRouter();
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated } = usePrivy();
   const [projects, setProjects] = useState<Project[]>([]);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");

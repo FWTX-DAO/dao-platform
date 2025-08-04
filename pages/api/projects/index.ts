@@ -61,7 +61,7 @@ export default async function handler(
 
       const newProject = await db.insert(projects).values({
         id: projectId,
-        creatorId: user.id,
+        creatorId: user!.id,
         title,
         description,
         githubRepo,
@@ -74,10 +74,10 @@ export default async function handler(
       // Return the created project with creator info
       const projectWithCreator = {
         ...newProject[0],
-        github_repo: newProject[0].githubRepo,
-        benefit_to_fort_worth: newProject[0].benefitToFortWorth,
-        creator_name: user.username,
-        creator_avatar: user.avatarUrl,
+        github_repo: newProject[0]!.githubRepo,
+        benefit_to_fort_worth: newProject[0]!.benefitToFortWorth,
+        creator_name: user!.username,
+        creator_avatar: user!.avatarUrl,
         collaborators: 1,
       };
 

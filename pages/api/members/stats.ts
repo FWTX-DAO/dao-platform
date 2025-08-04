@@ -24,14 +24,14 @@ export default async function handler(
     let memberRecord = await db
       .select()
       .from(members)
-      .where(eq(members.userId, user.id))
+      .where(eq(members.userId, user!.id))
       .limit(1);
 
     if (memberRecord.length === 0) {
       // Create member record if doesn't exist
       await db.insert(members).values({
         id: crypto.randomUUID(),
-        userId: user.id,
+        userId: user!.id,
         membershipType: "basic",
         contributionPoints: 0,
         votingPower: 1,
@@ -44,7 +44,7 @@ export default async function handler(
       memberRecord = await db
         .select()
         .from(members)
-        .where(eq(members.userId, user.id))
+        .where(eq(members.userId, user!.id))
         .limit(1);
     }
 
@@ -52,25 +52,25 @@ export default async function handler(
     const stats = await db
       .select({
         forumPostCount: sql<number>`
-          (SELECT COUNT(*) FROM ${forumPosts} WHERE author_id = ${user.id})
+          (SELECT COUNT(*) FROM ${forumPosts} WHERE author_id = ${user!.id})
         `,
         projectCount: sql<number>`
-          (SELECT COUNT(*) FROM ${projects} WHERE creator_id = ${user.id})
+          (SELECT COUNT(*) FROM ${projects} WHERE creator_id = ${user!.id})
         `,
         meetingNotesCount: sql<number>`
-          (SELECT COUNT(*) FROM ${meetingNotes} WHERE author_id = ${user.id})
+          (SELECT COUNT(*) FROM ${meetingNotes} WHERE author_id = ${user!.id})
         `,
         totalVotesReceived: sql<number>`
           COALESCE((
             SELECT SUM(fv.vote_type) 
             FROM forum_votes fv
             JOIN forum_posts fp ON fv.post_id = fp.id
-            WHERE fp.author_id = ${user.id}
+            WHERE fp.author_id = ${user!.id}
           ), 0)
         `,
       })
       .from(members)
-      .where(eq(members.userId, user.id))
+      .where(eq(members.userId, user!.id))
       .limit(1);
 
     const member = memberRecord[0];
@@ -78,25 +78,25 @@ export default async function handler(
 
     return res.status(200).json({
       membership: {
-        type: member.membershipType,
-        joinedAt: member.joinedAt,
-        contributionPoints: member.contributionPoints,
-        votingPower: member.votingPower,
-        badges: member.badges ? JSON.parse(member.badges) : [],
-        specialRoles: member.specialRoles ? JSON.parse(member.specialRoles) : [],
-        status: member.status,
+        type: member!.membershipType,
+        joinedAt: member!.joinedAt,
+        contributionPoints: member!.contributionPoints,
+        votingPower: member!.votingPower,
+        badges: member!.badges ? JSON.parse(member!.badges) : [],
+        specialRoles: member!.specialRoles ? JSON.parse(member!.specialRoles) : [],
+        status: member!.status,
       },
       stats: {
-        forumPosts: statData.forumPostCount,
-        projects: statData.projectCount,
-        meetingNotes: statData.meetingNotesCount,
-        votesReceived: statData.totalVotesReceived,
+        forumPosts: statData!.forumPostCount,
+        projects: statData!.projectCount,
+        meetingNotes: statData!.meetingNotesCount,
+        votesReceived: statData!.totalVotesReceived,
       },
       user: {
-        id: user.id,
-        username: user.username,
-        bio: user.bio,
-        avatarUrl: user.avatarUrl,
+        id: user!.id,
+        username: user!.username,
+        bio: user!.bio,
+        avatarUrl: user!.avatarUrl,
       }
     });
   } catch (error: any) {

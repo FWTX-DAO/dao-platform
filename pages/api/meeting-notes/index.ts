@@ -58,7 +58,7 @@ export default async function handler(
 
       const newNote = await db.insert(meetingNotes).values({
         id: noteId,
-        authorId: user.id,
+        authorId: user!.id,
         title,
         date,
         attendees: attendeesString,
@@ -71,9 +71,9 @@ export default async function handler(
       // Return the created note with author info
       const noteWithAuthor = {
         ...newNote[0],
-        action_items: newNote[0].actionItems,
-        author_name: user.username,
-        author_avatar: user.avatarUrl,
+        action_items: newNote[0]!.actionItems,
+        author_name: user!.username,
+        author_avatar: user!.avatarUrl,
       };
 
       return res.status(201).json(noteWithAuthor);
