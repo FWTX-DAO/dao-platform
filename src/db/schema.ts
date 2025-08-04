@@ -55,6 +55,22 @@ export const meetingNotes = sqliteTable("meeting_notes", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Members table for DAO membership
+export const members = sqliteTable("members", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id).unique(),
+  membershipType: text("membership_type").notNull().default("basic"), // basic, contributor, council
+  joinedAt: text("joined_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: text("expires_at"), // For membership expiration if needed
+  contributionPoints: integer("contribution_points").notNull().default(0),
+  votingPower: integer("voting_power").notNull().default(1),
+  badges: text("badges"), // JSON array of earned badges
+  specialRoles: text("special_roles"), // JSON array of special roles
+  status: text("status").notNull().default("active"), // active, inactive, suspended
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Project collaborators junction table
 export const projectCollaborators = sqliteTable("project_collaborators", {
   projectId: text("project_id").notNull().references(() => projects.id),
@@ -76,12 +92,16 @@ export const forumVotes = sqliteTable("forum_votes", {
 }));
 
 // Define relations for better query support
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   forumPosts: many(forumPosts),
   projects: many(projects),
   meetingNotes: many(meetingNotes),
   projectCollaborations: many(projectCollaborators),
   votes: many(forumVotes),
+  membership: one(members, {
+    fields: [users.id],
+    references: [members.userId],
+  }),
 }));
 
 export const forumPostsRelations = relations(forumPosts, ({ one, many }) => ({
@@ -134,6 +154,13 @@ export const forumVotesRelations = relations(forumVotes, ({ one }) => ({
   }),
 }));
 
+export const membersRelations = relations(members, ({ one }) => ({
+  user: one(users, {
+    fields: [members.userId],
+    references: [users.id],
+  }),
+}));
+
 // Type exports for TypeScript
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
@@ -145,5 +172,7 @@ export type Project = InferSelectModel<typeof projects>;
 export type NewProject = InferInsertModel<typeof projects>;
 export type MeetingNote = InferSelectModel<typeof meetingNotes>;
 export type NewMeetingNote = InferInsertModel<typeof meetingNotes>;
+export type Member = InferSelectModel<typeof members>;
+export type NewMember = InferInsertModel<typeof members>;
 export type ProjectCollaborator = InferSelectModel<typeof projectCollaborators>;
 export type ForumVote = InferSelectModel<typeof forumVotes>;

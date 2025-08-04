@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import MobileNav from './MobileNav';
+import Navbar from './navbar';
 import Head from 'next/head';
 
 interface AppLayoutProps {
@@ -14,8 +14,8 @@ export default function AppLayout({ children, title = 'Fort Worth TX DAO' }: App
         <title>{title}</title>
       </Head>
       <div className="min-h-screen bg-gray-50">
-        <MobileNav />
-        <main className="pt-16">
+        <Navbar />
+        <main>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </div>

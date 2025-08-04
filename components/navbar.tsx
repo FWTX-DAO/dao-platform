@@ -1,200 +1,244 @@
+import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { Fragment } from "react";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
+import { usePrivy } from "@privy-io/react-auth";
+import { Button } from "./ui/button";
+import { ScrollArea } from "./ui/scroll-area";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import {
-  ChevronDownIcon,
-  Bars3Icon,
-  XMarkIcon,
-  InformationCircleIcon,
-} from "@heroicons/react/24/outline";
-import { Logo } from "./logo";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import {
+  Menu,
+  Home,
+  MessageSquare,
+  Settings,
+  User,
+  Lightbulb,
+  FileText,
+  LogOut,
+} from "lucide-react";
 
-function classNames(...classes: Array<string | boolean>): string {
-  return classes.filter(Boolean).join(" ");
-}
+const navigationItems = [
+  { id: "dashboard", name: "Dashboard", href: "/dashboard", icon: Home },
+  { id: "forums", name: "Forums", href: "/forums", icon: MessageSquare },
+  { id: "innovation-lab", name: "Innovation Lab", href: "/innovation-lab", icon: Lightbulb },
+  { id: "meeting-notes", name: "Meeting Notes", href: "/meeting-notes", icon: FileText },
+];
 
-/**
- * make sure you are passing router.pathname and not
- * router.asPath since we want to have stripped any
- * fragments, query params, or trailing slashes
- */
-const extractTabFromPath = (path: string) => {
-  return path.split("/").pop() as string;
-};
-
-export type NavbarItem = {
-  id: string;
-  name: string;
-  resource: string;
-};
-
-type NavbarProps = {
-  accountId: string;
-  appName: string;
-  items: Array<NavbarItem>;
-};
-
-export default function Navbar({ items, accountId, appName }: NavbarProps) {
+export default function Navbar() {
   const router = useRouter();
-  const resourceId = router.query.id;
-  const selected = extractTabFromPath(router.pathname);
+  const { user, logout } = usePrivy();
+  const [open, setOpen] = useState(false);
+  const currentPath = router.pathname;
 
-  const selectedItemClass =
-    "hover:cursor-pointer rounded-full bg-gray-900 px-3 py-2 text-lg font-medium text-white";
-  const unselectedItemClass =
-    "hover:cursor-pointer rounded-full px-3 py-2 text-lg font-medium text-gray-300 hover:bg-gray-700 hover:text-white";
+  const isActive = (href: string) => {
+    return currentPath === href;
+  };
 
-  // Navigate to a resource sub-page:
-  // /apps/:appId/settings
-  // /accounts/:accountId/users
-  const navigateTo = (item: NavbarItem) => {
-    router.push(`/${item.resource}/${resourceId}/${item.id}`);
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
   };
 
   return (
-    <Disclosure as="nav" className="bg-gray-800">
-      {({ open }) => (
-        <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex h-16 items-center justify-between">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="block h-8 w-auto lg:hidden mb-2">
-                    <Logo />
-                  </div>
-                  <div className="hidden h-8 w-auto lg:block mb-2 hover:cursor-pointer">
-                    <Logo />
-                  </div>
-                </div>
-                <div className="hidden sm:ml-6 sm:block">
-                  <div className="flex space-x-4">
-                    {items ? (
-                      items.map((item) => {
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              navigateTo(item);
-                            }}
-                            className={
-                              selected === item.id
-                                ? selectedItemClass
-                                : unselectedItemClass
-                            }
-                          >
-                            {item.name}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div></div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="hidden sm:ml-6 sm:block">
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    className="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white"
-                  >
-                    <InformationCircleIcon
-                      className="h-6 w-6"
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <p className="text-white">{appName}</p>
+    <nav className="bg-gray-800 border-b">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Left section with logo and navigation */}
+          <div className="flex items-center">
+            {/* Logo */}
+            <div className="flex-shrink-0 mr-6">
+              <Image
+                src="/logo.svg"
+                alt="Fort Worth TX DAO"
+                width={40}
+                height={40}
+                className="hover:opacity-80 transition-opacity cursor-pointer"
+                onClick={() => router.push("/dashboard")}
+              />
+            </div>
 
-                  {/* Profile dropdown */}
-                  <Menu as="div" className="relative ml-3">
-                    <div className="flex bg-gray-800 rounded-full items-center hover:ring-white hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-800 hover:outline-none hover:cursor-pointer">
-                      <Menu.Button className="flex rounded-full text-sm">
-                        <span className="sr-only">Open user menu</span>
-                        <div className="h-8 w-8 rounded-full">
-                          <Image
-                            className="h-8 w-8 rounded-full"
-                            src="/images/avatar.png"
-                            alt="avatar placeholder"
-                            height={32}
-                            width={32}
-                          />
-                        </div>
-                      </Menu.Button>
-                      <ChevronDownIcon
-                        className="ml-1 h-4 w-4 text-white"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-100"
-                      enterFrom="transform opacity-0 scale-95"
-                      enterTo="transform opacity-100 scale-100"
-                      leave="transition ease-in duration-75"
-                      leaveFrom="transform opacity-100 scale-100"
-                      leaveTo="transform opacity-0 scale-95"
+            {/* Desktop Navigation */}
+            <div className="hidden md:block">
+              <div className="flex space-x-2">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={isActive(item.href) ? "secondary" : "ghost"}
+                      className="text-gray-300 hover:text-white"
+                      onClick={() => router.push(item.href)}
                     >
-                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <a
-                              href={`/accounts/${accountId}`}
-                              className={classNames(
-                                active ? "bg-gray-100" : "",
-                                "block px-4 py-2 text-sm text-gray-700"
-                              )}
-                            >
-                              Your account
-                            </a>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <a
-                              href="#"
-                              className={classNames(
-                                active ? "bg-gray-100" : "",
-                                "block px-4 py-2 text-sm text-gray-700"
-                              )}
-                            >
-                              Settings
-                            </a>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <a
-                              href="#"
-                              className={classNames(
-                                active ? "bg-gray-100" : "",
-                                "block px-4 py-2 text-sm text-gray-700"
-                              )}
-                            >
-                              Sign out
-                            </a>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Transition>
-                  </Menu>
-                </div>
-              </div>
-              <div className="-mr-2 flex sm:hidden">
-                {/* Mobile menu button */}
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-                  <span className="sr-only">Open main menu</span>
-                  {open ? (
-                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                  )}
-                </Disclosure.Button>
+                      <Icon className="h-4 w-4 mr-2" />
+                      {item.name}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </div>
-        </>
-      )}
-    </Disclosure>
+
+          {/* Right section with user menu */}
+          <div className="flex items-center gap-4">
+            {/* User dropdown - Desktop */}
+            <div className="hidden md:flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-12 w-12 rounded-full p-0 hover:bg-gray-700 ring-2 ring-gray-600 hover:ring-gray-500"
+                  >
+                    <div className="relative h-11 w-11 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center">
+                      <Image
+                        src="/images/avatar.png"
+                        alt="User avatar"
+                        width={44}
+                        height={44}
+                        className="rounded-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                      <User className="h-6 w-6 text-gray-300 hidden" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user?.email?.address || "User"}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.id?.substring(0, 8)}...
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mobile menu button */}
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden text-gray-300 hover:text-white hover:bg-gray-700 h-10 w-10"
+                >
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <nav className="flex flex-col gap-4">
+                  {/* Logo in mobile menu */}
+                  <div className="flex items-center gap-2 pb-4 border-b">
+                    <Image
+                      src="/logo.svg"
+                      alt="Fort Worth TX DAO"
+                      width={32}
+                      height={32}
+                    />
+                    <span className="font-semibold text-lg">FW TX DAO</span>
+                  </div>
+
+                  {/* Navigation items */}
+                  <ScrollArea className="flex-1">
+                    <div className="space-y-1">
+                      {navigationItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Button
+                            key={item.id}
+                            variant={isActive(item.href) ? "secondary" : "ghost"}
+                            className="w-full justify-start"
+                            onClick={() => {
+                              router.push(item.href);
+                              setOpen(false);
+                            }}
+                          >
+                            <Icon className="mr-2 h-4 w-4" />
+                            {item.name}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    {/* User section and settings at bottom */}
+                    <div className="mt-8 pt-4 border-t space-y-1">
+                      <div className="flex items-center gap-3 px-3 py-2">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-600 flex items-center justify-center">
+                          <Image
+                            src="/images/avatar.png"
+                            alt="User avatar"
+                            width={40}
+                            height={40}
+                            className="rounded-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <User className="h-5 w-5 text-gray-300 hidden" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {user?.email?.address || "User"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {user?.id?.substring(0, 8)}...
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          router.push("/settings");
+                          setOpen(false);
+                        }}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          handleLogout();
+                          setOpen(false);
+                        }}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Log out
+                      </Button>
+                    </div>
+                  </ScrollArea>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 }

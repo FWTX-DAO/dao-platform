@@ -33,20 +33,19 @@ function MyApp({ Component, pageProps }: AppProps) {
         />
 
         <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
         <link rel="manifest" href="/favicons/manifest.json" />
 
         <title>Fort Worth DAO - Digital Sovereignty is Mission Critical</title>
-        <meta name="description" content="Emerging Tech Workshops, Community, and Civic Innovation Lab for North Texas. Growing Web3 Civic Excellence through education on cryptographic governance, civil rights, and the social impacts of AI." />
-        <meta name="keywords" content="Fort Worth DAO, Web3, blockchain, civic innovation, digital sovereignty, cryptographic governance, AI ethics, North Texas tech" />
+        <meta name="description" content="Fort Worth's Civic Innovation Lab advancing digital sovereignty through Web3, blockchain, and emerging technologies. We empower communities with cryptographic governance tools, Bitcoin education, and AI literacy to build resilient, decentralized civic infrastructure for North Texas." />
+        <meta name="keywords" content="Fort Worth, Web3, crypto, Bitcoin, blockchain, emerging tech, AI, digital sovereignty, civic innovation, cryptographic governance, Fort Worth DAO, North Texas, decentralized governance, civic technology" />
         <meta name="author" content="Fort Worth DAO" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://fwtx.city/" />
         <meta property="og:title" content="Fort Worth DAO - Digital Sovereignty is Mission Critical" />
-        <meta property="og:description" content="Emerging Tech Workshops, Community, and Civic Innovation Lab for North Texas" />
+        <meta property="og:description" content="Fort Worth's Civic Innovation Lab advancing digital sovereignty through Web3, blockchain, and emerging technologies. We empower communities with cryptographic governance tools, Bitcoin education, and AI literacy." />
         <meta property="og:image" content="/ogimage.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -55,7 +54,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://fwtx.city/" />
         <meta property="twitter:title" content="Fort Worth DAO - Digital Sovereignty is Mission Critical" />
-        <meta property="twitter:description" content="Emerging Tech Workshops, Community, and Civic Innovation Lab for North Texas" />
+        <meta property="twitter:description" content="Fort Worth's Civic Innovation Lab advancing digital sovereignty through Web3, blockchain, and emerging technologies. We empower communities with cryptographic governance tools, Bitcoin education, and AI literacy." />
         <meta property="twitter:image" content="/ogimage.png" />
         
         {/* Additional Meta Tags */}
