@@ -7,7 +7,8 @@ import {
   PlusIcon,
   CalendarIcon,
   UserGroupIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 interface MeetingNote {
@@ -24,20 +25,39 @@ interface MeetingNote {
   created_at: string;
 }
 
+interface Member {
+  id: string;
+  userId: string;
+  username: string;
+  membershipType: string;
+  status: string;
+  avatarUrl?: string;
+  joinedAt: string;
+}
+
+interface Attendee {
+  id: string;
+  name: string;
+  type: 'member' | 'guest';
+  memberId?: string;
+}
+
 export default function MeetingNotesPage() {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
   const [notes, setNotes] = useState<MeetingNote[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [showCreateNote, setShowCreateNote] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
+  const [selectedAttendees, setSelectedAttendees] = useState<Attendee[]>([]);
+  const [guestName, setGuestName] = useState("");
   const [newNote, setNewNote] = useState({
     title: "",
     date: "",
-    attendees: "",
     agenda: "",
     notes: "",
     actionItems: "",
@@ -53,6 +73,7 @@ export default function MeetingNotesPage() {
   useEffect(() => {
     if (authenticated) {
       fetchNotes();
+      fetchMembers();
     }
   }, [authenticated]);
 
@@ -77,6 +98,24 @@ export default function MeetingNotesPage() {
     }
   };
 
+  const fetchMembers = async () => {
+    try {
+      const accessToken = await getAccessToken();
+      const response = await fetch("/api/members", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMembers(data);
+      }
+    } catch (err) {
+      console.error("Error fetching members:", err);
+    }
+  };
+
   const handleCreateNote = async () => {
     if (newNote.title && newNote.date && newNote.notes) {
       setIsCreating(true);
@@ -93,7 +132,7 @@ export default function MeetingNotesPage() {
           body: JSON.stringify({
             title: newNote.title,
             date: newNote.date,
-            attendees: newNote.attendees.split(",").map(a => a.trim()).filter(Boolean),
+            attendees: selectedAttendees.map(a => a.name),
             agenda: newNote.agenda,
             notes: newNote.notes,
             actionItems: newNote.actionItems.split("\n").map(a => a.trim()).filter(Boolean),
@@ -107,12 +146,13 @@ export default function MeetingNotesPage() {
           setNewNote({
             title: "",
             date: "",
-            attendees: "",
             agenda: "",
             notes: "",
             actionItems: "",
             tags: "",
           });
+          setSelectedAttendees([]);
+          setGuestName("");
           setShowCreateNote(false);
         } else {
           throw new Error("Failed to create meeting note");
@@ -124,6 +164,34 @@ export default function MeetingNotesPage() {
         setIsCreating(false);
       }
     }
+  };
+
+  const addMemberAttendee = (member: Member) => {
+    const isAlreadySelected = selectedAttendees.some(a => a.id === member.id);
+    if (!isAlreadySelected) {
+      setSelectedAttendees([...selectedAttendees, {
+        id: member.id,
+        name: member.username || `Member ${member.id}`,
+        type: 'member',
+        memberId: member.id
+      }]);
+    }
+  };
+
+  const addGuestAttendee = () => {
+    if (guestName.trim()) {
+      const guestId = `guest-${Date.now()}`;
+      setSelectedAttendees([...selectedAttendees, {
+        id: guestId,
+        name: guestName.trim(),
+        type: 'guest'
+      }]);
+      setGuestName("");
+    }
+  };
+
+  const removeAttendee = (attendeeId: string) => {
+    setSelectedAttendees(selectedAttendees.filter(a => a.id !== attendeeId));
   };
 
   const getAllTags = () => {
@@ -210,12 +278,15 @@ export default function MeetingNotesPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Meeting Title</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Meeting Title <span className="text-xs text-gray-500">({newNote.title.length}/200)</span>
+                    </label>
                     <input
                       type="text"
                       value={newNote.title}
-                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value.slice(0, 200) })}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
+                      maxLength={200}
                     />
                   </div>
                   <div>
@@ -229,52 +300,132 @@ export default function MeetingNotesPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Attendees (comma-separated)</label>
-                  <input
-                    type="text"
-                    value={newNote.attendees}
-                    onChange={(e) => setNewNote({ ...newNote, attendees: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    placeholder="John Doe, Jane Smith, Bob Johnson"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Attendees</label>
+                  
+                  {/* DAO Members Dropdown */}
+                  <div className="mb-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">DAO Members</label>
+                    <select
+                      onChange={(e) => {
+                        const member = members.find(m => m.id === e.target.value);
+                        if (member) {
+                          addMemberAttendee(member);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 text-sm"
+                      defaultValue=""
+                    >
+                      <option value="">Select a DAO member...</option>
+                      {members
+                        .filter(member => !selectedAttendees.some(a => a.memberId === member.id))
+                        .map(member => (
+                        <option key={member.id} value={member.id}>
+                          {member.username} ({member.membershipType})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Guest Input */}
+                  <div className="mb-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Add Guest</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addGuestAttendee()}
+                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 text-sm"
+                        placeholder="Guest name"
+                      />
+                      <button
+                        type="button"
+                        onClick={addGuestAttendee}
+                        className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Selected Attendees */}
+                  {selectedAttendees.length > 0 && (
+                    <div className="border rounded-md p-3 bg-gray-50">
+                      <p className="text-xs font-medium text-gray-600 mb-2">Selected Attendees:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedAttendees.map(attendee => (
+                          <span
+                            key={attendee.id}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                              attendee.type === 'member' 
+                                ? 'bg-violet-100 text-violet-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {attendee.name}
+                            <button
+                              type="button"
+                              onClick={() => removeAttendee(attendee.id)}
+                              className="ml-1 hover:text-red-600"
+                            >
+                              <XMarkIcon className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Agenda</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Agenda <span className="text-xs text-gray-500">({newNote.agenda.length}/2000)</span>
+                  </label>
                   <textarea
                     value={newNote.agenda}
-                    onChange={(e) => setNewNote({ ...newNote, agenda: e.target.value })}
+                    onChange={(e) => setNewNote({ ...newNote, agenda: e.target.value.slice(0, 2000) })}
                     rows={3}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    placeholder="1. Topic one\n2. Topic two\n3. Topic three"
+                    placeholder="1. Topic one&#10;2. Topic two&#10;3. Topic three"
+                    maxLength={2000}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Meeting Notes</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Meeting Notes <span className="text-xs text-gray-500">({newNote.notes.length}/10000)</span>
+                  </label>
                   <textarea
                     value={newNote.notes}
-                    onChange={(e) => setNewNote({ ...newNote, notes: e.target.value })}
+                    onChange={(e) => setNewNote({ ...newNote, notes: e.target.value.slice(0, 10000) })}
                     rows={5}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
+                    maxLength={10000}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Action Items (one per line)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Action Items (one per line) <span className="text-xs text-gray-500">({newNote.actionItems.length}/4000)</span>
+                  </label>
                   <textarea
                     value={newNote.actionItems}
-                    onChange={(e) => setNewNote({ ...newNote, actionItems: e.target.value })}
+                    onChange={(e) => setNewNote({ ...newNote, actionItems: e.target.value.slice(0, 4000) })}
                     rows={3}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    placeholder="Schedule follow-up meeting\nPrepare budget proposal\nContact stakeholders"
+                    placeholder="Schedule follow-up meeting&#10;Prepare budget proposal&#10;Contact stakeholders"
+                    maxLength={4000}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tags (comma-separated) <span className="text-xs text-gray-500">({newNote.tags.length}/500)</span>
+                  </label>
                   <input
                     type="text"
                     value={newNote.tags}
-                    onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
+                    onChange={(e) => setNewNote({ ...newNote, tags: e.target.value.slice(0, 500) })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                     placeholder="planning, budget, technical"
+                    maxLength={500}
                   />
                 </div>
                 <div className="flex justify-end gap-3">

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest, generateId } from "../../../lib/api-helpers";
+import { sanitizeMeetingNoteInput } from "../../../lib/utils";
 import { getOrCreateUser } from "../../../src/db/queries/users";
 import { db, meetingNotes, users } from "../../../src/db";
 import { eq, sql } from "drizzle-orm";
@@ -43,27 +44,53 @@ export default async function handler(
     
     else if (req.method === "POST") {
       // Create new meeting note
-      const { title, date, attendees, agenda, notes, actionItems, tags } = req.body;
+      const rawInput = req.body;
 
-      if (!title || !date || !notes) {
+      if (!rawInput.title || !rawInput.date || !rawInput.notes) {
         return res.status(400).json({ 
           error: "Title, date, and notes are required" 
         });
       }
 
+      // Validate date format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(rawInput.date)) {
+        return res.status(400).json({
+          error: "Invalid date format. Use YYYY-MM-DD format."
+        });
+      }
+
+      // Sanitize all input data
+      const sanitizedInput = sanitizeMeetingNoteInput({
+        title: rawInput.title,
+        date: rawInput.date,
+        attendees: rawInput.attendees,
+        agenda: rawInput.agenda,
+        notes: rawInput.notes,
+        actionItems: rawInput.actionItems,
+        tags: rawInput.tags,
+      });
+
+      // Additional validation after sanitization
+      if (!sanitizedInput.title || !sanitizedInput.notes) {
+        return res.status(400).json({
+          error: "Title and notes cannot be empty after sanitization"
+        });
+      }
+
       const noteId = generateId();
-      const attendeesString = Array.isArray(attendees) ? attendees.join(",") : attendees || "";
-      const actionItemsString = Array.isArray(actionItems) ? actionItems.join("\n") : actionItems || "";
-      const tagsString = Array.isArray(tags) ? tags.join(",") : tags || "";
+      const attendeesString = sanitizedInput.attendees.join(",");
+      const actionItemsString = sanitizedInput.actionItems.join("\n");
+      const tagsString = sanitizedInput.tags.join(",");
 
       const newNote = await db.insert(meetingNotes).values({
         id: noteId,
         authorId: user!.id,
-        title,
-        date,
+        title: sanitizedInput.title,
+        date: sanitizedInput.date,
         attendees: attendeesString,
-        agenda: agenda || "",
-        notes,
+        agenda: sanitizedInput.agenda,
+        notes: sanitizedInput.notes,
         actionItems: actionItemsString,
         tags: tagsString,
       }).returning();
