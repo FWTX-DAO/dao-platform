@@ -81,6 +81,18 @@ export const projectCollaborators = sqliteTable("project_collaborators", {
   pk: primaryKey({ columns: [table.projectId, table.userId] }),
 }));
 
+// Project updates table for tracking progress and announcements
+export const projectUpdates = sqliteTable("project_updates", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => projects.id),
+  authorId: text("author_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  updateType: text("update_type").default("general"), // general, milestone, announcement, issue
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Forum votes table
 export const forumVotes = sqliteTable("forum_votes", {
   postId: text("post_id").notNull().references(() => forumPosts.id),
@@ -123,6 +135,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [users.id],
   }),
   collaborators: many(projectCollaborators),
+  updates: many(projectUpdates),
 }));
 
 export const meetingNotesRelations = relations(meetingNotes, ({ one }) => ({
@@ -161,6 +174,17 @@ export const membersRelations = relations(members, ({ one }) => ({
   }),
 }));
 
+export const projectUpdatesRelations = relations(projectUpdates, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectUpdates.projectId],
+    references: [projects.id],
+  }),
+  author: one(users, {
+    fields: [projectUpdates.authorId],
+    references: [users.id],
+  }),
+}));
+
 // Type exports for TypeScript
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
@@ -175,4 +199,6 @@ export type NewMeetingNote = InferInsertModel<typeof meetingNotes>;
 export type Member = InferSelectModel<typeof members>;
 export type NewMember = InferInsertModel<typeof members>;
 export type ProjectCollaborator = InferSelectModel<typeof projectCollaborators>;
+export type ProjectUpdate = InferSelectModel<typeof projectUpdates>;
+export type NewProjectUpdate = InferInsertModel<typeof projectUpdates>;
 export type ForumVote = InferSelectModel<typeof forumVotes>;

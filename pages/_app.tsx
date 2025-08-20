@@ -2,8 +2,35 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
 import { PrivyProvider } from "@privy-io/react-auth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useState } from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
+  // Create a client with optimized settings for our use case
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+        refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        refetchOnReconnect: 'always',
+        retry: (failureCount, error: any) => {
+          // Don't retry on 401/403 errors (auth issues)
+          if (error?.status === 401 || error?.status === 403) {
+            return false;
+          }
+          // Retry up to 3 times for other errors
+          return failureCount < 3;
+        },
+      },
+      mutations: {
+        retry: false, // Don't retry mutations by default
+      },
+    },
+  }));
+
   return (
     <>
       <Head>
@@ -62,16 +89,19 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta name="theme-color" content="#7c3aed" />
         <link rel="canonical" href="https://fwtx.city/" />
       </Head>
-      <PrivyProvider
-        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
-        config={{
-          embeddedWallets: {
-            createOnLogin: "all-users",
-          },
-        }}
-      >
-        <Component {...pageProps} />
-      </PrivyProvider>
+      <QueryClientProvider client={queryClient}>
+        <PrivyProvider
+          appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
+          config={{
+            embeddedWallets: {
+              createOnLogin: "all-users",
+            },
+          }}
+        >
+          <Component {...pageProps} />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </PrivyProvider>
+      </QueryClientProvider>
     </>
   );
 }

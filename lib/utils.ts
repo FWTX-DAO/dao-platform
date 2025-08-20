@@ -170,3 +170,66 @@ export const sanitizeForumPostInput = (input: ForumPostInput) => {
 
   return sanitized;
 };
+
+/**
+ * Validates GitHub repository URL format
+ */
+export const validateGithubRepo = (url: string): boolean => {
+  if (!url) return false;
+  
+  const githubPattern = /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/?$/;
+  return githubPattern.test(url);
+};
+
+/**
+ * Validates and sanitizes project data
+ */
+export interface ProjectInput {
+  title: string;
+  description: string;
+  githubRepo: string;
+  intent: string;
+  benefitToFortWorth: string;
+  tags?: string | string[];
+  status?: string;
+}
+
+export const sanitizeProjectInput = (input: ProjectInput) => {
+  // Validate GitHub repo URL
+  if (!validateGithubRepo(input.githubRepo)) {
+    throw new Error('Invalid GitHub repository URL. Must be a valid GitHub repo URL.');
+  }
+
+  const sanitized = {
+    title: sanitizeText(input.title, 200),
+    description: sanitizeMultilineText(input.description, 2000),
+    githubRepo: sanitizeText(input.githubRepo, 500),
+    intent: sanitizeMultilineText(input.intent, 1000),
+    benefitToFortWorth: sanitizeMultilineText(input.benefitToFortWorth, 1000),
+    tags: Array.isArray(input.tags)
+      ? input.tags.map(t => sanitizeText(t, 50)).filter(Boolean)
+      : sanitizeCommaSeparated(input.tags || '', 20),
+    status: input.status ? sanitizeText(input.status, 50) : 'proposed',
+  };
+
+  return sanitized;
+};
+
+/**
+ * Validates and sanitizes project update data
+ */
+export interface ProjectUpdateInput {
+  title: string;
+  content: string;
+  updateType?: string;
+}
+
+export const sanitizeProjectUpdateInput = (input: ProjectUpdateInput) => {
+  const sanitized = {
+    title: sanitizeText(input.title, 200),
+    content: sanitizeMultilineText(input.content, 5000),
+    updateType: input.updateType ? sanitizeText(input.updateType, 50) : 'general',
+  };
+
+  return sanitized;
+};

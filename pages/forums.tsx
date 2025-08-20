@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { usePrivy, getAccessToken } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import AppLayout from "../components/AppLayout";
 import { 
   HeartIcon,
@@ -11,37 +11,42 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
-
-interface ForumPost {
-  id: string;
-  title: string;
-  content: string;
-  author_name: string;
-  author_id: string;
-  category: string;
-  upvotes: number;
-  reply_count: number;
-  created_at: string;
-  updated_at?: string;
-  has_upvoted: number;
-}
+import {
+  useForumPosts,
+  useForumReplies,
+  useCreateForumPost,
+  useUpdateForumPost,
+  useDeleteForumPost,
+  useVoteOnPost,
+  type ForumPost
+} from "../hooks/useForumPosts";
 
 const categories = ["General", "Governance", "Technical", "Events", "Education"];
 
 export default function ForumsPage() {
   const router = useRouter();
   const { ready, authenticated, user } = usePrivy();
-  const [posts, setPosts] = useState<ForumPost[]>([]);
+  
+  // React Query hooks
+  const { 
+    data: posts = [], 
+    isLoading, 
+    error: postsError 
+  } = useForumPosts();
+  
+  const createPostMutation = useCreateForumPost();
+  const updatePostMutation = useUpdateForumPost();
+  const deletePostMutation = useDeleteForumPost();
+  const voteMutation = useVoteOnPost();
+
+  // UI state
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [editingPost, setEditingPost] = useState<ForumPost | null>(null);
   const [viewingReplies, setViewingReplies] = useState<ForumPost | null>(null);
-  const [replies, setReplies] = useState<ForumPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [error, setError] = useState("");
+  
+  // Form state
   const [newPost, setNewPost] = useState({
     title: "",
     content: "",
@@ -53,165 +58,73 @@ export default function ForumsPage() {
     category: "General",
   });
 
+  // Replies query - only enabled when viewing replies
+  const { 
+    data: replies = [], 
+    isLoading: isLoadingReplies 
+  } = useForumReplies(viewingReplies?.id || null);
+
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/");
     }
   }, [ready, authenticated, router]);
 
+  // Handle query errors
   useEffect(() => {
-    if (authenticated) {
-      fetchPosts();
-    }
-  }, [authenticated]);
-
-  const fetchPosts = async () => {
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch("/api/forums/posts", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPosts(data);
-      }
-    } catch (err) {
-      console.error("Error fetching posts:", err);
+    if (postsError) {
       setError("Failed to load posts");
-    } finally {
-      setIsLoading(false);
     }
+  }, [postsError]);
+
+  const handleUpvote = (postId: string, currentUpvoted: number) => {
+    const voteType = currentUpvoted ? 0 : 1;
+    voteMutation.mutate({ postId, voteType });
   };
 
-  const handleUpvote = async (postId: string, currentUpvoted: number) => {
-    try {
-      const accessToken = await getAccessToken();
-      const voteType = currentUpvoted ? 0 : 1;
-      
-      const response = await fetch("/api/forums/vote", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ postId, voteType }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPosts(posts.map(post => {
-          if (post.id === postId) {
-            return {
-              ...post,
-              upvotes: data.upvotes,
-              has_upvoted: data.hasUpvoted ? 1 : 0,
-            };
-          }
-          return post;
-        }));
-      }
-    } catch (err) {
-      console.error("Error voting:", err);
-    }
-  };
-
-  const handleCreatePost = async () => {
-    if (newPost.title && newPost.content) {
-      setIsCreating(true);
+  const handleCreatePost = () => {
+    if (newPost.title.trim() && newPost.content.trim()) {
       setError("");
-      
-      try {
-        const accessToken = await getAccessToken();
-        const response = await fetch("/api/forums/posts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(newPost),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setPosts([data, ...posts]);
+      createPostMutation.mutate(newPost, {
+        onSuccess: () => {
           setNewPost({ title: "", content: "", category: "General" });
           setShowCreatePost(false);
-        } else {
-          throw new Error("Failed to create post");
+        },
+        onError: () => {
+          setError("Failed to create post. Please try again.");
         }
-      } catch (err) {
-        console.error("Error creating post:", err);
-        setError("Failed to create post. Please try again.");
-      } finally {
-        setIsCreating(false);
-      }
+      });
     }
   };
 
-  const handleEditPost = async () => {
-    if (!editingPost || !editPost.title || !editPost.content) return;
+  const handleEditPost = () => {
+    if (!editingPost || !editPost.title.trim() || !editPost.content.trim()) return;
     
-    setIsEditing(true);
     setError("");
-
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch("/api/forums/posts", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          id: editingPost.id,
-          title: editPost.title,
-          content: editPost.content,
-          category: editPost.category,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPosts(posts.map(post => post.id === editingPost.id ? data : post));
+    updatePostMutation.mutate({
+      id: editingPost.id,
+      title: editPost.title,
+      content: editPost.content,
+      category: editPost.category,
+    }, {
+      onSuccess: () => {
         setEditingPost(null);
         setEditPost({ title: "", content: "", category: "General" });
-      } else {
-        throw new Error("Failed to update post");
+      },
+      onError: () => {
+        setError("Failed to update post. Please try again.");
       }
-    } catch (err) {
-      console.error("Error updating post:", err);
-      setError("Failed to update post. Please try again.");
-    } finally {
-      setIsEditing(false);
-    }
+    });
   };
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = (postId: string) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
 
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch("/api/forums/posts", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ id: postId }),
-      });
-
-      if (response.ok) {
-        setPosts(posts.filter(post => post.id !== postId));
-      } else {
-        throw new Error("Failed to delete post");
+    deletePostMutation.mutate(postId, {
+      onError: () => {
+        setError("Failed to delete post. Please try again.");
       }
-    } catch (err) {
-      console.error("Error deleting post:", err);
-      setError("Failed to delete post. Please try again.");
-    }
+    });
   };
 
   const startEditPost = (post: ForumPost) => {
@@ -223,31 +136,8 @@ export default function ForumsPage() {
     });
   };
 
-  const viewReplies = async (post: ForumPost) => {
+  const viewReplies = (post: ForumPost) => {
     setViewingReplies(post);
-    setIsLoadingReplies(true);
-    setReplies([]);
-
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch(`/api/forums/posts/${post.id}/replies`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setReplies(data);
-      } else {
-        throw new Error("Failed to load replies");
-      }
-    } catch (err) {
-      console.error("Error fetching replies:", err);
-      setError("Failed to load replies");
-    } finally {
-      setIsLoadingReplies(false);
-    }
   };
 
   const filteredPosts = selectedCategory === "All" 
@@ -360,17 +250,17 @@ export default function ForumsPage() {
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowCreatePost(false)}
-                    disabled={isCreating}
+                    disabled={createPostMutation.isPending}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreatePost}
-                    disabled={isCreating || !newPost.title.trim() || !newPost.content.trim()}
+                    disabled={createPostMutation.isPending || !newPost.title.trim() || !newPost.content.trim()}
                     className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {isCreating ? "Creating..." : "Create Post"}
+                    {createPostMutation.isPending ? "Creating..." : "Create Post"}
                   </button>
                 </div>
               </div>
@@ -436,17 +326,17 @@ export default function ForumsPage() {
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setEditingPost(null)}
-                    disabled={isEditing}
+                    disabled={updatePostMutation.isPending}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleEditPost}
-                    disabled={isEditing || !editPost.title.trim() || !editPost.content.trim()}
+                    disabled={updatePostMutation.isPending || !editPost.title.trim() || !editPost.content.trim()}
                     className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {isEditing ? "Updating..." : "Update Post"}
+                    {updatePostMutation.isPending ? "Updating..." : "Update Post"}
                   </button>
                 </div>
               </div>
@@ -547,7 +437,7 @@ export default function ForumsPage() {
         {/* Posts List */}
         {isLoading ? (
           <div className="py-8 text-center text-gray-500">Loading posts...</div>
-        ) : error && posts.length === 0 ? (
+        ) : error ? (
           <div className="py-8 text-center text-red-600">{error}</div>
         ) : posts.length === 0 ? (
           <div className="py-8 text-center text-gray-500">

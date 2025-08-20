@@ -298,7 +298,11 @@ export default function InnovationLabPage() {
             {filteredProjects.map(project => {
               const tags = project.tags ? project.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
               return (
-                <div key={project.id} className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow">
+                 <div 
+                   key={project.id} 
+                   className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                   onClick={() => router.push(`/innovation-lab/${project.id}`)}
+                 >
                   <div className="flex items-center justify-between mb-4">
                     <BeakerIcon className="h-8 w-8 text-violet-600" />
                     <span className={`text-xs px-2 py-1 rounded-full ${statusColors[project.status]}`}>
@@ -324,12 +328,13 @@ export default function InnovationLabPage() {
                       <UserGroupIcon className="h-4 w-4" />
                       <span>{project.collaborators} collaborators</span>
                     </div>
-                    <a
-                      href={project.github_repo}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-violet-600 hover:text-violet-700"
-                    >
+                     <a
+                       href={project.github_repo}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="flex items-center gap-1 text-violet-600 hover:text-violet-700"
+                       onClick={(e) => e.stopPropagation()}
+                     >
                       <LinkIcon className="h-4 w-4" />
                       GitHub
                     </a>

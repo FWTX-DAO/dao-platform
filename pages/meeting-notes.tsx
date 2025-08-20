@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { usePrivy, getAccessToken } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import AppLayout from "../components/AppLayout";
 import { 
   DocumentTextIcon,
@@ -10,30 +10,8 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
-
-interface MeetingNote {
-  id: string;
-  title: string;
-  date: string;
-  attendees: string;
-  agenda: string;
-  notes: string;
-  action_items: string;
-  tags: string;
-  author_name: string;
-  author_id: string;
-  created_at: string;
-}
-
-interface Member {
-  id: string;
-  userId: string;
-  username: string;
-  membershipType: string;
-  status: string;
-  avatarUrl?: string;
-  joinedAt: string;
-}
+import { useMeetingNotes, useCreateMeetingNote, type MeetingNote } from "../hooks/useMeetingNotes";
+import { useMembers, type Member } from "../hooks/useMembers";
 
 interface Attendee {
   id: string;
@@ -45,16 +23,26 @@ interface Attendee {
 export default function MeetingNotesPage() {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
-  const [notes, setNotes] = useState<MeetingNote[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
+  
+  // React Query hooks
+  const { 
+    data: notes = [], 
+    isLoading, 
+    error: notesError 
+  } = useMeetingNotes();
+  
+  const { data: members = [] } = useMembers();
+  const createNoteMutation = useCreateMeetingNote();
+
+  // UI state
   const [showCreateNote, setShowCreateNote] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
   const [selectedAttendees, setSelectedAttendees] = useState<Attendee[]>([]);
   const [guestName, setGuestName] = useState("");
+  
+  // Form state
   const [newNote, setNewNote] = useState({
     title: "",
     date: "",
@@ -70,79 +58,27 @@ export default function MeetingNotesPage() {
     }
   }, [ready, authenticated, router]);
 
+  // Handle query errors
   useEffect(() => {
-    if (authenticated) {
-      fetchNotes();
-      fetchMembers();
-    }
-  }, [authenticated]);
-
-  const fetchNotes = async () => {
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch("/api/meeting-notes", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNotes(data);
-      }
-    } catch (err) {
-      console.error("Error fetching meeting notes:", err);
+    if (notesError) {
       setError("Failed to load meeting notes");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [notesError]);
 
-  const fetchMembers = async () => {
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch("/api/members", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMembers(data);
-      }
-    } catch (err) {
-      console.error("Error fetching members:", err);
-    }
-  };
-
-  const handleCreateNote = async () => {
-    if (newNote.title && newNote.date && newNote.notes) {
-      setIsCreating(true);
+  const handleCreateNote = () => {
+    if (newNote.title.trim() && newNote.date && newNote.notes.trim()) {
       setError("");
-
-      try {
-        const accessToken = await getAccessToken();
-        const response = await fetch("/api/meeting-notes", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            title: newNote.title,
-            date: newNote.date,
-            attendees: selectedAttendees.map(a => a.name),
-            agenda: newNote.agenda,
-            notes: newNote.notes,
-            actionItems: newNote.actionItems.split("\n").map(a => a.trim()).filter(Boolean),
-            tags: newNote.tags.split(",").map(t => t.trim()).filter(Boolean),
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setNotes([data, ...notes]);
+      
+      createNoteMutation.mutate({
+        title: newNote.title,
+        date: newNote.date,
+        attendees: selectedAttendees.map(a => a.name),
+        agenda: newNote.agenda,
+        notes: newNote.notes,
+        actionItems: newNote.actionItems.split("\n").map(a => a.trim()).filter(Boolean),
+        tags: newNote.tags.split(",").map(t => t.trim()).filter(Boolean),
+      }, {
+        onSuccess: () => {
           setNewNote({
             title: "",
             date: "",
@@ -154,15 +90,11 @@ export default function MeetingNotesPage() {
           setSelectedAttendees([]);
           setGuestName("");
           setShowCreateNote(false);
-        } else {
-          throw new Error("Failed to create meeting note");
+        },
+        onError: () => {
+          setError("Failed to create meeting note. Please try again.");
         }
-      } catch (err) {
-        console.error("Error creating meeting note:", err);
-        setError("Failed to create meeting note. Please try again.");
-      } finally {
-        setIsCreating(false);
-      }
+      });
     }
   };
 
@@ -431,17 +363,17 @@ export default function MeetingNotesPage() {
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowCreateNote(false)}
-                    disabled={isCreating}
+                    disabled={createNoteMutation.isPending}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateNote}
-                    disabled={isCreating}
+                    disabled={createNoteMutation.isPending || !newNote.title.trim() || !newNote.date || !newNote.notes.trim()}
                     className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {isCreating ? "Creating..." : "Create Note"}
+                    {createNoteMutation.isPending ? "Creating..." : "Create Note"}
                   </button>
                 </div>
               </div>
@@ -452,7 +384,7 @@ export default function MeetingNotesPage() {
         {/* Notes List */}
         {isLoading ? (
           <div className="py-8 text-center text-gray-500">Loading meeting notes...</div>
-        ) : error && notes.length === 0 ? (
+        ) : error ? (
           <div className="py-8 text-center text-red-600">{error}</div>
         ) : notes.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
