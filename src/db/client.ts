@@ -8,11 +8,15 @@ import {
   meetingNotes,
   projectCollaborators,
   forumVotes,
+  documents,
+  documentAuditTrail,
   type NewUser,
   type NewMember,
   type NewForumPost,
   type NewProject,
-  type NewMeetingNote
+  type NewMeetingNote,
+  type NewDocument,
+  type NewDocumentAuditTrail
 } from './schema';
 
 // User operations
@@ -273,6 +277,169 @@ export const meetingNotesOperations = {
   }
 };
 
+// Document operations
+export const documentOperations = {
+  async createDocument(document: Omit<NewDocument, 'id' | 'createdAt' | 'updatedAt'>) {
+    const newDocument: NewDocument = {
+      ...document,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    await db.insert(documents).values(newDocument);
+    
+    // Create audit trail entry for upload
+    await this.createAuditEntry(newDocument.id, document.uploaderId, 'uploaded', {
+      pinataId: document.pinataId,
+      cid: document.cid,
+      size: document.fileSize,
+    });
+    
+    // Award contribution points
+    await memberOperations.addContributionPoints(document.uploaderId, 10);
+    
+    return newDocument;
+  },
+
+  async getDocuments(limit = 20, offset = 0) {
+    return db
+      .select({
+        document: documents,
+        uploader: users,
+      })
+      .from(documents)
+      .leftJoin(users, eq(documents.uploaderId, users.id))
+      .where(eq(documents.status, 'active'))
+      .orderBy(desc(documents.createdAt))
+      .limit(limit)
+      .offset(offset);
+  },
+
+  async getDocumentsByUser(userId: string, limit = 20, offset = 0) {
+    return db
+      .select({
+        document: documents,
+        uploader: users,
+      })
+      .from(documents)
+      .leftJoin(users, eq(documents.uploaderId, users.id))
+      .where(and(
+        eq(documents.uploaderId, userId),
+        eq(documents.status, 'active')
+      ))
+      .orderBy(desc(documents.createdAt))
+      .limit(limit)
+      .offset(offset);
+  },
+
+  async getDocumentsByCategory(category: string, limit = 20, offset = 0) {
+    return db
+      .select({
+        document: documents,
+        uploader: users,
+      })
+      .from(documents)
+      .leftJoin(users, eq(documents.uploaderId, users.id))
+      .where(and(
+        eq(documents.category, category),
+        eq(documents.status, 'active')
+      ))
+      .orderBy(desc(documents.createdAt))
+      .limit(limit)
+      .offset(offset);
+  },
+
+  async getDocumentById(id: string) {
+    const result = await db
+      .select({
+        document: documents,
+        uploader: users,
+      })
+      .from(documents)
+      .leftJoin(users, eq(documents.uploaderId, users.id))
+      .where(eq(documents.id, id))
+      .get();
+    
+    if (result) {
+      // Update access count and timestamp
+      await db.update(documents)
+        .set({
+          accessCount: sql`${documents.accessCount} + 1`,
+          lastAccessedAt: new Date().toISOString(),
+        })
+        .where(eq(documents.id, id));
+    }
+    
+    return result;
+  },
+
+  async updateDocument(id: string, updates: Partial<NewDocument>, userId: string) {
+    await db.update(documents)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(documents.id, id));
+
+    // Create audit trail entry
+    await this.createAuditEntry(id, userId, 'updated', updates);
+  },
+
+  async deleteDocument(id: string, userId: string) {
+    await db.update(documents)
+      .set({ 
+        status: 'deleted',
+        updatedAt: new Date().toISOString() 
+      })
+      .where(eq(documents.id, id));
+
+    // Create audit trail entry
+    await this.createAuditEntry(id, userId, 'deleted');
+  },
+
+  async searchDocuments(searchTerm: string) {
+    return db
+      .select({
+        document: documents,
+        uploader: users,
+      })
+      .from(documents)
+      .leftJoin(users, eq(documents.uploaderId, users.id))
+      .where(sql`
+        (${documents.name} LIKE ${'%' + searchTerm + '%'} OR
+         ${documents.description} LIKE ${'%' + searchTerm + '%'} OR
+         ${documents.tags} LIKE ${'%' + searchTerm + '%'}) AND
+         ${documents.status} = 'active'
+      `)
+      .orderBy(desc(documents.updatedAt));
+  },
+
+  async createAuditEntry(documentId: string, userId: string, action: string, metadata?: any) {
+    const auditEntry: NewDocumentAuditTrail = {
+      id: crypto.randomUUID(),
+      documentId,
+      userId,
+      action,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+      timestamp: new Date().toISOString(),
+    };
+    
+    await db.insert(documentAuditTrail).values(auditEntry);
+    return auditEntry;
+  },
+
+  async getDocumentAuditTrail(documentId: string, limit = 50) {
+    return db
+      .select({
+        audit: documentAuditTrail,
+        user: users,
+      })
+      .from(documentAuditTrail)
+      .leftJoin(users, eq(documentAuditTrail.userId, users.id))
+      .where(eq(documentAuditTrail.documentId, documentId))
+      .orderBy(desc(documentAuditTrail.timestamp))
+      .limit(limit);
+  }
+};
+
 // Export all operations
 export const dbOperations = {
   users: userOperations,
@@ -280,4 +447,5 @@ export const dbOperations = {
   forums: forumOperations,
   projects: projectOperations,
   meetingNotes: meetingNotesOperations,
+  documents: documentOperations,
 };

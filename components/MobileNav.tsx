@@ -10,7 +10,8 @@ import {
   ChatBubbleLeftRightIcon,
   BeakerIcon,
   DocumentTextIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  FolderOpenIcon
 } from '@heroicons/react/24/outline';
 import { usePrivy } from '@privy-io/react-auth';
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Forums', href: '/forums', icon: ChatBubbleLeftRightIcon },
   { name: 'Innovation Lab', href: '/innovation-lab', icon: BeakerIcon },
   { name: 'Meeting Notes', href: '/meeting-notes', icon: DocumentTextIcon },
+  { name: 'Documents', href: '/documents', icon: FolderOpenIcon },
 ];
 
 export default function MobileNav() {

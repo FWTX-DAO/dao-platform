@@ -103,6 +103,54 @@ export const forumVotes = sqliteTable("forum_votes", {
   pk: primaryKey({ columns: [table.postId, table.userId] }),
 }));
 
+// Documents table for IPFS file management
+export const documents = sqliteTable("documents", {
+  id: text("id").primaryKey(),
+  uploaderId: text("uploader_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category").default("General"),
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(), // Size in bytes
+  pinataId: text("pinata_id").notNull().unique(), // Pinata file ID
+  cid: text("cid").notNull(), // IPFS content identifier
+  network: text("network").notNull().default("private"), // "public" or "private"
+  groupId: text("group_id"), // Pinata group ID for organization
+  keyvalues: text("keyvalues"), // JSON string for metadata key-value pairs
+  status: text("status").notNull().default("active"), // active, archived, deleted
+  isPublic: integer("is_public").notNull().default(0), // Boolean as integer (0/1)
+  tags: text("tags"), // Comma-separated tags
+  accessCount: integer("access_count").notNull().default(0),
+  lastAccessedAt: text("last_accessed_at"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Document audit trail table for tracking changes and access
+export const documentAuditTrail = sqliteTable("document_audit_trail", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").notNull().references(() => documents.id),
+  userId: text("user_id").notNull().references(() => users.id),
+  action: text("action").notNull(), // uploaded, updated, accessed, deleted, shared, downloaded
+  metadata: text("metadata"), // JSON string for additional action-specific data
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  timestamp: text("timestamp").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Document shares table for tracking shared access
+export const documentShares = sqliteTable("document_shares", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").notNull().references(() => documents.id),
+  sharedById: text("shared_by_id").notNull().references(() => users.id),
+  sharedWithId: text("shared_with_id").references(() => users.id), // null for public shares
+  shareType: text("share_type").notNull().default("view"), // view, edit, admin
+  expiresAt: text("expires_at"), // Optional expiration
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Define relations for better query support
 export const usersRelations = relations(users, ({ one, many }) => ({
   forumPosts: many(forumPosts),
@@ -110,6 +158,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   meetingNotes: many(meetingNotes),
   projectCollaborations: many(projectCollaborators),
   votes: many(forumVotes),
+  documents: many(documents),
+  documentAuditTrail: many(documentAuditTrail),
+  documentSharesGiven: many(documentShares, { relationName: "SharedBy" }),
+  documentSharesReceived: many(documentShares, { relationName: "SharedWith" }),
   membership: one(members, {
     fields: [users.id],
     references: [members.userId],
@@ -185,6 +237,43 @@ export const projectUpdatesRelations = relations(projectUpdates, ({ one }) => ({
   }),
 }));
 
+export const documentsRelations = relations(documents, ({ one, many }) => ({
+  uploader: one(users, {
+    fields: [documents.uploaderId],
+    references: [users.id],
+  }),
+  auditTrail: many(documentAuditTrail),
+  shares: many(documentShares),
+}));
+
+export const documentAuditTrailRelations = relations(documentAuditTrail, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentAuditTrail.documentId],
+    references: [documents.id],
+  }),
+  user: one(users, {
+    fields: [documentAuditTrail.userId],
+    references: [users.id],
+  }),
+}));
+
+export const documentSharesRelations = relations(documentShares, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentShares.documentId],
+    references: [documents.id],
+  }),
+  sharedBy: one(users, {
+    fields: [documentShares.sharedById],
+    references: [users.id],
+    relationName: "SharedBy",
+  }),
+  sharedWith: one(users, {
+    fields: [documentShares.sharedWithId],
+    references: [users.id],
+    relationName: "SharedWith",
+  }),
+}));
+
 // Type exports for TypeScript
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
@@ -202,3 +291,9 @@ export type ProjectCollaborator = InferSelectModel<typeof projectCollaborators>;
 export type ProjectUpdate = InferSelectModel<typeof projectUpdates>;
 export type NewProjectUpdate = InferInsertModel<typeof projectUpdates>;
 export type ForumVote = InferSelectModel<typeof forumVotes>;
+export type Document = InferSelectModel<typeof documents>;
+export type NewDocument = InferInsertModel<typeof documents>;
+export type DocumentAuditTrail = InferSelectModel<typeof documentAuditTrail>;
+export type NewDocumentAuditTrail = InferInsertModel<typeof documentAuditTrail>;
+export type DocumentShare = InferSelectModel<typeof documentShares>;
+export type NewDocumentShare = InferInsertModel<typeof documentShares>;

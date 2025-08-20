@@ -22,6 +22,7 @@ import {
   Lightbulb,
   FileText,
   LogOut,
+  FolderOpen,
 } from "lucide-react";
 
 export type NavbarItem = {
@@ -36,6 +37,7 @@ const navigationItems: NavbarItem[] = [
   { id: "forums", name: "Forums", href: "/forums", icon: MessageSquare },
   { id: "innovation-lab", name: "Innovation Lab", href: "/innovation-lab", icon: Lightbulb },
   { id: "meeting-notes", name: "Meeting Notes", href: "/meeting-notes", icon: FileText },
+  { id: "documents", name: "Documents", href: "/documents", icon: FolderOpen },
 ];
 
 export default function Navbar() {
