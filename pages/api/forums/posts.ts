@@ -139,7 +139,7 @@ export default async function handler(
         });
       }
 
-      const updatedPost = await db
+      await db
         .update(forumPosts)
         .set({
           title: sanitizedInput.title,
@@ -147,8 +147,7 @@ export default async function handler(
           category: sanitizedInput.category,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
-        .where(eq(forumPosts.id, id))
-        .returning();
+        .where(eq(forumPosts.id, id));
 
       // Get updated post with vote counts
       const postWithData = await db
