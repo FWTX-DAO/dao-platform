@@ -4,7 +4,7 @@
 
 [build.environment]
   # Exclude public environment variables from secrets scanning
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_PRIVY_APP_ID,NEXT_PUBLIC_SESSION_SIGNER_ID,SESSION_SIGNER_SECRET"
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_PRIVY_APP_ID,NEXT_PUBLIC_SESSION_SIGNER_ID,SESSION_SIGNER_SECRET,NEXT_PUBLIC_GATEWAY_URL"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
