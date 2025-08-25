@@ -157,7 +157,7 @@ export default async function handler(
 
         const tagsString = sanitizedInput.tags.join(",");
 
-        const updatedProject = await db
+        await db
           .update(projects)
           .set({
             title: sanitizedInput.title,
@@ -169,8 +169,7 @@ export default async function handler(
             status: sanitizedInput.status,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           })
-          .where(eq(projects.id, id))
-          .returning();
+          .where(eq(projects.id, id));
 
         // Get updated project with collaborator count
         const projectWithData = await db

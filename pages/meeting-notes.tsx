@@ -10,7 +10,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
-import { useMeetingNotes, useCreateMeetingNote, type MeetingNote } from "../hooks/useMeetingNotes";
+import { useMeetingNotes, useCreateMeetingNote } from "../hooks/useMeetingNotes";
 import { useMembers, type Member } from "../hooks/useMembers";
 
 interface Attendee {

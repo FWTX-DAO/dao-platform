@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest, generateId } from "../../../../lib/api-helpers";
 import { sanitizeProjectUpdateInput } from "../../../../lib/utils";
 import { getOrCreateUser } from "../../../../src/db/queries/users";
-import { db, projectUpdates, users, projects, projectCollaborators } from "../../../../src/db";
+import { db, projectUpdates, users, projects } from "../../../../src/db";
 import { eq, and, or, sql } from "drizzle-orm";
 
 export default async function handler(
