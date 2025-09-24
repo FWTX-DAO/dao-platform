@@ -96,7 +96,7 @@ export default function EditBountyPage() {
         desiredOutcome: bounty.desiredOutcome || "",
         bountyAmount: bounty.bountyAmount ? (bounty.bountyAmount / 100).toString() : "",
         bountyType: bounty.bountyType || "fixed",
-        deadline: bounty.deadline ? String(bounty.deadline || "").split('T')[0] : "",
+        deadline: (bounty.deadline ? String(bounty.deadline).split('T')[0] : "") as string,
         category: bounty.category || "",
         technicalRequirements: bounty.technicalRequirements || "",
         constraints: bounty.constraints || "",
