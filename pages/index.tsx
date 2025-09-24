@@ -135,7 +135,7 @@ export default function LoginPage() {
                 📜 Read our Whitepaper and Constitution
               </a>
               <p className="text-sm text-gray-300 max-w-2xl mx-auto text-center mt-2 drop-shadow-md">
-                Educating on Emerging Tech, and paying forward thought leadership on Cryptographic Governance and Civil & Property Rights, social impacts of AI, and how Fort Worth can protect our Constituency in the information age
+                Educating on Emerging Tech, and paying forward thought leadership on Cryptographic Governance and Digital Property Rights, social impacts of AI, and how Fort Worth can protect our Constituency's Sovreignty in the information age
               </p>
             </div>
           </div>
