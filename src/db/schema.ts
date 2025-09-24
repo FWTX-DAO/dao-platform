@@ -274,6 +274,160 @@ export const documentSharesRelations = relations(documentShares, ({ one }) => ({
   }),
 }));
 
+// Innovation Bounties table
+export const innovationBounties = sqliteTable("innovation_bounties", {
+  id: text("id").primaryKey(),
+  
+  // Organization Info
+  organizationName: text("organization_name").notNull(),
+  organizationType: text("organization_type").notNull(), // civic, commercial, non-profit
+  organizationContact: text("organization_contact"), // Email or contact info
+  organizationWebsite: text("organization_website"),
+  
+  // Sponsor Information
+  sponsorFirstName: text("sponsor_first_name"),
+  sponsorLastName: text("sponsor_last_name"),
+  sponsorEmail: text("sponsor_email"),
+  sponsorPhone: text("sponsor_phone"),
+  sponsorTitle: text("sponsor_title"),
+  sponsorDepartment: text("sponsor_department"),
+  sponsorLinkedIn: text("sponsor_linkedin"),
+  
+  // Organization Details
+  organizationSize: text("organization_size"), // 1-10, 11-50, 51-200, 201-500, 500+
+  organizationIndustry: text("organization_industry"),
+  organizationAddress: text("organization_address"),
+  organizationCity: text("organization_city"),
+  organizationState: text("organization_state"),
+  organizationZip: text("organization_zip"),
+  
+  // Bounty Details
+  title: text("title").notNull(),
+  problemStatement: text("problem_statement").notNull(),
+  useCase: text("use_case").notNull(),
+  currentState: text("current_state"), // Description of current solution/process
+  commonToolsUsed: text("common_tools_used"), // JSON array or comma-separated
+  desiredOutcome: text("desired_outcome").notNull(),
+  
+  // Technical Requirements
+  technicalRequirements: text("technical_requirements"), // JSON array
+  constraints: text("constraints"), // Budget, timeline, regulatory, etc.
+  deliverables: text("deliverables"), // Expected deliverables
+  
+  // Bounty Metadata
+  bountyAmount: integer("bounty_amount"), // In cents for precision
+  bountyType: text("bounty_type").default("fixed"), // fixed, milestone-based, equity
+  deadline: text("deadline"), // ISO date string
+  category: text("category"), // infrastructure, sustainability, public-safety, etc.
+  tags: text("tags"), // Comma-separated tags
+  
+  // Status & Screening
+  status: text("status").default("draft"), // draft, screening, published, assigned, completed, cancelled
+  screeningNotes: text("screening_notes"), // Internal notes from screening
+  screenedBy: text("screened_by").references(() => users.id),
+  screenedAt: text("screened_at"),
+  publishedAt: text("published_at"),
+  
+  // Submission & Ownership
+  submitterId: text("submitter_id").notNull().references(() => users.id),
+  isAnonymous: integer("is_anonymous").notNull().default(0), // Boolean as integer
+  
+  // Metrics
+  viewCount: integer("view_count").notNull().default(0),
+  proposalCount: integer("proposal_count").notNull().default(0),
+  
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Bounty Proposals table (links projects to bounties)
+export const bountyProposals = sqliteTable("bounty_proposals", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull().references(() => innovationBounties.id),
+  projectId: text("project_id").references(() => projects.id), // Can link to existing project
+  proposerId: text("proposer_id").notNull().references(() => users.id),
+  
+  // Proposal Details
+  proposalTitle: text("proposal_title").notNull(),
+  proposalDescription: text("proposal_description").notNull(),
+  approach: text("approach").notNull(), // How they plan to solve it
+  timeline: text("timeline"), // Estimated timeline
+  budget: text("budget"), // Proposed budget breakdown if applicable
+  teamMembers: text("team_members"), // JSON array of team member info
+  
+  // Status
+  status: text("status").default("submitted"), // submitted, under_review, accepted, rejected, withdrawn
+  reviewNotes: text("review_notes"),
+  reviewedBy: text("reviewed_by").references(() => users.id),
+  reviewedAt: text("reviewed_at"),
+  
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Bounty Comments table for discussion
+export const bountyComments = sqliteTable("bounty_comments", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull().references(() => innovationBounties.id),
+  authorId: text("author_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  parentId: text("parent_id").references((): any => bountyComments.id), // For nested replies
+  isInternal: integer("is_internal").notNull().default(0), // Internal notes for screeners
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Define relations for bounty tables
+export const innovationBountiesRelations = relations(innovationBounties, ({ one, many }) => ({
+  submitter: one(users, {
+    fields: [innovationBounties.submitterId],
+    references: [users.id],
+    relationName: "BountySubmitter",
+  }),
+  screener: one(users, {
+    fields: [innovationBounties.screenedBy],
+    references: [users.id],
+    relationName: "BountyScreener",
+  }),
+  proposals: many(bountyProposals),
+  comments: many(bountyComments),
+}));
+
+export const bountyProposalsRelations = relations(bountyProposals, ({ one }) => ({
+  bounty: one(innovationBounties, {
+    fields: [bountyProposals.bountyId],
+    references: [innovationBounties.id],
+  }),
+  project: one(projects, {
+    fields: [bountyProposals.projectId],
+    references: [projects.id],
+  }),
+  proposer: one(users, {
+    fields: [bountyProposals.proposerId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [bountyProposals.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const bountyCommentsRelations = relations(bountyComments, ({ one, many }) => ({
+  bounty: one(innovationBounties, {
+    fields: [bountyComments.bountyId],
+    references: [innovationBounties.id],
+  }),
+  author: one(users, {
+    fields: [bountyComments.authorId],
+    references: [users.id],
+  }),
+  parent: one(bountyComments, {
+    fields: [bountyComments.parentId],
+    references: [bountyComments.id],
+  }),
+  replies: many(bountyComments),
+}));
+
 // Type exports for TypeScript
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
@@ -297,3 +451,9 @@ export type DocumentAuditTrail = InferSelectModel<typeof documentAuditTrail>;
 export type NewDocumentAuditTrail = InferInsertModel<typeof documentAuditTrail>;
 export type DocumentShare = InferSelectModel<typeof documentShares>;
 export type NewDocumentShare = InferInsertModel<typeof documentShares>;
+export type InnovationBounty = InferSelectModel<typeof innovationBounties>;
+export type NewInnovationBounty = InferInsertModel<typeof innovationBounties>;
+export type BountyProposal = InferSelectModel<typeof bountyProposals>;
+export type NewBountyProposal = InferInsertModel<typeof bountyProposals>;
+export type BountyComment = InferSelectModel<typeof bountyComments>;
+export type NewBountyComment = InferInsertModel<typeof bountyComments>;
