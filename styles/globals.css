@@ -6,7 +6,8 @@
   /* normal */
   @font-face {
     font-family: "Adelle Sans";
-    src: url("/fonts/AdelleSans-Regular.woff2") format("woff2");
+    src: url("/fonts/AdelleSans-Regular.woff2") format("woff2"),
+         url("/fonts/AdelleSans-Regular.woff") format("woff");
     font-style: normal;
     font-display: swap;
     font-weight: 300;
@@ -15,9 +16,33 @@
   /* semibold */
   @font-face {
     font-family: "Adelle Sans";
-    src: url("/fonts/AdelleSans-Semibold.woff2") format("woff2");
+    src: url("/fonts/AdelleSans-Semibold.woff2") format("woff2"),
+         url("/fonts/AdelleSans-Semibold.woff") format("woff");
     font-style: normal;
     font-display: swap;
     font-weight: 600;
+  }
+  
+  body {
+    font-family: 'Adelle Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .touch-manipulation {
+    touch-action: manipulation;
   }
 }
