@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "../../../lib/api-helpers";
-import { getOrCreateUser } from "../../../src/db/queries/users";
-import { db, users, projects, forumPosts, meetingNotes, innovationBounties, documents, projectCollaborators } from "../../../src/db";
+import { authenticateRequest } from "@utils/api-helpers";
+import { getOrCreateUser } from "@core/database/queries/users";
+import { db, users, projects, forumPosts, meetingNotes, innovationBounties, documents, projectCollaborators } from "@core/database";
 import { sql, eq, desc, isNull, or } from "drizzle-orm";
 
 export default async function handler(

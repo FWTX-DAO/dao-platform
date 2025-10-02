@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "../../../lib/api-helpers";
+import { authenticateRequest } from "@utils/api-helpers";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,7 +22,7 @@ export default async function handler(
     }
 
     // Import pinata dynamically to catch initialization errors
-    const { pinata } = await import("../../../lib/pinata-config");
+    const { pinata } = await import("@utils/pinata-config");
     
     // Create a signed upload URL that the client can use
     const url = await pinata.upload.private.createSignedURL({

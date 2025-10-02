@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { usePrivy, getAccessToken } from "@privy-io/react-auth";
-import AppLayout from "../components/AppLayout";
+import AppLayout from "@components/AppLayout";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 
 export default function SettingsPage() {

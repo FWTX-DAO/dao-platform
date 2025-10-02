@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import AppLayout from "../components/AppLayout";
+import AppLayout from "@components/AppLayout";
 import { 
   HeartIcon,
   ChatBubbleBottomCenterTextIcon,
@@ -20,7 +20,7 @@ import {
   useDeleteForumPost,
   useVoteOnPost,
   type ForumPost
-} from "../hooks/useForumPosts";
+} from "@hooks/useForumPosts";
 
 const categories = ["General", "Governance", "Technical", "Events", "Education"];
 

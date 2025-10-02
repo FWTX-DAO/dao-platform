@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "../../../lib/api-helpers";
-import { getOrCreateUser, updateUserProfile } from "../../../src/db/queries/users";
+import { authenticateRequest } from "@utils/api-helpers";
+import { getOrCreateUser, updateUserProfile } from "@core/database/queries/users";
 
 export default async function handler(
   req: NextApiRequest,

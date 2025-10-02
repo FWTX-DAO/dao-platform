@@ -2,14 +2,14 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import AppLayout from "../components/AppLayout";
+import AppLayout from "@components/AppLayout";
 import { 
   BeakerIcon,
   PlusIcon,
   LinkIcon,
   UserGroupIcon
 } from "@heroicons/react/24/outline";
-import { useProjects, useCreateProject } from "../hooks/useProjects";
+import { useProjects, useCreateProject } from "@hooks/useProjects";
 
 const statusColors: Record<string, string> = {
   proposed: "bg-yellow-100 text-yellow-800",

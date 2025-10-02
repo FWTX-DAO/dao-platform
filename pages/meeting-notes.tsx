@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import AppLayout from "../components/AppLayout";
+import AppLayout from "@components/AppLayout";
 import { 
   DocumentTextIcon,
   PlusIcon,
@@ -10,8 +10,8 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
-import { useMeetingNotes, useCreateMeetingNote } from "../hooks/useMeetingNotes";
-import { useMembers, type Member } from "../hooks/useMembers";
+import { useMeetingNotes, useCreateMeetingNote } from "@hooks/useMeetingNotes";
+import { useMembers, type Member } from "@hooks/useMembers";
 
 interface Attendee {
   id: string;

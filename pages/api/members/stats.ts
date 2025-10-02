@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "../../../lib/api-helpers";
-import { generateId } from "../../../lib/id-generator";
-import { getOrCreateUser } from "../../../src/db/queries/users";
-import { db, members, forumPosts, projects, meetingNotes } from "../../../src/db";
+import { authenticateRequest } from "@utils/api-helpers";
+import { generateId } from "@utils/id-generator";
+import { getOrCreateUser } from "@core/database/queries/users";
+import { db, members, forumPosts, projects, meetingNotes } from "@core/database";
 import { eq, sql } from "drizzle-orm";
 
 export default async function handler(
@@ -80,7 +80,7 @@ export default async function handler(
     return res.status(200).json({
       membership: {
         type: member!.membershipType,
-        joinedAt: member!.joinedAt,
+        joinedAt: user!.createdAt,
         contributionPoints: member!.contributionPoints,
         votingPower: member!.votingPower,
         badges: member!.badges ? JSON.parse(member!.badges) : [],
@@ -98,6 +98,7 @@ export default async function handler(
         username: user!.username,
         bio: user!.bio,
         avatarUrl: user!.avatarUrl,
+        createdAt: user!.createdAt,
       }
     });
   } catch (error: any) {

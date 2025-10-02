@@ -1,18 +1,20 @@
 import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import AppLayout from "../components/AppLayout";
+import AppLayout from "@components/AppLayout";
 import { 
   CloudArrowUpIcon,
   DocumentIcon,
-  EyeIcon,
   PencilIcon,
   TrashIcon,
   XMarkIcon,
   FolderOpenIcon,
   MagnifyingGlassIcon,
   ArrowDownTrayIcon,
-  TagIcon
+  TagIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ArrowsUpDownIcon
 } from "@heroicons/react/24/outline";
 import {
   useDocuments,
@@ -22,7 +24,7 @@ import {
   useDeleteDocument,
   type DocumentWithUploader,
   type DocumentUpdate
-} from "../hooks/useDocuments";
+} from "@hooks/useDocuments";
 
 const categories = ["General", "Legal", "Finance", "Technical", "Governance", "Meeting Notes"];
 
@@ -45,9 +47,20 @@ const getFileIcon = (mimeType: string) => {
   return '📁';
 };
 
+type SortField = 'name' | 'createdAt' | 'fileSize' | 'category';
+type SortDirection = 'asc' | 'desc';
+
 export default function DocumentsPage() {
   const router = useRouter();
   const { ready, authenticated, user } = usePrivy();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   // UI state
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -95,6 +108,57 @@ export default function DocumentsPage() {
 
   // Individual document query for viewing
   const { data: documentDetail } = useDocument(viewingDocument?.document.id || null);
+
+  // Sort documents
+  const sortedDocuments = [...documents].sort((a, b) => {
+    let aVal: any, bVal: any;
+    
+    switch (sortField) {
+      case 'name':
+        aVal = a.document.name.toLowerCase();
+        bVal = b.document.name.toLowerCase();
+        break;
+      case 'createdAt':
+        aVal = new Date(a.document.createdAt).getTime();
+        bVal = new Date(b.document.createdAt).getTime();
+        break;
+      case 'fileSize':
+        aVal = a.document.fileSize;
+        bVal = b.document.fileSize;
+        break;
+      case 'category':
+        aVal = a.document.category.toLowerCase();
+        bVal = b.document.category.toLowerCase();
+        break;
+      default:
+        return 0;
+    }
+
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Paginate documents
+  const totalPages = Math.ceil(sortedDocuments.length / pageSize);
+  const paginatedDocuments = sortedDocuments.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchTerm, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -225,9 +289,7 @@ export default function DocumentsPage() {
   };
 
   const handleDownload = (doc: DocumentWithUploader) => {
-    // First, set the viewing document to trigger the download URL fetch
     setViewingDocument(doc);
-    // The actual download will be handled when documentDetail is available
     if (documentDetail?.downloadUrl) {
       window.open(documentDetail.downloadUrl, '_blank');
     } else {
@@ -569,7 +631,7 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        {/* Documents List */}
+        {/* Data Table */}
         {isLoading ? (
           <div className="py-12 text-center text-gray-500">
             <DocumentIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -593,96 +655,226 @@ export default function DocumentsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documents.map(doc => (
-              <div key={doc.document.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="text-3xl flex-shrink-0">
-                      {getFileIcon(doc.document.mimeType)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate" title={doc.document.name}>
-                        {doc.document.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {formatFileSize(doc.document.fileSize)}
-                      </p>
-                    </div>
-                  </div>
-                  {doc.document.isPublic === 1 && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Public
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                      {doc.document.category}
-                    </span>
-                    {doc.document.tags && (
-                      <div className="flex items-center gap-1 text-gray-500">
-                        <TagIcon className="h-3 w-3" />
-                        <span className="text-xs truncate" title={doc.document.tags}>
-                          {doc.document.tags}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            {/* Table Header */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left">
+                      <button
+                        onClick={() => handleSort('name')}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                      >
+                        Document
+                        <ArrowsUpDownIcon className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left">
+                      <button
+                        onClick={() => handleSort('category')}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                      >
+                        Category
+                        <ArrowsUpDownIcon className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left">
+                      <button
+                        onClick={() => handleSort('fileSize')}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                      >
+                        Size
+                        <ArrowsUpDownIcon className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Uploaded By
+                    </th>
+                    <th className="px-6 py-3 text-left">
+                      <button
+                        onClick={() => handleSort('createdAt')}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                      >
+                        Date
+                        <ArrowsUpDownIcon className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedDocuments.map(doc => (
+                    <tr key={doc.document.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl flex-shrink-0">
+                            {getFileIcon(doc.document.mimeType)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-gray-900 truncate" title={doc.document.name}>
+                                {doc.document.name}
+                              </p>
+                              {doc.document.isPublic === 1 && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  Public
+                                </span>
+                              )}
+                            </div>
+                            {doc.document.description && (
+                              <p className="text-sm text-gray-500 truncate" title={doc.document.description}>
+                                {doc.document.description}
+                              </p>
+                            )}
+                            {doc.document.tags && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <TagIcon className="h-3 w-3 text-gray-400" />
+                                <span className="text-xs text-gray-500">
+                                  {doc.document.tags}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {doc.document.category}
                         </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {doc.document.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {doc.document.description}
-                    </p>
-                  )}
-                  
-                  <div className="text-xs text-gray-500">
-                    <p>Uploaded by {doc.uploader?.username || "Unknown"}</p>
-                    <p>{new Date(doc.document.createdAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatFileSize(doc.document.fileSize)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {doc.uploader?.username || "Unknown"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(doc.document.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleDownload(doc)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Download"
+                          >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                          </button>
+                          {user && doc.document.uploaderId === user.id && (
+                            <>
+                              <button
+                                onClick={() => startEditDocument(doc)}
+                                className="text-violet-600 hover:text-violet-900"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteDocument(doc)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-2">
+            {/* Pagination */}
+            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+                    <span className="font-medium">
+                      {Math.min(currentPage * pageSize, sortedDocuments.length)}
+                    </span>{' '}
+                    of <span className="font-medium">{sortedDocuments.length}</span> results
+                  </p>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border border-gray-300 rounded-md text-sm py-1 px-2"
+                  >
+                    <option value="10">10 per page</option>
+                    <option value="25">25 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                  </select>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
-                      onClick={() => setViewingDocument(doc)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <EyeIcon className="h-3 w-3" />
-                      View
+                      <ChevronLeftIcon className="h-5 w-5" />
                     </button>
+                    {[...Array(totalPages)].map((_, i) => {
+                      const page = i + 1;
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              currentPage === page
+                                ? 'z-10 bg-violet-50 border-violet-500 text-violet-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      } else if (page === currentPage - 2 || page === currentPage + 2) {
+                        return <span key={page} className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>;
+                      }
+                      return null;
+                    })}
                     <button
-                      onClick={() => handleDownload(doc)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <ArrowDownTrayIcon className="h-3 w-3" />
-                      Download
+                      <ChevronRightIcon className="h-5 w-5" />
                     </button>
-                  </div>
-                  
-                  {user && doc.document.uploaderId === user.id && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => startEditDocument(doc)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded"
-                      >
-                        <PencilIcon className="h-3 w-3" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteDocument(doc)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <TrashIcon className="h-3 w-3" />
-                        Delete
-                      </button>
-                    </div>
-                  )}
+                  </nav>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         )}
       </div>

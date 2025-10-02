@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { dbOperations } from '../../../src/db/client';
-import { fetchAndVerifyAuthorization, createPrivyClient } from '../../../lib/utils';
+import { dbOperations } from '@core/database/client';
+import { fetchAndVerifyAuthorization, createPrivyClient } from '@utils/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Verify authentication

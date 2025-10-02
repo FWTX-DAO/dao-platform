@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import AppLayout from "../../components/AppLayout";
-import { useBountyDetails, formatBountyAmount, getBountyStatusColor } from "../../hooks/useBounties";
+import AppLayout from "@components/AppLayout";
+import { useBountyDetails, formatBountyAmount, getBountyStatusColor } from "@hooks/useBounties";
 import {
   BuildingOfficeIcon,
   UserCircleIcon,

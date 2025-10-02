@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "../../../lib/api-helpers";
-import { db, members, users } from "../../../src/db";
+import { authenticateRequest } from "@utils/api-helpers";
+import { db, members, users } from "@core/database";
 import { eq } from "drizzle-orm";
 
 export default async function handler(

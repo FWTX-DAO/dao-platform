@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "../../../lib/api-helpers";
-import { getUserIdFromClaims } from "../../../lib/db-helpers";
-import { dbOperations } from "../../../src/db/client";
-import { pinata } from "../../../lib/pinata-config";
+import { authenticateRequest } from "@utils/api-helpers";
+import { getUserIdFromClaims } from "@utils/db-helpers";
+import { dbOperations } from "@core/database/client";
+import { pinata } from "@utils/pinata-config";
 
 export default async function handler(
   req: NextApiRequest,

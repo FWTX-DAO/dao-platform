@@ -1,4 +1,4 @@
-import Portal from "../components/graphics/portal";
+import Portal from "@components/graphics/portal";
 import { useLogin } from "@privy-io/react-auth";
 import { PrivyClient } from "@privy-io/server-auth";
 import { GetServerSideProps } from "next";

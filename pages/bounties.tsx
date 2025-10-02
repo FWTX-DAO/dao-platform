@@ -2,15 +2,15 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import AppLayout from "../components/AppLayout";
+import AppLayout from "@components/AppLayout";
 import { 
   useBounties, 
   usePrefetchBounty,
   formatBountyAmount, 
   getBountyStatusColor,
   getOrgTypeLabel 
-} from "../hooks/useBounties";
-import { queryKeys } from "../lib/query-client";
+} from "@hooks/useBounties";
+import { queryKeys } from "@utils/query-client";
 import { 
   BriefcaseIcon,
   PlusIcon,

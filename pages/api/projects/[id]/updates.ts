@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest, generateId } from "../../../../lib/api-helpers";
-import { sanitizeProjectUpdateInput } from "../../../../lib/utils";
-import { getOrCreateUser } from "../../../../src/db/queries/users";
-import { db, projectUpdates, users, projects } from "../../../../src/db";
+import { authenticateRequest, generateId } from "@utils/api-helpers";
+import { sanitizeProjectUpdateInput } from "@utils/utils";
+import { getOrCreateUser } from "@core/database/queries/users";
+import { db, projectUpdates, users, projects } from "@core/database";
 import { eq, and, or, sql } from "drizzle-orm";
 
 export default async function handler(
