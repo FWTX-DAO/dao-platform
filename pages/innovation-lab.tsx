@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { usePrivy, getAccessToken } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "../components/AppLayout";
 import { 
   BeakerIcon,
@@ -8,23 +9,9 @@ import {
   LinkIcon,
   UserGroupIcon
 } from "@heroicons/react/24/outline";
+import { useProjects, useCreateProject } from "../hooks/useProjects";
 
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  github_repo: string;
-  intent: string;
-  benefit_to_fort_worth: string;
-  creator_name: string;
-  creator_id: string;
-  status: "proposed" | "active" | "completed";
-  tags: string;
-  collaborators: number;
-  created_at: string;
-}
-
-const statusColors = {
+const statusColors: Record<string, string> = {
   proposed: "bg-yellow-100 text-yellow-800",
   active: "bg-green-100 text-green-800",
   completed: "bg-gray-100 text-gray-800",
@@ -33,11 +20,10 @@ const statusColors = {
 export default function InnovationLabPage() {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const queryClient = useQueryClient();
+  
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
   const [newProject, setNewProject] = useState({
     title: "",
@@ -48,6 +34,9 @@ export default function InnovationLabPage() {
     tags: "",
   });
 
+  const { data: projects = [], isLoading, error: projectsError } = useProjects();
+  const createProjectMutation = useCreateProject();
+
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/");
@@ -55,55 +44,25 @@ export default function InnovationLabPage() {
   }, [ready, authenticated, router]);
 
   useEffect(() => {
-    if (authenticated) {
-      fetchProjects();
-    }
-  }, [authenticated]);
-
-  const fetchProjects = async () => {
-    try {
-      const accessToken = await getAccessToken();
-      const response = await fetch("/api/projects", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
-      }
-    } catch (err) {
-      console.error("Error fetching projects:", err);
+    if (projectsError) {
       setError("Failed to load projects");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [projectsError]);
 
-  const handleCreateProject = async () => {
+  const handleCreateProject = () => {
     if (newProject.title && newProject.description && newProject.githubRepo && 
         newProject.intent && newProject.benefitToFortWorth) {
-      setIsCreating(true);
       setError("");
 
-      try {
-        const accessToken = await getAccessToken();
-        const response = await fetch("/api/projects", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            ...newProject,
-            tags: newProject.tags.split(",").map(tag => tag.trim()).filter(Boolean),
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProjects([data, ...projects]);
+      createProjectMutation.mutate({
+        title: newProject.title,
+        description: newProject.description,
+        githubRepo: newProject.githubRepo,
+        intent: newProject.intent,
+        benefitToFortWorth: newProject.benefitToFortWorth,
+        tags: newProject.tags.split(",").map(tag => tag.trim()).filter(Boolean),
+      }, {
+        onSuccess: () => {
           setNewProject({
             title: "",
             description: "",
@@ -113,15 +72,11 @@ export default function InnovationLabPage() {
             tags: "",
           });
           setShowCreateProject(false);
-        } else {
-          throw new Error("Failed to create project");
+        },
+        onError: () => {
+          setError("Failed to create project. Please try again.");
         }
-      } catch (err) {
-        console.error("Error creating project:", err);
-        setError("Failed to create project. Please try again.");
-      } finally {
-        setIsCreating(false);
-      }
+      });
     }
   };
 
@@ -266,17 +221,17 @@ export default function InnovationLabPage() {
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowCreateProject(false)}
-                    disabled={isCreating}
+                    disabled={createProjectMutation.isPending}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateProject}
-                    disabled={isCreating}
+                    disabled={createProjectMutation.isPending}
                     className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50"
                   >
-                    {isCreating ? "Creating..." : "Create Project"}
+                    {createProjectMutation.isPending ? "Creating..." : "Create Project"}
                   </button>
                 </div>
               </div>
@@ -302,6 +257,20 @@ export default function InnovationLabPage() {
                    key={project.id} 
                    className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                    onClick={() => router.push(`/innovation-lab/${project.id}`)}
+                   onMouseEnter={() => {
+                     queryClient.prefetchQuery({
+                       queryKey: ["project-details", project.id],
+                       queryFn: async () => {
+                         const { getAccessToken } = await import("@privy-io/react-auth");
+                         const accessToken = await getAccessToken();
+                         const response = await fetch(`/api/projects/${project.id}`, {
+                           headers: { Authorization: `Bearer ${accessToken}` },
+                         });
+                         if (!response.ok) throw new Error('Failed to fetch');
+                         return response.json();
+                       },
+                     });
+                   }}
                  >
                   <div className="flex items-center justify-between mb-4">
                     <BeakerIcon className="h-8 w-8 text-violet-600" />

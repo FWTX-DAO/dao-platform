@@ -150,7 +150,7 @@ export const useDocuments = (params?: {
   return useQuery({
     queryKey: ["documents", params],
     queryFn: () => fetchDocuments(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 3, // 3 minutes
   });
 };
 
@@ -159,7 +159,7 @@ export const useDocument = (id: string | null) => {
     queryKey: ["document", id],
     queryFn: () => fetchDocument(id!),
     enabled: !!id,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 3, // 3 minutes
   });
 };
 
@@ -226,12 +226,51 @@ export const useUploadDocument = () => {
       file: File; 
       metadata: Omit<DocumentInput, 'pinataId' | 'cid' | 'mimeType' | 'fileSize'> 
     }) => {
-      // Upload file to server, which handles Pinata upload and database creation
       const result = await uploadFileToServer(file, metadata);
       return result;
     },
+    onMutate: async ({ file, metadata }) => {
+      await queryClient.cancelQueries({ queryKey: ["documents"] });
+      
+      const previousDocuments = queryClient.getQueryData<DocumentWithUploader[]>(["documents"]);
+      
+      const optimisticDoc: DocumentWithUploader = {
+        document: {
+          id: `temp-${Date.now()}`,
+          name: metadata.name,
+          description: metadata.description,
+          category: (metadata as any).category || 'General',
+          mimeType: file.type,
+          fileSize: file.size,
+          pinataId: 'pending',
+          cid: 'pending',
+          network: 'ipfs',
+          isPublic: (metadata as any).isPublic ? 1 : 0,
+          tags: (metadata as any).tags || '',
+          accessCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          uploaderId: 'temp',
+          status: 'uploading',
+        },
+        uploader: {
+          id: 'temp',
+          username: 'You',
+        },
+      };
+      
+      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) => 
+        old ? [optimisticDoc, ...old] : [optimisticDoc]
+      );
+      
+      return { previousDocuments };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousDocuments) {
+        queryClient.setQueryData(["documents"], context.previousDocuments);
+      }
+    },
     onSuccess: () => {
-      // Invalidate and refetch documents
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
@@ -242,18 +281,50 @@ export const useUpdateDocument = () => {
   
   return useMutation({
     mutationFn: updateDocument,
+    onMutate: async (updatedDoc) => {
+      await queryClient.cancelQueries({ queryKey: ["documents"] });
+      await queryClient.cancelQueries({ queryKey: ["document", updatedDoc.id] });
+      
+      const previousDocuments = queryClient.getQueryData<DocumentWithUploader[]>(["documents"]);
+      const previousDocument = queryClient.getQueryData<DocumentWithUploader>(["document", updatedDoc.id]);
+      
+      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) => 
+        old ? old.map((doc): DocumentWithUploader => 
+          doc.document.id === updatedDoc.id 
+            ? {
+                ...doc,
+                document: {
+                  ...doc.document,
+                  name: updatedDoc.name || doc.document.name,
+                  description: updatedDoc.description || doc.document.description,
+                  category: updatedDoc.category || doc.document.category,
+                  tags: updatedDoc.tags || doc.document.tags,
+                  isPublic: updatedDoc.isPublic !== undefined ? (updatedDoc.isPublic ? 1 : 0) : doc.document.isPublic,
+                  updatedAt: new Date().toISOString(),
+                },
+              }
+            : doc
+        ) : []
+      );
+      
+      return { previousDocuments, previousDocument };
+    },
+    onError: (_err, updatedDoc, context) => {
+      if (context?.previousDocuments) {
+        queryClient.setQueryData(["documents"], context.previousDocuments);
+      }
+      if (context?.previousDocument) {
+        queryClient.setQueryData(["document", updatedDoc.id], context.previousDocument);
+      }
+    },
     onSuccess: (updatedDocument, variables) => {
-      // Update the document in the list
       queryClient.setQueryData(["documents"], (oldData: DocumentWithUploader[] | undefined) => {
         return oldData ? oldData.map(doc => 
           doc.document.id === variables.id ? updatedDocument : doc
         ) : [updatedDocument];
       });
       
-      // Update the individual document query
       queryClient.setQueryData(["document", variables.id], updatedDocument);
-      
-      // Invalidate all document queries to be safe
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });

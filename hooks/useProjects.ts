@@ -211,7 +211,7 @@ export const useProjects = () => {
   return useQuery({
     queryKey: ["projects"],
     queryFn: fetchProjects,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60, // 1 minute
   });
 };
 
@@ -220,7 +220,7 @@ export const useProjectDetails = (projectId: string | null) => {
     queryKey: ["project-details", projectId],
     queryFn: () => fetchProjectDetails(projectId!),
     enabled: !!projectId,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60, // 1 minute
   });
 };
 
@@ -229,7 +229,7 @@ export const useProjectUpdates = (projectId: string | null) => {
     queryKey: ["project-updates", projectId],
     queryFn: () => fetchProjectUpdates(projectId!),
     enabled: !!projectId,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 60, // 1 minute
   });
 };
 
@@ -239,10 +239,40 @@ export const useCreateProject = () => {
   
   return useMutation({
     mutationFn: createProject,
+    onMutate: async (newProject) => {
+      await queryClient.cancelQueries({ queryKey: ["projects"] });
+      
+      const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
+      
+      const optimisticProject: Project = {
+        id: `temp-${Date.now()}`,
+        title: newProject.title,
+        description: newProject.description,
+        github_repo: newProject.githubRepo,
+        intent: newProject.intent,
+        benefit_to_fort_worth: newProject.benefitToFortWorth,
+        status: newProject.status || 'proposed',
+        tags: Array.isArray(newProject.tags) ? newProject.tags.join(',') : (newProject.tags || ''),
+        creator_id: 'temp',
+        creator_name: 'You',
+        created_at: new Date().toISOString(),
+        collaborators: 1,
+      };
+      
+      queryClient.setQueryData<Project[]>(["projects"], (old) => 
+        old ? [optimisticProject, ...old] : [optimisticProject]
+      );
+      
+      return { previousProjects };
+    },
+    onError: (_err, _newProject, context) => {
+      if (context?.previousProjects) {
+        queryClient.setQueryData(["projects"], context.previousProjects);
+      }
+    },
     onSuccess: (newProject) => {
-      // Add the new project to the beginning of the list
       queryClient.setQueryData(["projects"], (oldData: Project[] | undefined) => {
-        return oldData ? [newProject, ...oldData] : [newProject];
+        return oldData ? [newProject, ...oldData.filter(p => !p.id.startsWith('temp-'))] : [newProject];
       });
     },
   });
@@ -253,15 +283,49 @@ export const useUpdateProject = () => {
   
   return useMutation({
     mutationFn: updateProject,
+    onMutate: async (updatedProjectData) => {
+      await queryClient.cancelQueries({ queryKey: ["projects"] });
+      await queryClient.cancelQueries({ queryKey: ["project-details", updatedProjectData.id] });
+      
+      const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
+      const previousDetails = queryClient.getQueryData<ProjectDetails>(["project-details", updatedProjectData.id]);
+      
+      queryClient.setQueryData<Project[]>(["projects"], (old) => 
+        old ? old.map((project): Project => {
+          if (project.id === updatedProjectData.id) {
+            return {
+              ...project,
+              title: updatedProjectData.title,
+              description: updatedProjectData.description,
+              github_repo: updatedProjectData.githubRepo,
+              intent: updatedProjectData.intent,
+              benefit_to_fort_worth: updatedProjectData.benefitToFortWorth,
+              status: updatedProjectData.status || project.status,
+              tags: Array.isArray(updatedProjectData.tags) ? updatedProjectData.tags.join(',') : (updatedProjectData.tags || project.tags),
+              updated_at: new Date().toISOString(),
+            };
+          }
+          return project;
+        }) : []
+      );
+      
+      return { previousProjects, previousDetails };
+    },
+    onError: (_err, updatedProjectData, context) => {
+      if (context?.previousProjects) {
+        queryClient.setQueryData(["projects"], context.previousProjects);
+      }
+      if (context?.previousDetails) {
+        queryClient.setQueryData(["project-details", updatedProjectData.id], context.previousDetails);
+      }
+    },
     onSuccess: (updatedProject) => {
-      // Update the project in the list
       queryClient.setQueryData(["projects"], (oldData: Project[] | undefined) => {
         return oldData ? oldData.map(project => 
           project.id === updatedProject.id ? updatedProject : project
         ) : [updatedProject];
       });
       
-      // Invalidate project details to refresh collaborators count etc.
       queryClient.invalidateQueries({ queryKey: ["project-details", updatedProject.id] });
     },
   });
@@ -304,18 +368,42 @@ export const useJoinProject = () => {
   
   return useMutation({
     mutationFn: joinProject,
-    onSuccess: (_, projectId) => {
-      // Invalidate project details to refresh collaborators
-      queryClient.invalidateQueries({ queryKey: ["project-details", projectId] });
+    onMutate: async (projectId) => {
+      await queryClient.cancelQueries({ queryKey: ["projects"] });
+      await queryClient.cancelQueries({ queryKey: ["project-details", projectId] });
       
-      // Update collaborators count in projects list
-      queryClient.setQueryData(["projects"], (oldData: Project[] | undefined) => {
-        return oldData ? oldData.map(project => 
+      const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
+      const previousDetails = queryClient.getQueryData<ProjectDetails>(["project-details", projectId]);
+      
+      queryClient.setQueryData<Project[]>(["projects"], (old) => 
+        old ? old.map(project => 
           project.id === projectId 
             ? { ...project, collaborators: project.collaborators + 1 }
             : project
-        ) : [];
-      });
+        ) : []
+      );
+      
+      if (previousDetails) {
+        queryClient.setQueryData<ProjectDetails>(["project-details", projectId], {
+          ...previousDetails,
+          user_is_collaborator: true,
+          total_collaborators: previousDetails.total_collaborators + 1,
+        });
+      }
+      
+      return { previousProjects, previousDetails };
+    },
+    onError: (_err, projectId, context) => {
+      if (context?.previousProjects) {
+        queryClient.setQueryData(["projects"], context.previousProjects);
+      }
+      if (context?.previousDetails) {
+        queryClient.setQueryData(["project-details", projectId], context.previousDetails);
+      }
+    },
+    onSuccess: (_, projectId) => {
+      queryClient.invalidateQueries({ queryKey: ["project-details", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 };

@@ -134,7 +134,7 @@ export const useForumPosts = () => {
   return useQuery({
     queryKey: ["forum-posts"],
     queryFn: fetchForumPosts,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60, // 1 minute
   });
 };
 
@@ -143,7 +143,7 @@ export const useForumReplies = (postId: string | null) => {
     queryKey: ["forum-replies", postId],
     queryFn: () => fetchForumReplies(postId!),
     enabled: !!postId,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 60, // 1 minute
   });
 };
 
@@ -153,11 +153,61 @@ export const useCreateForumPost = () => {
   
   return useMutation({
     mutationFn: createForumPost,
-    onSuccess: (newPost) => {
-      // Add the new post to the beginning of the list
-      queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
-        return oldData ? [newPost, ...oldData] : [newPost];
-      });
+    onMutate: async (newPost) => {
+      await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
+      
+      const previousPosts = queryClient.getQueryData<ForumPost[]>(["forum-posts"]);
+      
+      const optimisticPost: ForumPost = {
+        id: `temp-${Date.now()}`,
+        title: newPost.title,
+        content: newPost.content,
+        author_name: 'You',
+        author_id: 'temp',
+        category: newPost.category || 'general',
+        upvotes: 0,
+        reply_count: 0,
+        created_at: new Date().toISOString(),
+        has_upvoted: 0,
+      };
+      
+      if (newPost.parent_id) {
+        queryClient.setQueryData<ForumPost[]>(["forum-replies", newPost.parent_id], (old) => 
+          old ? [optimisticPost, ...old] : [optimisticPost]
+        );
+      } else {
+        queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) => 
+          old ? [optimisticPost, ...old] : [optimisticPost]
+        );
+      }
+      
+      return { previousPosts, parentId: newPost.parent_id };
+    },
+    onError: (_err, _newPost, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["forum-posts"], context.previousPosts);
+      }
+      if (context?.parentId) {
+        queryClient.invalidateQueries({ queryKey: ["forum-replies", context.parentId] });
+      }
+    },
+    onSuccess: (newPost, variables) => {
+      if (variables.parent_id) {
+        queryClient.setQueryData(["forum-replies", variables.parent_id], (oldData: ForumPost[] | undefined) => {
+          return oldData ? [newPost, ...oldData.filter(p => !p.id.startsWith('temp-'))] : [newPost];
+        });
+        queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
+          return oldData ? oldData.map(post => 
+            post.id === variables.parent_id 
+              ? { ...post, reply_count: post.reply_count + 1 }
+              : post
+          ) : [];
+        });
+      } else {
+        queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
+          return oldData ? [newPost, ...oldData.filter(p => !p.id.startsWith('temp-'))] : [newPost];
+        });
+      }
     },
   });
 };
@@ -167,15 +217,33 @@ export const useUpdateForumPost = () => {
   
   return useMutation({
     mutationFn: updateForumPost,
+    onMutate: async (updatedPost) => {
+      await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
+      
+      const previousPosts = queryClient.getQueryData<ForumPost[]>(["forum-posts"]);
+      
+      queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) => 
+        old ? old.map((post): ForumPost => 
+          post.id === updatedPost.id 
+            ? { ...post, title: updatedPost.title, content: updatedPost.content, category: updatedPost.category, updated_at: new Date().toISOString() }
+            : post
+        ) : []
+      );
+      
+      return { previousPosts };
+    },
+    onError: (_err, _updatedPost, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["forum-posts"], context.previousPosts);
+      }
+    },
     onSuccess: (updatedPost) => {
-      // Update the post in the list
       queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
         return oldData ? oldData.map(post => 
           post.id === updatedPost.id ? updatedPost : post
         ) : [updatedPost];
       });
       
-      // Also update any reply queries that might contain this post
       queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
     },
   });
@@ -203,8 +271,47 @@ export const useVoteOnPost = () => {
   
   return useMutation({
     mutationFn: voteOnPost,
+    onMutate: async ({ postId, voteType }) => {
+      await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
+      await queryClient.cancelQueries({ queryKey: ["forum-replies"] });
+      
+      const previousPosts = queryClient.getQueryData<ForumPost[]>(["forum-posts"]);
+      
+      const updatePostVotesOptimistic = (posts: ForumPost[] | undefined): ForumPost[] => {
+        return posts ? posts.map(post => {
+          if (post.id === postId) {
+            const currentlyUpvoted = post.has_upvoted === 1;
+            let newUpvotes = post.upvotes;
+            let newHasUpvoted = 0;
+            
+            if (voteType === 1) {
+              if (currentlyUpvoted) {
+                newUpvotes = post.upvotes - 1;
+                newHasUpvoted = 0;
+              } else {
+                newUpvotes = post.upvotes + 1;
+                newHasUpvoted = 1;
+              }
+            }
+            
+            return { ...post, upvotes: newUpvotes, has_upvoted: newHasUpvoted };
+          }
+          return post;
+        }) : [];
+      };
+
+      queryClient.setQueryData(["forum-posts"], updatePostVotesOptimistic);
+      queryClient.setQueriesData({ queryKey: ["forum-replies"] }, updatePostVotesOptimistic);
+      
+      return { previousPosts };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["forum-posts"], context.previousPosts);
+      }
+      queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
+    },
     onSuccess: (data, { postId }) => {
-      // Update the vote counts in both posts and replies queries
       const updatePostVotes = (posts: ForumPost[] | undefined) => {
         return posts ? posts.map(post => 
           post.id === postId 
@@ -214,12 +321,7 @@ export const useVoteOnPost = () => {
       };
 
       queryClient.setQueryData(["forum-posts"], updatePostVotes);
-      
-      // Update all reply queries
-      queryClient.setQueriesData(
-        { queryKey: ["forum-replies"] },
-        updatePostVotes
-      );
+      queryClient.setQueriesData({ queryKey: ["forum-replies"] }, updatePostVotes);
     },
   });
 };

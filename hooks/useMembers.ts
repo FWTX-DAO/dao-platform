@@ -31,6 +31,6 @@ export const useMembers = () => {
   return useQuery({
     queryKey: ["members"],
     queryFn: fetchMembers,
-    staleTime: 1000 * 60 * 10, // 10 minutes (members don't change often)
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

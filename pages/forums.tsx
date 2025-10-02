@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "../components/AppLayout";
 import { 
   HeartIcon,
@@ -26,6 +27,7 @@ const categories = ["General", "Governance", "Technical", "Events", "Education"]
 export default function ForumsPage() {
   const router = useRouter();
   const { ready, authenticated, user } = usePrivy();
+  const queryClient = useQueryClient();
   
   // React Query hooks
   const { 
@@ -445,8 +447,25 @@ export default function ForumsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredPosts.map(post => (
-              <div key={post.id} className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow">
+                     {filteredPosts.map(post => (
+              <div 
+                key={post.id} 
+                className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow"
+                onMouseEnter={() => {
+                  queryClient.prefetchQuery({
+                    queryKey: ["forum-replies", post.id],
+                    queryFn: async () => {
+                      const { getAccessToken } = await import("@privy-io/react-auth");
+                      const accessToken = await getAccessToken();
+                      const response = await fetch(`/api/forums/posts/${post.id}/replies`, {
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                      });
+                      if (!response.ok) throw new Error('Failed to fetch');
+                      return response.json();
+                    },
+                  });
+                }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">

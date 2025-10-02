@@ -63,7 +63,7 @@ export const useMeetingNotes = () => {
   return useQuery({
     queryKey: ["meeting-notes"],
     queryFn: fetchMeetingNotes,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 3, // 3 minutes
   });
 };
 
@@ -73,10 +73,39 @@ export const useCreateMeetingNote = () => {
   
   return useMutation({
     mutationFn: createMeetingNote,
+    onMutate: async (newNote) => {
+      await queryClient.cancelQueries({ queryKey: ["meeting-notes"] });
+      
+      const previousNotes = queryClient.getQueryData<MeetingNote[]>(["meeting-notes"]);
+      
+      const optimisticNote: MeetingNote = {
+        id: `temp-${Date.now()}`,
+        title: newNote.title,
+        date: newNote.date,
+        attendees: Array.isArray(newNote.attendees) ? newNote.attendees.join(', ') : (newNote.attendees || ''),
+        agenda: newNote.agenda || '',
+        notes: newNote.notes,
+        action_items: Array.isArray(newNote.actionItems) ? newNote.actionItems.join(', ') : (newNote.actionItems || ''),
+        tags: Array.isArray(newNote.tags) ? newNote.tags.join(', ') : (newNote.tags || ''),
+        author_name: 'You',
+        author_id: 'temp',
+        created_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<MeetingNote[]>(["meeting-notes"], (old) => 
+        old ? [optimisticNote, ...old] : [optimisticNote]
+      );
+      
+      return { previousNotes };
+    },
+    onError: (_err, _newNote, context) => {
+      if (context?.previousNotes) {
+        queryClient.setQueryData(["meeting-notes"], context.previousNotes);
+      }
+    },
     onSuccess: (newNote) => {
-      // Add the new note to the beginning of the list
       queryClient.setQueryData(["meeting-notes"], (oldData: MeetingNote[] | undefined) => {
-        return oldData ? [newNote, ...oldData] : [newNote];
+        return oldData ? [newNote, ...oldData.filter(n => !n.id.startsWith('temp-'))] : [newNote];
       });
     },
   });
