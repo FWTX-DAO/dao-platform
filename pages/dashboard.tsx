@@ -17,6 +17,7 @@ import {
 interface DashboardStats {
   totalUsers: number;
   totalDocuments: number;
+  totalProjects: number;
   activeProjects: Array<{
     id: string;
     title: string;
@@ -194,8 +195,8 @@ export default function DashboardPage() {
                 <div className="flex items-center">
                   <RocketLaunchIcon className="h-10 w-10 text-violet-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Active Projects</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.activeProjects.length || 0}</p>
+                    <p className="text-sm font-medium text-gray-600">Innovation Lab Projects</p>
+                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.totalProjects || 0}</p>
                   </div>
                 </div>
               </div>

@@ -24,6 +24,11 @@ export default async function handler(
       .from(users);
     const totalUsers = totalUsersResult[0]?.count || 0;
 
+    const totalProjectsResult = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(projects);
+    const totalProjects = totalProjectsResult[0]?.count || 0;
+
     const activeProjectsData = await db
       .select({
         id: projects.id,
@@ -150,6 +155,7 @@ export default async function handler(
     return res.status(200).json({
       totalUsers,
       totalDocuments,
+      totalProjects,
       activeProjects: activeProjectsData,
       userActiveProjects: uniqueUserProjects,
       latestForumPosts,
