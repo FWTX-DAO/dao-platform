@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db, users, type NewUser } from '../index';
-import { generateId } from '../../../lib/api-helpers';
+import { generateId } from '../../../lib/id-generator';
 
 /**
  * Get or create a user based on Privy DID

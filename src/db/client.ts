@@ -18,12 +18,13 @@ import {
   type NewDocument,
   type NewDocumentAuditTrail
 } from './schema';
+import { generateId } from '../../lib/id-generator';
 
 // User operations
 export const userOperations = {
   // Create or update user from Privy auth
   async upsertFromPrivy(privyDid: string, email?: string) {
-    const userId = crypto.randomUUID();
+    const userId = generateId();
     const existingUser = await db.select().from(users).where(eq(users.privyDid, privyDid)).get();
     
     if (existingUser) {
@@ -42,7 +43,7 @@ export const userOperations = {
     
     // Auto-create basic membership
     const newMember: NewMember = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       userId,
       membershipType: 'basic',
       contributionPoints: 0,
@@ -96,7 +97,7 @@ export const forumOperations = {
   async createPost(post: Omit<NewForumPost, 'id' | 'createdAt' | 'updatedAt'>) {
     const newPost: NewForumPost = {
       ...post,
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -175,7 +176,7 @@ export const projectOperations = {
   async createProject(project: Omit<NewProject, 'id' | 'createdAt' | 'updatedAt'>) {
     const newProject: NewProject = {
       ...project,
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -234,7 +235,7 @@ export const meetingNotesOperations = {
   async createMeetingNote(note: Omit<NewMeetingNote, 'id' | 'createdAt' | 'updatedAt'>) {
     const newNote: NewMeetingNote = {
       ...note,
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -282,7 +283,7 @@ export const documentOperations = {
   async createDocument(document: Omit<NewDocument, 'id' | 'createdAt' | 'updatedAt'>) {
     const newDocument: NewDocument = {
       ...document,
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -414,7 +415,7 @@ export const documentOperations = {
 
   async createAuditEntry(documentId: string, userId: string, action: string, metadata?: any) {
     const auditEntry: NewDocumentAuditTrail = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       documentId,
       userId,
       action,

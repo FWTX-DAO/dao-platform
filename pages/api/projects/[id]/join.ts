@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest } from "../../../../lib/api-helpers";
+import { generateId } from "../../../../lib/id-generator";
 import { getOrCreateUser } from "../../../../src/db/queries/users";
 import { db, projectCollaborators, members } from "../../../../src/db";
 import { eq, and } from "drizzle-orm";
@@ -67,7 +68,7 @@ export default async function handler(
     } else {
       // Create member record if doesn't exist
       await db.insert(members).values({
-        id: crypto.randomUUID(),
+        id: generateId(),
         userId: user!.id,
         membershipType: "basic",
         contributionPoints: 10,

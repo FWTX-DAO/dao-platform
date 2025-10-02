@@ -78,6 +78,10 @@ SESSION_SIGNER_SECRET=<your-session-signer-secret>
   - `meeting_notes` - DAO meeting documentation
   - `forum_votes` - Upvote/downvote system
 - **Type Safety**: Full TypeScript support with auto-generated types
+- **ID Generation**: All IDs use UUIDv7 for time-sortable, globally unique identifiers
+  - Centralized in `lib/id-generator.ts`
+  - Import via `import { generateId } from '@/lib/id-generator'`
+  - UUIDv7 provides chronological sorting while maintaining UUID uniqueness guarantees
 
 ### Key API Endpoints
 - `/api/verify` - Validates Privy auth tokens server-side
@@ -106,6 +110,7 @@ The platform includes:
 
 ## Important Implementation Details
 
+- **ID Generation**: Always use `generateId()` from `lib/id-generator.ts` for all new database records. This ensures consistent UUIDv7 format across the application
 - Embedded wallets are created automatically on login for all users
 - Authentication state is checked in `useEffect` to handle client-side redirects
 - The app prevents unlinking the last authentication method

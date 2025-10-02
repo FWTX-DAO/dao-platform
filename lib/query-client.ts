@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 // Query key factory for consistent key generation
 export const queryKeys = {
   all: ["app"] as const,
-  
+
   // Bounties
   bounties: {
     all: ["bounties"] as const,
@@ -13,7 +13,7 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.bounties.details(), id] as const,
     screening: () => [...queryKeys.bounties.all, "screening"] as const,
   },
-  
+
   // Projects
   projects: {
     all: ["projects"] as const,
@@ -21,9 +21,10 @@ export const queryKeys = {
     list: (filters?: any) => [...queryKeys.projects.lists(), filters] as const,
     details: () => [...queryKeys.projects.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.projects.details(), id] as const,
-    updates: (id: string) => [...queryKeys.projects.detail(id), "updates"] as const,
+    updates: (id: string) =>
+      [...queryKeys.projects.detail(id), "updates"] as const,
   },
-  
+
   // Forums
   forums: {
     all: ["forums"] as const,
@@ -31,28 +32,28 @@ export const queryKeys = {
     post: (id: string) => [...queryKeys.forums.posts(), id] as const,
     replies: (id: string) => [...queryKeys.forums.post(id), "replies"] as const,
   },
-  
+
   // Members
   members: {
     all: ["members"] as const,
     lists: () => [...queryKeys.members.all, "list"] as const,
     stats: () => [...queryKeys.members.all, "stats"] as const,
   },
-  
+
   // Meeting Notes
   meetingNotes: {
     all: ["meetingNotes"] as const,
     lists: () => [...queryKeys.meetingNotes.all, "list"] as const,
     detail: (id: string) => [...queryKeys.meetingNotes.all, id] as const,
   },
-  
+
   // Documents
   documents: {
     all: ["documents"] as const,
     lists: () => [...queryKeys.documents.all, "list"] as const,
     detail: (id: string) => [...queryKeys.documents.all, id] as const,
   },
-  
+
   // User
   user: {
     all: ["user"] as const,
@@ -102,7 +103,7 @@ export const prefetchUtils = {
   prefetchBounties: async (queryClient: QueryClient, filters?: any) => {
     const { getAccessToken } = await import("@privy-io/react-auth");
     const accessToken = await getAccessToken();
-    
+
     return queryClient.prefetchQuery({
       queryKey: queryKeys.bounties.list(filters),
       queryFn: async () => {
@@ -112,49 +113,49 @@ export const prefetchUtils = {
             if (value) params.append(key, value.toString());
           });
         }
-        
+
         const response = await fetch(`/api/bounties?${params.toString()}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        
+
         if (!response.ok) throw new Error("Failed to fetch bounties");
         return response.json();
       },
       staleTime: 30 * 1000,
     });
   },
-  
+
   // Prefetch bounty details
   prefetchBountyDetails: async (queryClient: QueryClient, id: string) => {
     const { getAccessToken } = await import("@privy-io/react-auth");
     const accessToken = await getAccessToken();
-    
+
     return queryClient.prefetchQuery({
       queryKey: queryKeys.bounties.detail(id),
       queryFn: async () => {
         const response = await fetch(`/api/bounties/${id}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        
+
         if (!response.ok) throw new Error("Failed to fetch bounty");
         return response.json();
       },
       staleTime: 30 * 1000,
     });
   },
-  
+
   // Prefetch projects
   prefetchProjects: async (queryClient: QueryClient) => {
     const { getAccessToken } = await import("@privy-io/react-auth");
     const accessToken = await getAccessToken();
-    
+
     return queryClient.prefetchQuery({
       queryKey: queryKeys.projects.lists(),
       queryFn: async () => {
         const response = await fetch("/api/projects", {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        
+
         if (!response.ok) throw new Error("Failed to fetch projects");
         return response.json();
       },
@@ -168,78 +169,97 @@ export const optimisticHelpers = {
   // Add item to list optimistically
   addToList: <T extends { id: string }>(
     oldData: T[] | undefined,
-    newItem: T
+    newItem: T,
   ): T[] => {
     return [newItem, ...(oldData || [])];
   },
-  
+
   // Update item in list optimistically
   updateInList: <T extends { id: string }>(
     oldData: T[] | undefined,
-    updatedItem: T
+    updatedItem: T,
   ): T[] => {
     if (!oldData) return [updatedItem];
-    return oldData.map(item => 
-      item.id === updatedItem.id ? updatedItem : item
+    return oldData.map((item) =>
+      item.id === updatedItem.id ? updatedItem : item,
     );
   },
-  
+
   // Remove item from list optimistically
   removeFromList: <T extends { id: string }>(
     oldData: T[] | undefined,
-    itemId: string
+    itemId: string,
   ): T[] => {
     if (!oldData) return [];
-    return oldData.filter(item => item.id !== itemId);
+    return oldData.filter((item) => item.id !== itemId);
   },
 };
 
 // Cache invalidation patterns
 export const invalidationPatterns = {
   // Invalidate all queries for a resource
-  invalidateResource: (queryClient: QueryClient, resource: "bounties" | "projects" | "forums" | "members" | "meetingNotes" | "documents" | "user") => {
-    return queryClient.invalidateQueries({ 
+  invalidateResource: (
+    queryClient: QueryClient,
+    resource:
+      | "bounties"
+      | "projects"
+      | "forums"
+      | "members"
+      | "meetingNotes"
+      | "documents"
+      | "user",
+  ) => {
+    return queryClient.invalidateQueries({
       queryKey: queryKeys[resource].all,
     });
   },
-  
+
   // Invalidate specific query
-  invalidateSpecific: (queryClient: QueryClient, queryKey: readonly unknown[]) => {
+  invalidateSpecific: (
+    queryClient: QueryClient,
+    queryKey: readonly unknown[],
+  ) => {
     return queryClient.invalidateQueries({ queryKey });
   },
-  
+
   // Smart invalidation based on mutation type
   smartInvalidate: async (
     queryClient: QueryClient,
-    resource: "bounties" | "projects" | "forums" | "members" | "meetingNotes" | "documents",
+    resource:
+      | "bounties"
+      | "projects"
+      | "forums"
+      | "members"
+      | "meetingNotes"
+      | "documents",
     action: "create" | "update" | "delete",
-    id?: string
+    id?: string,
   ) => {
     const promises = [];
     const resourceKeys = queryKeys[resource];
-    
+
     // Always invalidate lists when creating or deleting
     if (action === "create" || action === "delete") {
-      if ('lists' in resourceKeys) {
+      if ("lists" in resourceKeys) {
         promises.push(
-          queryClient.invalidateQueries({ 
-            queryKey: resourceKeys.lists() 
-          })
+          queryClient.invalidateQueries({
+            queryKey: resourceKeys.lists(),
+          }),
         );
       }
     }
-    
+
     // Invalidate specific item on update or delete
     if ((action === "update" || action === "delete") && id) {
-      if ('detail' in resourceKeys) {
+      if ("detail" in resourceKeys) {
         promises.push(
-          queryClient.invalidateQueries({ 
-            queryKey: resourceKeys.detail(id) 
-          })
+          queryClient.invalidateQueries({
+            queryKey: resourceKeys.detail(id),
+          }),
         );
       }
     }
-    
+
     return Promise.all(promises);
   },
 };

@@ -15,7 +15,7 @@ export type APIError = {
 export const fetchAndVerifyAuthorization = async (
   req: NextApiRequest,
   res: NextApiResponse,
-  client: PrivyClient
+  client: PrivyClient,
 ): Promise<AuthTokenClaims | void> => {
   const header = req.headers.authorization;
   if (!header) {
@@ -38,7 +38,7 @@ export const createPrivyClient = () => {
       walletApi: {
         authorizationPrivateKey: process.env.SESSION_SIGNER_SECRET,
       },
-    }
+    },
   );
 };
 
@@ -46,74 +46,83 @@ export const createPrivyClient = () => {
  * Sanitizes text input by trimming whitespace and removing potentially harmful content
  */
 export const sanitizeText = (text: string, maxLength?: number): string => {
-  if (!text || typeof text !== 'string') return '';
-  
+  if (!text || typeof text !== "string") return "";
+
   let sanitized = text
     .trim()
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters except \n and \r
-    .replace(/\s+/g, ' '); // Normalize whitespace
-  
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // Remove control characters except \n and \r
+    .replace(/\s+/g, " "); // Normalize whitespace
+
   if (maxLength && sanitized.length > maxLength) {
     sanitized = sanitized.substring(0, maxLength).trim();
   }
-  
+
   return sanitized;
 };
 
 /**
  * Sanitizes multiline text content (preserves line breaks)
  */
-export const sanitizeMultilineText = (text: string, maxLength?: number): string => {
-  if (!text || typeof text !== 'string') return '';
-  
+export const sanitizeMultilineText = (
+  text: string,
+  maxLength?: number,
+): string => {
+  if (!text || typeof text !== "string") return "";
+
   let sanitized = text
     .trim()
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters except \n and \r
-    .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs but preserve line breaks
-    .replace(/\n{3,}/g, '\n\n') // Limit consecutive line breaks to 2
-    .replace(/\r\n/g, '\n') // Normalize line endings
-    .replace(/\r/g, '\n');
-  
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // Remove control characters except \n and \r
+    .replace(/[ \t]+/g, " ") // Normalize spaces and tabs but preserve line breaks
+    .replace(/\n{3,}/g, "\n\n") // Limit consecutive line breaks to 2
+    .replace(/\r\n/g, "\n") // Normalize line endings
+    .replace(/\r/g, "\n");
+
   if (maxLength && sanitized.length > maxLength) {
     sanitized = sanitized.substring(0, maxLength).trim();
   }
-  
+
   return sanitized;
 };
 
 /**
  * Sanitizes comma-separated values (like tags or attendees)
  */
-export const sanitizeCommaSeparated = (text: string, maxItems?: number): string[] => {
-  if (!text || typeof text !== 'string') return [];
-  
+export const sanitizeCommaSeparated = (
+  text: string,
+  maxItems?: number,
+): string[] => {
+  if (!text || typeof text !== "string") return [];
+
   let items = text
-    .split(',')
-    .map(item => sanitizeText(item))
-    .filter(item => item.length > 0);
-  
+    .split(",")
+    .map((item) => sanitizeText(item))
+    .filter((item) => item.length > 0);
+
   if (maxItems && items.length > maxItems) {
     items = items.slice(0, maxItems);
   }
-  
+
   return items;
 };
 
 /**
  * Sanitizes line-separated values (like action items)
  */
-export const sanitizeLineSeparated = (text: string, maxItems?: number): string[] => {
-  if (!text || typeof text !== 'string') return [];
-  
+export const sanitizeLineSeparated = (
+  text: string,
+  maxItems?: number,
+): string[] => {
+  if (!text || typeof text !== "string") return [];
+
   let items = text
     .split(/\n|\r\n|\r/)
-    .map(item => sanitizeText(item))
-    .filter(item => item.length > 0);
-  
+    .map((item) => sanitizeText(item))
+    .filter((item) => item.length > 0);
+
   if (maxItems && items.length > maxItems) {
     items = items.slice(0, maxItems);
   }
-  
+
   return items;
 };
 
@@ -134,17 +143,17 @@ export const sanitizeMeetingNoteInput = (input: MeetingNoteInput) => {
   const sanitized = {
     title: sanitizeText(input.title, 200),
     date: input.date, // Date validation should be done separately
-    attendees: Array.isArray(input.attendees) 
-      ? input.attendees.map(a => sanitizeText(a, 100)).filter(Boolean)
-      : sanitizeCommaSeparated(input.attendees || '', 50),
-    agenda: sanitizeMultilineText(input.agenda || '', 2000),
+    attendees: Array.isArray(input.attendees)
+      ? input.attendees.map((a) => sanitizeText(a, 100)).filter(Boolean)
+      : sanitizeCommaSeparated(input.attendees || "", 50),
+    agenda: sanitizeMultilineText(input.agenda || "", 2000),
     notes: sanitizeMultilineText(input.notes, 10000),
     actionItems: Array.isArray(input.actionItems)
-      ? input.actionItems.map(a => sanitizeText(a, 200)).filter(Boolean)
-      : sanitizeLineSeparated(input.actionItems || '', 20),
+      ? input.actionItems.map((a) => sanitizeText(a, 200)).filter(Boolean)
+      : sanitizeLineSeparated(input.actionItems || "", 20),
     tags: Array.isArray(input.tags)
-      ? input.tags.map(t => sanitizeText(t, 50)).filter(Boolean)
-      : sanitizeCommaSeparated(input.tags || '', 10),
+      ? input.tags.map((t) => sanitizeText(t, 50)).filter(Boolean)
+      : sanitizeCommaSeparated(input.tags || "", 10),
   };
 
   return sanitized;
@@ -164,7 +173,7 @@ export const sanitizeForumPostInput = (input: ForumPostInput) => {
   const sanitized = {
     title: sanitizeText(input.title, 200),
     content: sanitizeMultilineText(input.content, 10000),
-    category: input.category ? sanitizeText(input.category, 50) : 'General',
+    category: input.category ? sanitizeText(input.category, 50) : "General",
     parent_id: input.parent_id ? sanitizeText(input.parent_id, 100) : null,
   };
 
@@ -176,8 +185,9 @@ export const sanitizeForumPostInput = (input: ForumPostInput) => {
  */
 export const validateGithubRepo = (url: string): boolean => {
   if (!url) return false;
-  
-  const githubPattern = /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/?$/;
+
+  const githubPattern =
+    /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/?$/;
   return githubPattern.test(url);
 };
 
@@ -197,7 +207,9 @@ export interface ProjectInput {
 export const sanitizeProjectInput = (input: ProjectInput) => {
   // Validate GitHub repo URL
   if (!validateGithubRepo(input.githubRepo)) {
-    throw new Error('Invalid GitHub repository URL. Must be a valid GitHub repo URL.');
+    throw new Error(
+      "Invalid GitHub repository URL. Must be a valid GitHub repo URL.",
+    );
   }
 
   const sanitized = {
@@ -207,9 +219,9 @@ export const sanitizeProjectInput = (input: ProjectInput) => {
     intent: sanitizeMultilineText(input.intent, 1000),
     benefitToFortWorth: sanitizeMultilineText(input.benefitToFortWorth, 1000),
     tags: Array.isArray(input.tags)
-      ? input.tags.map(t => sanitizeText(t, 50)).filter(Boolean)
-      : sanitizeCommaSeparated(input.tags || '', 20),
-    status: input.status ? sanitizeText(input.status, 50) : 'proposed',
+      ? input.tags.map((t) => sanitizeText(t, 50)).filter(Boolean)
+      : sanitizeCommaSeparated(input.tags || "", 20),
+    status: input.status ? sanitizeText(input.status, 50) : "proposed",
   };
 
   return sanitized;
@@ -228,7 +240,9 @@ export const sanitizeProjectUpdateInput = (input: ProjectUpdateInput) => {
   const sanitized = {
     title: sanitizeText(input.title, 200),
     content: sanitizeMultilineText(input.content, 5000),
-    updateType: input.updateType ? sanitizeText(input.updateType, 50) : 'general',
+    updateType: input.updateType
+      ? sanitizeText(input.updateType, 50)
+      : "general",
   };
 
   return sanitized;

@@ -20,7 +20,7 @@ const pinata = new PinataSDK({
 export async function authenticateRequest(req: NextApiRequest) {
   const headerAuthToken = req.headers.authorization?.replace(/^Bearer /, "");
   const cookieAuthToken = req.cookies["privy-token"];
-  
+
   const authToken = cookieAuthToken || headerAuthToken;
   if (!authToken) {
     throw new Error("Missing auth token");
@@ -34,21 +34,23 @@ export async function authenticateRequest(req: NextApiRequest) {
   }
 }
 
-export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
+export { generateId } from "./id-generator";
 
 export const pinataHelpers = {
-  async uploadFile(file: File, options?: {
-    name?: string;
-    keyvalues?: Record<string, string>;
-    groupId?: string;
-    network?: "public" | "private";
-  }) {
+  async uploadFile(
+    file: File,
+    options?: {
+      name?: string;
+      keyvalues?: Record<string, string>;
+      groupId?: string;
+      network?: "public" | "private";
+    },
+  ) {
     const network = options?.network || "private";
-    const upload = network === "public" 
-      ? pinata.upload.public.file(file)
-      : pinata.upload.private.file(file);
+    const upload =
+      network === "public"
+        ? pinata.upload.public.file(file)
+        : pinata.upload.private.file(file);
 
     if (options?.name) upload.name(options.name);
     if (options?.keyvalues) upload.keyvalues(options.keyvalues);
@@ -57,19 +59,23 @@ export const pinataHelpers = {
     return await upload;
   },
 
-  async listFiles(network: "public" | "private" = "private", options?: {
-    name?: string;
-    group?: string;
-    mimeType?: string;
-    cid?: string;
-    limit?: number;
-    order?: "ASC" | "DESC";
-    pageToken?: string;
-    metadata?: Record<string, string>;
-  }) {
-    const list = network === "public" 
-      ? pinata.files.public.list()
-      : pinata.files.private.list();
+  async listFiles(
+    network: "public" | "private" = "private",
+    options?: {
+      name?: string;
+      group?: string;
+      mimeType?: string;
+      cid?: string;
+      limit?: number;
+      order?: "ASC" | "DESC";
+      pageToken?: string;
+      metadata?: Record<string, string>;
+    },
+  ) {
+    const list =
+      network === "public"
+        ? pinata.files.public.list()
+        : pinata.files.private.list();
 
     if (options?.name) list.name(options.name);
     if (options?.group) list.group(options.group);
@@ -84,15 +90,19 @@ export const pinataHelpers = {
   },
 
   async getFile(id: string, network: "public" | "private" = "private") {
-    return network === "public" 
+    return network === "public"
       ? await pinata.files.public.get(id)
       : await pinata.files.private.get(id);
   },
 
-  async updateFile(id: string, options: {
-    name?: string;
-    keyvalues?: Record<string, string>;
-  }, network: "public" | "private" = "private") {
+  async updateFile(
+    id: string,
+    options: {
+      name?: string;
+      keyvalues?: Record<string, string>;
+    },
+    network: "public" | "private" = "private",
+  ) {
     return network === "public"
       ? await pinata.files.public.update({ id, ...options })
       : await pinata.files.private.update({ id, ...options });
@@ -105,11 +115,14 @@ export const pinataHelpers = {
       : await pinata.files.private.delete(deleteIds);
   },
 
-  async createDownloadLink(cid: string, options?: {
-    expires?: number;
-    date?: number;
-    method?: string;
-  }) {
+  async createDownloadLink(
+    cid: string,
+    options?: {
+      expires?: number;
+      date?: number;
+      method?: string;
+    },
+  ) {
     return await pinata.gateways.private.createAccessLink({
       cid,
       expires: options?.expires || 3600,
@@ -123,21 +136,29 @@ export const pinataHelpers = {
       : await pinata.gateways.private.get(cid);
   },
 
-  async createGroup(name: string, isPublic: boolean = false, network: "public" | "private" = "private") {
+  async createGroup(
+    name: string,
+    isPublic: boolean = false,
+    network: "public" | "private" = "private",
+  ) {
     return network === "public"
       ? await pinata.groups.public.create({ name, isPublic })
       : await pinata.groups.private.create({ name, isPublic });
   },
 
-  async listGroups(network: "public" | "private" = "private", options?: {
-    name?: string;
-    isPublic?: boolean;
-    limit?: number;
-    pageToken?: string;
-  }) {
-    const list = network === "public"
-      ? pinata.groups.public.list()
-      : pinata.groups.private.list();
+  async listGroups(
+    network: "public" | "private" = "private",
+    options?: {
+      name?: string;
+      isPublic?: boolean;
+      limit?: number;
+      pageToken?: string;
+    },
+  ) {
+    const list =
+      network === "public"
+        ? pinata.groups.public.list()
+        : pinata.groups.private.list();
 
     if (options?.name) list.name(options.name);
     if (options?.isPublic !== undefined) list.isPublic(options.isPublic);
@@ -147,15 +168,23 @@ export const pinataHelpers = {
     return await list;
   },
 
-  async addFileToGroup(groupId: string, fileId: string, network: "public" | "private" = "private") {
+  async addFileToGroup(
+    groupId: string,
+    fileId: string,
+    network: "public" | "private" = "private",
+  ) {
     return network === "public"
       ? await pinata.groups.public.addFiles({ groupId, files: [fileId] })
       : await pinata.groups.private.addFiles({ groupId, files: [fileId] });
   },
 
-  async removeFileFromGroup(groupId: string, fileId: string, network: "public" | "private" = "private") {
+  async removeFileFromGroup(
+    groupId: string,
+    fileId: string,
+    network: "public" | "private" = "private",
+  ) {
     return network === "public"
       ? await pinata.groups.public.removeFiles({ groupId, files: [fileId] })
       : await pinata.groups.private.removeFiles({ groupId, files: [fileId] });
-  }
+  },
 };
