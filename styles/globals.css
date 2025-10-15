@@ -22,7 +22,12 @@
     font-display: swap;
     font-weight: 600;
   }
-  
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem; /* Account for sticky navbar (h-16 = 64px = 4rem) */
+  }
+
   body {
     font-family: 'Adelle Sans', system-ui, -apple-system, sans-serif;
   }

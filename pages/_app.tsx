@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import { createQueryClient } from "@utils/query-client";
+import { SidebarProvider } from "@shared/contexts/SidebarContext";
 
 function MyApp({ Component, pageProps }: AppProps) {
   // Create a client with optimized settings
@@ -78,8 +79,10 @@ function MyApp({ Component, pageProps }: AppProps) {
             },
           }}
         >
-          <Component {...pageProps} />
-          <ReactQueryDevtools initialIsOpen={false} />
+          <SidebarProvider>
+            <Component {...pageProps} />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </SidebarProvider>
         </PrivyProvider>
       </QueryClientProvider>
     </>

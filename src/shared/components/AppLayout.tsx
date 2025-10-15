@@ -1,6 +1,8 @@
 import { ReactNode, memo } from 'react';
 import Head from 'next/head';
 import Navbar from './navbar';
+import Sidebar from './Sidebar';
+import { useSidebar } from '../contexts/SidebarContext';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -8,6 +10,8 @@ interface AppLayoutProps {
 }
 
 function AppLayout({ children, title = 'Fort Worth TX DAO' }: AppLayoutProps) {
+  const { isOpen } = useSidebar();
+
   return (
     <>
       <Head>
@@ -16,8 +20,13 @@ function AppLayout({ children, title = 'Fort Worth TX DAO' }: AppLayoutProps) {
       </Head>
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <main className="pb-safe">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <Sidebar />
+        <main
+          className={`pt-20 sm:pt-22 lg:pt-24 pb-8 transition-all duration-300 ease-in-out ${
+            isOpen ? 'md:ml-64' : 'md:ml-0'
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
