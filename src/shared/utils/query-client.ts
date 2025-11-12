@@ -72,10 +72,47 @@ export function createQueryClient() {
         gcTime: 5 * 60 * 1000,
         // Refetch on mount if data is stale
         refetchOnMount: true,
-        // Don't refetch on window focus by default
-        refetchOnWindowFocus: false,
+
+        // OPTIMIZED: Selective window focus refetch
+        // Only refetch real-time data when user returns to tab
+        refetchOnWindowFocus: (query) => {
+          const realtimeKeys = [
+            'forum-posts',
+            'forum-replies',
+            'bounties',
+            'dashboard'
+          ];
+
+          return realtimeKeys.some(key =>
+            query.queryKey.some(k =>
+              typeof k === 'string' && k.includes(key)
+            )
+          );
+        },
+
         // Refetch on reconnect
         refetchOnReconnect: "always",
+
+        // OPTIMIZED: Automatic polling for real-time data
+        // Poll specific queries when tab is active
+        refetchInterval: (query) => {
+          if (query.state.status === 'success') {
+            const queryKey = query.queryKey[0];
+
+            // Poll bounties every minute when page is active
+            if (queryKey === 'bounties') {
+              return 60 * 1000; // 1 minute
+            }
+
+            // Poll forum posts every 2 minutes when page is active
+            if (queryKey === 'forum-posts') {
+              return 2 * 60 * 1000; // 2 minutes
+            }
+          }
+
+          return false; // No polling for other queries
+        },
+
         // Retry configuration
         retry: (failureCount, error: any) => {
           // Don't retry on 4xx errors
@@ -161,6 +198,54 @@ export const prefetchUtils = {
       },
       staleTime: 60 * 1000,
     });
+  },
+
+  // Prefetch dashboard-related data (forums, projects, bounties)
+  prefetchDashboardRelated: async (queryClient: QueryClient) => {
+    const { getAccessToken } = await import("@privy-io/react-auth");
+    const accessToken = await getAccessToken();
+
+    // Run all prefetches in parallel - use allSettled to not fail if one fails
+    return Promise.allSettled([
+      // Prefetch recent forum posts
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.forums.posts(),
+        queryFn: async () => {
+          const response = await fetch("/api/forums/posts", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (!response.ok) throw new Error("Failed to fetch");
+          return response.json();
+        },
+        staleTime: 30 * 1000,
+      }),
+
+      // Prefetch projects list
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.projects.lists(),
+        queryFn: async () => {
+          const response = await fetch("/api/projects", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (!response.ok) throw new Error("Failed to fetch");
+          return response.json();
+        },
+        staleTime: 60 * 1000,
+      }),
+
+      // Prefetch bounties list
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.bounties.lists(),
+        queryFn: async () => {
+          const response = await fetch("/api/bounties", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (!response.ok) throw new Error("Failed to fetch");
+          return response.json();
+        },
+        staleTime: 60 * 1000,
+      }),
+    ]);
   },
 };
 

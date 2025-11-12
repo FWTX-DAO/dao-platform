@@ -1,9 +1,12 @@
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getAccessToken, usePrivy } from "@privy-io/react-auth";
+import { useEffect } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@components/AppLayout";
 import { needsOnboarding } from "@utils/onboarding";
+import { useDashboardData, type MembershipData } from "@hooks/useDashboard";
+import { prefetchUtils } from "@utils/query-client";
 import { 
   UsersIcon, 
   DocumentTextIcon, 
@@ -17,88 +20,17 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 
-interface DashboardStats {
-  totalUsers: number;
-  totalDocuments: number;
-  totalProjects: number;
-  activeProjects: Array<{
-    id: string;
-    title: string;
-    status: string;
-    creator_name: string | null;
-    created_at: string;
-    updated_at: string;
-    collaborators: number;
-  }>;
-  userActiveProjects: Array<{
-    id: string;
-    title: string;
-    status: string;
-    creator_name: string | null;
-    creator_id: string;
-    created_at: string;
-    updated_at: string;
-    collaborators: number;
-    user_role: string;
-  }>;
-  latestForumPosts: Array<{
-    id: string;
-    title: string;
-    category: string | null;
-    author_name: string | null;
-    created_at: string;
-    reply_count: number;
-    upvotes: number;
-  }>;
-  innovationAssetsRanking: Array<{
-    id: string;
-    title: string;
-    bountyAmount: number | null;
-    status: string | null;
-    proposalCount: number;
-    category: string | null;
-  }>;
-  latestMeetingNote: {
-    id: string;
-    title: string;
-    date: string;
-    author_name: string | null;
-    notes: string;
-    created_at: string;
-  } | null;
-}
-
-interface MembershipData {
-  membership: {
-    type: string;
-    joinedAt: string;
-    contributionPoints: number;
-    votingPower: number;
-    badges: string[];
-    specialRoles: string[];
-    status: string;
-  };
-  stats: {
-    forumPosts: number;
-    projects: number;
-    meetingNotes: number;
-    votesReceived: number;
-  };
-  user: {
-    id: string;
-    username: string | null;
-    bio: string | null;
-    avatarUrl: string | null;
-    createdAt: string;
-  };
-}
-
 export default function DashboardPage() {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [membershipData, setMembershipData] = useState<MembershipData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // Use React Query hook for dashboard data
+  const {
+    dashboardStats,
+    membershipData,
+    isLoading,
+  } = useDashboardData();
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -106,50 +38,20 @@ export default function DashboardPage() {
     }
   }, [ready, authenticated, router]);
 
+  // Check if user needs onboarding (safety check)
   useEffect(() => {
-    if (authenticated) {
-      fetchDashboardData();
+    if (membershipData?.user && needsOnboarding(membershipData.user.username)) {
+      router.push("/onboarding");
     }
-  }, [authenticated]);
+  }, [membershipData, router]);
 
-  const fetchDashboardData = async () => {
-    try {
-      const accessToken = await getAccessToken();
-      
-      const [statsResponse, memberResponse] = await Promise.all([
-        fetch("/api/dashboard/stats", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }),
-        fetch("/api/members/stats", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }),
-      ]);
-
-      if (statsResponse.ok) {
-        const stats = await statsResponse.json();
-        setDashboardStats(stats);
-      }
-
-      if (memberResponse.ok) {
-        const member = await memberResponse.json();
-        setMembershipData(member);
-
-        // Check if user needs onboarding (safety check)
-        if (member.user && needsOnboarding(member.user.username)) {
-          router.push("/onboarding");
-          return;
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-    } finally {
-      setIsLoading(false);
+  // Prefetch frequently accessed pages from dashboard
+  useEffect(() => {
+    if (authenticated && dashboardStats) {
+      // Prefetch in background - won't block UI
+      prefetchUtils.prefetchDashboardRelated(queryClient);
     }
-  };
+  }, [authenticated, dashboardStats, queryClient]);
 
   const calculateTenure = (joinedAt: string) => {
     const joined = new Date(joinedAt);

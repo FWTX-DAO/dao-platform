@@ -365,24 +365,26 @@ export const useCreateProjectUpdate = () => {
 
 export const useJoinProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: joinProject,
     onMutate: async (projectId) => {
       await queryClient.cancelQueries({ queryKey: ["projects"] });
       await queryClient.cancelQueries({ queryKey: ["project-details", projectId] });
-      
+
       const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
       const previousDetails = queryClient.getQueryData<ProjectDetails>(["project-details", projectId]);
-      
-      queryClient.setQueryData<Project[]>(["projects"], (old) => 
-        old ? old.map(project => 
-          project.id === projectId 
+
+      // Optimistic update to project list
+      queryClient.setQueryData<Project[]>(["projects"], (old) =>
+        old ? old.map(project =>
+          project.id === projectId
             ? { ...project, collaborators: project.collaborators + 1 }
             : project
         ) : []
       );
-      
+
+      // Optimistic update to project details
       if (previousDetails) {
         queryClient.setQueryData<ProjectDetails>(["project-details", projectId], {
           ...previousDetails,
@@ -390,10 +392,11 @@ export const useJoinProject = () => {
           total_collaborators: previousDetails.total_collaborators + 1,
         });
       }
-      
+
       return { previousProjects, previousDetails };
     },
     onError: (_err, projectId, context) => {
+      // Rollback on error
       if (context?.previousProjects) {
         queryClient.setQueryData(["projects"], context.previousProjects);
       }
@@ -401,9 +404,13 @@ export const useJoinProject = () => {
         queryClient.setQueryData(["project-details", projectId], context.previousDetails);
       }
     },
-    onSuccess: (_, projectId) => {
-      queryClient.invalidateQueries({ queryKey: ["project-details", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    onSuccess: () => {
+      // OPTIMIZED: Don't invalidate - optimistic update is already correct
+      // The server response will update the cache automatically if there's a mismatch
+      // This prevents unnecessary refetches and loading flashes
+
+      // Removed: queryClient.invalidateQueries({ queryKey: ["project-details", projectId] });
+      // Removed: queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 };

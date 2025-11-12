@@ -214,22 +214,22 @@ export const useCreateForumPost = () => {
 
 export const useUpdateForumPost = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: updateForumPost,
     onMutate: async (updatedPost) => {
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
-      
+
       const previousPosts = queryClient.getQueryData<ForumPost[]>(["forum-posts"]);
-      
-      queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) => 
-        old ? old.map((post): ForumPost => 
-          post.id === updatedPost.id 
+
+      queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) =>
+        old ? old.map((post): ForumPost =>
+          post.id === updatedPost.id
             ? { ...post, title: updatedPost.title, content: updatedPost.content, category: updatedPost.category, updated_at: new Date().toISOString() }
             : post
         ) : []
       );
-      
+
       return { previousPosts };
     },
     onError: (_err, _updatedPost, context) => {
@@ -237,14 +237,24 @@ export const useUpdateForumPost = () => {
         queryClient.setQueryData(["forum-posts"], context.previousPosts);
       }
     },
-    onSuccess: (updatedPost) => {
+    onSuccess: (updatedPost, variables) => {
       queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
-        return oldData ? oldData.map(post => 
+        return oldData ? oldData.map(post =>
           post.id === updatedPost.id ? updatedPost : post
         ) : [updatedPost];
       });
-      
-      queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
+
+      // OPTIMIZED: Only invalidate specific reply thread if this is a reply
+      const parentId = (variables as any).parent_id || (updatedPost as any).parent_id;
+      if (parentId) {
+        queryClient.invalidateQueries({
+          queryKey: ["forum-replies", parentId],
+          exact: true // Important: Don't invalidate all reply threads
+        });
+      }
+
+      // Removed: queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
+      // This was invalidating ALL reply threads unnecessarily
     },
   });
 };

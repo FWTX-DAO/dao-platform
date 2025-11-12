@@ -1,4 +1,5 @@
 export * from './useBounties';
+export * from './useDashboard';
 export * from './useDatabase';
 export * from './useDocuments';
 export * from './useForumPosts';
