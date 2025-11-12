@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAccessToken, usePrivy } from "@privy-io/react-auth";
 import AppLayout from "@components/AppLayout";
+import { needsOnboarding } from "@utils/onboarding";
 import { 
   UsersIcon, 
   DocumentTextIcon, 
@@ -136,6 +137,12 @@ export default function DashboardPage() {
       if (memberResponse.ok) {
         const member = await memberResponse.json();
         setMembershipData(member);
+
+        // Check if user needs onboarding (safety check)
+        if (member.user && needsOnboarding(member.user.username)) {
+          router.push("/onboarding");
+          return;
+        }
       }
     } catch (err) {
       console.error("Error fetching dashboard data:", err);

@@ -4,6 +4,9 @@ import { PrivyClient } from "@privy-io/server-auth";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { db, users } from "@core/database";
+import { eq } from "drizzle-orm";
+import { needsOnboarding } from "@utils/onboarding";
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const cookieAuthToken = req.cookies["privy-token"];
@@ -17,10 +20,34 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
 
   try {
     const claims = await client.verifyAuthToken(cookieAuthToken);
-    // Use this result to pass props to a page for server rendering or to drive redirects!
-    // ref https://nextjs.org/docs/pages/api-reference/functions/get-server-side-props
     console.log({ claims });
 
+    // Check if user needs onboarding
+    const privyDid = claims.userId;
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.privyDid, privyDid))
+      .limit(1);
+
+    // If user doesn't exist yet, they need onboarding
+    if (existingUser.length === 0) {
+      return {
+        props: {},
+        redirect: { destination: "/onboarding", permanent: false },
+      };
+    }
+
+    // Check if existing user needs onboarding based on username
+    const user = existingUser[0];
+    if (user && needsOnboarding(user.username)) {
+      return {
+        props: {},
+        redirect: { destination: "/onboarding", permanent: false },
+      };
+    }
+
+    // User is fully onboarded, send to dashboard
     return {
       props: {},
       redirect: { destination: "/dashboard", permanent: false },
@@ -33,7 +60,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useLogin({
-    onComplete: () => router.push("/dashboard"),
+    onComplete: () => router.push("/"), // Let server-side redirect handle routing
   });
 
   return (
