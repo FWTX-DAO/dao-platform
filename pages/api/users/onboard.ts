@@ -32,6 +32,10 @@ export default async function handler(
     // Get or create user
     const user = await getOrCreateUser(privyDid, email);
 
+    if (!user) {
+      return res.status(500).json({ error: "Failed to create user" });
+    }
+
     // Check if username is already taken by another user
     const existingUser = await db
       .select()
@@ -39,7 +43,7 @@ export default async function handler(
       .where(eq(users.username, trimmedUsername))
       .limit(1);
 
-    if (existingUser.length > 0 && existingUser[0].id !== user!.id) {
+    if (existingUser.length > 0 && existingUser[0] && existingUser[0].id !== user.id) {
       return res.status(400).json({ error: "Username is already taken" });
     }
 
@@ -53,14 +57,14 @@ export default async function handler(
     let memberRecord = await db
       .select()
       .from(members)
-      .where(eq(members.userId, user!.id))
+      .where(eq(members.userId, user.id))
       .limit(1);
 
     if (memberRecord.length === 0) {
       // Create member record if doesn't exist
       await db.insert(members).values({
         id: generateId(),
-        userId: user!.id,
+        userId: user.id,
         membershipType: "basic",
         contributionPoints: 0,
         votingPower: 1,
@@ -73,7 +77,7 @@ export default async function handler(
       memberRecord = await db
         .select()
         .from(members)
-        .where(eq(members.userId, user!.id))
+        .where(eq(members.userId, user.id))
         .limit(1);
     }
 
