@@ -5,7 +5,7 @@ import { defineConfig } from 'drizzle-kit';
 config({ path: '.env.local' });
 
 export default defineConfig({
-  schema: './src/db/schema.ts',
+  schema: './src/core/database/schema.ts',
   out: './migrations',
   dialect: 'turso',
   dbCredentials: {
@@ -14,4 +14,7 @@ export default defineConfig({
   },
   verbose: true,
   strict: true,
+  // Improve migration performance
+  tablesFilter: ['!_*'], // Exclude internal tables
+  breakpoints: true, // Enable SQL breakpoints for debugging
 });

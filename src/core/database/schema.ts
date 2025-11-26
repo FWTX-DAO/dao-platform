@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { text, sqliteTable, integer, primaryKey } from "drizzle-orm/sqlite-core";
+import { text, sqliteTable, integer, primaryKey, index } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
 // Users table - syncs with Privy authentication
@@ -150,6 +150,29 @@ export const documentShares = sqliteTable("document_shares", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Performance indexes for frequently queried columns
+export const forumPostsAuthorIdx = index("idx_forum_posts_author_id").on(forumPosts.authorId);
+export const forumPostsParentIdx = index("idx_forum_posts_parent_id").on(forumPosts.parentId);
+export const forumPostsCreatedAtIdx = index("idx_forum_posts_created_at").on(forumPosts.createdAt);
+export const forumPostsCategoryIdx = index("idx_forum_posts_category").on(forumPosts.category);
+
+export const forumVotesPostIdx = index("idx_forum_votes_post_id").on(forumVotes.postId);
+export const forumVotesUserIdx = index("idx_forum_votes_user_id").on(forumVotes.userId);
+
+export const projectsCreatorIdx = index("idx_projects_creator_id").on(projects.creatorId);
+export const projectsStatusIdx = index("idx_projects_status").on(projects.status);
+export const projectsCreatedAtIdx = index("idx_projects_created_at").on(projects.createdAt);
+
+export const projectCollaboratorsProjectIdx = index("idx_project_collaborators_project_id").on(projectCollaborators.projectId);
+export const projectCollaboratorsUserIdx = index("idx_project_collaborators_user_id").on(projectCollaborators.userId);
+
+export const documentsUploaderIdx = index("idx_documents_uploader_id").on(documents.uploaderId);
+export const documentsStatusIdx = index("idx_documents_status").on(documents.status);
+export const documentsCategoryIdx = index("idx_documents_category").on(documents.category);
+
+export const meetingNotesAuthorIdx = index("idx_meeting_notes_author_id").on(meetingNotes.authorId);
+export const meetingNotesDateIdx = index("idx_meeting_notes_date").on(meetingNotes.date);
 
 // Define relations for better query support
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -340,6 +363,10 @@ export const innovationBounties = sqliteTable("innovation_bounties", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Indexes for innovation_bounties
+export const innovationBountiesSubmitterIdx = index("idx_innovation_bounties_submitter_id").on(innovationBounties.submitterId);
+export const innovationBountiesStatusIdx = index("idx_innovation_bounties_status").on(innovationBounties.status);
+
 // Bounty Proposals table (links projects to bounties)
 export const bountyProposals = sqliteTable("bounty_proposals", {
   id: text("id").primaryKey(),
@@ -365,6 +392,10 @@ export const bountyProposals = sqliteTable("bounty_proposals", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Indexes for bounty_proposals
+export const bountyProposalsBountyIdx = index("idx_bounty_proposals_bounty_id").on(bountyProposals.bountyId);
+export const bountyProposalsProposerIdx = index("idx_bounty_proposals_proposer_id").on(bountyProposals.proposerId);
+
 // Bounty Comments table for discussion
 export const bountyComments = sqliteTable("bounty_comments", {
   id: text("id").primaryKey(),
@@ -376,6 +407,10 @@ export const bountyComments = sqliteTable("bounty_comments", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Indexes for bounty_comments
+export const bountyCommentsBountyIdx = index("idx_bounty_comments_bounty_id").on(bountyComments.bountyId);
+export const bountyCommentsParentIdx = index("idx_bounty_comments_parent_id").on(bountyComments.parentId);
 
 // Define relations for bounty tables
 export const innovationBountiesRelations = relations(innovationBounties, ({ one, many }) => ({
