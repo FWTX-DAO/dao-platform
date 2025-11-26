@@ -86,7 +86,7 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
         {items.map((item, index) => (
           <button
             key={item.id}
-            ref={(el) => (btnRefs.current[index] = el)}
+            ref={(el) => { btnRefs.current[index] = el; }}
             onClick={() => handleNavigation(index, item.href)}
             className={`relative flex flex-col items-center justify-center flex-1 px-1.5 py-2 text-sm font-medium transition-all duration-200 rounded-xl ${
               active === index ? 'text-white' : 'text-gray-400 hover:text-gray-200'
