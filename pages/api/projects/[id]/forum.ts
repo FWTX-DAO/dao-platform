@@ -3,6 +3,8 @@ import { authenticateRequest } from "@utils/api-helpers";
 import { sanitizeForumPostInput } from "@utils/utils";
 import { getOrCreateUser } from "@core/database/queries/users";
 import { forumService } from "@features/forum";
+import { db, projects } from "@core/database";
+import { eq } from "drizzle-orm";
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,19 +18,34 @@ export default async function handler(
     // Get or create user
     const user = await getOrCreateUser(privyDid, email);
 
+    const { id: projectId } = req.query;
+
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ error: "Valid project ID is required" });
+    }
+
+    // Verify project exists
+    const project = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    if (project.length === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
     if (req.method === "GET") {
-      // Get pagination and filter parameters
-      const { limit: limitParam, offset: offsetParam, category, projectId } = req.query;
+      // Get pagination parameters
+      const { limit: limitParam, offset: offsetParam, category } = req.query;
       const limit = parseInt(limitParam as string) || 20;
       const offset = parseInt(offsetParam as string) || 0;
 
-      // Get all forum posts (root posts only by default)
-      const posts = await forumService.getPostsWithMetadata(user!.id, {
+      // Get forum posts for this project
+      const posts = await forumService.getProjectPosts(projectId, user!.id, {
         limit,
         offset,
         category: category as string | undefined,
-        projectId: projectId as string | undefined,
-        rootOnly: true,
       });
 
       // Transform to snake_case for API compatibility
@@ -57,7 +74,7 @@ export default async function handler(
     }
 
     else if (req.method === "POST") {
-      // Create new forum post
+      // Create new forum post for this project
       const rawInput = req.body;
 
       if (!rawInput.title || !rawInput.content) {
@@ -84,7 +101,7 @@ export default async function handler(
         content: sanitizedInput.content,
         category: sanitizedInput.category,
         parentId: sanitizedInput.parent_id || undefined,
-        projectId: rawInput.project_id || undefined,
+        projectId: projectId, // Associate with this project
       }, user!.id);
 
       // Return the created post with author info
@@ -100,64 +117,9 @@ export default async function handler(
       return res.status(201).json(postWithAuthor);
     }
 
-    else if (req.method === "PUT") {
-      // Update existing forum post
-      const { id, title, content, category } = req.body;
-
-      if (!id || !title || !content) {
-        return res.status(400).json({ error: "ID, title and content are required" });
-      }
-
-      // Sanitize input data
-      const sanitizedInput = sanitizeForumPostInput({
-        title: title,
-        content: content,
-        category: category,
-      });
-
-      // Additional validation after sanitization
-      if (!sanitizedInput.title || !sanitizedInput.content) {
-        return res.status(400).json({
-          error: "Title and content cannot be empty after sanitization"
-        });
-      }
-
-      await forumService.updatePost(id, {
-        title: sanitizedInput.title,
-        content: sanitizedInput.content,
-        category: sanitizedInput.category,
-      }, user!.id);
-
-      // Get full post with metadata
-      const postWithMetadata = await forumService.getPostById(id, user!.id);
-
-      return res.status(200).json({
-        ...postWithMetadata,
-        author_id: postWithMetadata.authorId,
-        author_name: postWithMetadata.authorName,
-        created_at: postWithMetadata.createdAt,
-        updated_at: postWithMetadata.updatedAt,
-        has_upvoted: postWithMetadata.hasUpvoted,
-        reply_count: postWithMetadata.replyCount,
-      });
-    }
-
-    else if (req.method === "DELETE") {
-      // Delete forum post
-      const { id } = req.body;
-
-      if (!id) {
-        return res.status(400).json({ error: "Post ID is required" });
-      }
-
-      await forumService.deletePost(id, user!.id);
-
-      return res.status(200).json({ message: "Post deleted successfully" });
-    }
-
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error: any) {
-    console.error("Forum posts API error:", error);
+    console.error("Project forum API error:", error);
 
     // Handle specific error types
     if (error.name === 'NotFoundError') {

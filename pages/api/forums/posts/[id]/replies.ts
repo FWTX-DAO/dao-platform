@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest } from "@utils/api-helpers";
 import { getOrCreateUser } from "@core/database/queries/users";
-import { db, forumPosts, users } from "@core/database";
-import { eq, sql } from "drizzle-orm";
+import { forumService } from "@features/forum";
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,34 +26,30 @@ export default async function handler(
     }
 
     // Get all replies for the post
-    const replies = await db
-      .select({
-        id: forumPosts.id,
-        title: forumPosts.title,
-        content: forumPosts.content,
-        author_id: forumPosts.authorId,
-        author_name: users.username,
-        author_avatar: users.avatarUrl,
-        created_at: forumPosts.createdAt,
-        updated_at: forumPosts.updatedAt,
-        // Aggregate vote count for each reply
-        upvotes: sql<number>`COALESCE(
-          (SELECT SUM(vote_type) FROM forum_votes WHERE post_id = ${forumPosts.id}), 
-          0
-        )`,
-        // Check if current user has upvoted this reply
-        has_upvoted: sql<number>`COALESCE(
-          (SELECT vote_type FROM forum_votes 
-           WHERE post_id = ${forumPosts.id} AND user_id = ${user!.id}), 
-          0
-        )`,
-      })
-      .from(forumPosts)
-      .leftJoin(users, eq(forumPosts.authorId, users.id))
-      .where(eq(forumPosts.parentId, postId))
-      .orderBy(forumPosts.createdAt);
+    const replies = await forumService.getReplies(postId, user!.id);
 
-    return res.status(200).json(replies);
+    // Transform to snake_case for API compatibility
+    const transformedReplies = replies.map(reply => ({
+      id: reply.id,
+      title: reply.title,
+      content: reply.content,
+      category: reply.category,
+      author_id: reply.authorId,
+      author_name: reply.authorName,
+      author_privy_did: reply.authorPrivyDid,
+      parent_id: reply.parentId,
+      project_id: reply.projectId,
+      thread_depth: reply.threadDepth,
+      is_pinned: reply.isPinned,
+      is_locked: reply.isLocked,
+      created_at: reply.createdAt,
+      updated_at: reply.updatedAt,
+      upvotes: reply.upvotes,
+      has_upvoted: reply.hasUpvoted,
+      reply_count: reply.replyCount,
+    }));
+
+    return res.status(200).json(transformedReplies);
   } catch (error: any) {
     console.error("Forum replies API error:", error);
     return res.status(500).json({ error: error.message || "Internal server error" });

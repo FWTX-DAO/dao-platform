@@ -24,6 +24,13 @@ import {
 
 const categories = ["General", "Governance", "Technical", "Events", "Education"];
 
+// Helper to safely format dates
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return "Unknown date";
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? "Unknown date" : date.toLocaleDateString();
+};
+
 export default function ForumsPage() {
   const router = useRouter();
   const { ready, authenticated, user } = usePrivy();
@@ -354,7 +361,7 @@ export default function ForumsPage() {
                 <div>
                   <h2 className="text-xl font-bold">Replies to: {viewingReplies.title}</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    by {viewingReplies.author_name} • {new Date(viewingReplies.created_at).toLocaleDateString()}
+                    by {viewingReplies.author_name} • {formatDate(viewingReplies.created_at)}
                   </p>
                 </div>
                 <button
@@ -387,7 +394,7 @@ export default function ForumsPage() {
                             {reply.author_name || "Anonymous"}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {new Date(reply.created_at).toLocaleDateString()}
+                            {formatDate(reply.created_at)}
                             {reply.updated_at && reply.updated_at !== reply.created_at && (
                               <span className="ml-1">(edited)</span>
                             )}
@@ -408,7 +415,7 @@ export default function ForumsPage() {
                           </button>
                           
                           {/* Show edit/delete buttons only for reply author */}
-                          {user && reply.author_id === user.id && (
+                          {user && reply.author_privy_did === user.id && (
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => startEditPost(reply)}
@@ -473,7 +480,7 @@ export default function ForumsPage() {
                         {post.category}
                       </span>
                       <span className="text-xs text-gray-500">
-                        by {post.author_name || "Anonymous"} • {new Date(post.created_at).toLocaleDateString()}
+                        by {post.author_name || "Anonymous"} • {formatDate(post.created_at)}
                         {post.updated_at && post.updated_at !== post.created_at && (
                           <span className="ml-1 text-xs text-gray-400">(edited)</span>
                         )}
@@ -506,7 +513,7 @@ export default function ForumsPage() {
                       </div>
                       
                       {/* Show edit/delete buttons only for post author */}
-                      {user && post.author_id === user.id && (
+                      {user && post.author_privy_did === user.id && (
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => startEditPost(post)}

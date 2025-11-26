@@ -2,7 +2,7 @@ import { db } from '@core/database';
 import { forumPosts, users, forumVotes } from '@core/database/schema';
 import { eq, sql, isNull, and, desc } from 'drizzle-orm';
 import { generateId } from '@shared/utils';
-import type { CreatePostInput, PostFilters } from '../types';
+import type { CreatePostInput, PostFilters, ForumPostWithMetadata } from '../types';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
@@ -12,17 +12,25 @@ export class ForumRepository {
    * Optimized query that fetches posts with all metadata in a single query
    * Eliminates N+1 problem by using SQL subqueries
    */
-  async findAllWithMetadata(userId: string, filters?: PostFilters) {
+  async findAllWithMetadata(userId: string, filters?: PostFilters): Promise<ForumPostWithMetadata[]> {
     const conditions = [];
 
     if (filters?.category) {
       conditions.push(eq(forumPosts.category, filters.category));
     }
 
-    if (filters?.parentId === null) {
+    // Handle parentId filter
+    if (filters?.parentId === null || filters?.rootOnly) {
       conditions.push(isNull(forumPosts.parentId));
     } else if (filters?.parentId) {
       conditions.push(eq(forumPosts.parentId, filters.parentId));
+    }
+
+    // Handle projectId filter
+    if (filters?.projectId === null) {
+      conditions.push(isNull(forumPosts.projectId));
+    } else if (filters?.projectId) {
+      conditions.push(eq(forumPosts.projectId, filters.projectId));
     }
 
     if (filters?.authorId) {
@@ -40,7 +48,14 @@ export class ForumRepository {
         category: forumPosts.category,
         authorId: forumPosts.authorId,
         parentId: forumPosts.parentId,
+        projectId: forumPosts.projectId,
+        rootPostId: forumPosts.rootPostId,
+        threadDepth: forumPosts.threadDepth,
+        isPinned: forumPosts.isPinned,
+        isLocked: forumPosts.isLocked,
+        lastActivityAt: forumPosts.lastActivityAt,
         authorName: users.username,
+        authorPrivyDid: users.privyDid,
         createdAt: forumPosts.createdAt,
         updatedAt: forumPosts.updatedAt,
         // Aggregate vote count in single query
@@ -68,13 +83,13 @@ export class ForumRepository {
     if (conditions.length > 0) {
       return query
         .where(and(...conditions))
-        .orderBy(desc(forumPosts.createdAt))
+        .orderBy(desc(forumPosts.isPinned), desc(forumPosts.lastActivityAt))
         .limit(limit)
         .offset(offset);
     }
 
     return query
-      .orderBy(desc(forumPosts.createdAt))
+      .orderBy(desc(forumPosts.isPinned), desc(forumPosts.lastActivityAt))
       .limit(limit)
       .offset(offset);
   }
@@ -142,14 +157,49 @@ export class ForumRepository {
 
   async create(data: CreatePostInput, authorId: string) {
     const id = generateId();
+    const now = new Date().toISOString();
+
+    // Calculate threading fields
+    let rootPostId: string | null = null;
+    let threadDepth = 0;
+
+    if (data.parentId) {
+      // This is a reply - get parent post to determine depth and root
+      const parentPost = await this.findById(data.parentId);
+      if (parentPost) {
+        threadDepth = (parentPost.threadDepth ?? 0) + 1;
+        // Root is either the parent's root or the parent itself if it's a top-level post
+        rootPostId = parentPost.rootPostId ?? parentPost.id;
+
+        // Update parent's lastActivityAt
+        await db.update(forumPosts)
+          .set({ lastActivityAt: now })
+          .where(eq(forumPosts.id, data.parentId));
+
+        // Also update the root post's lastActivityAt if different from parent
+        if (rootPostId && rootPostId !== data.parentId) {
+          await db.update(forumPosts)
+            .set({ lastActivityAt: now })
+            .where(eq(forumPosts.id, rootPostId));
+        }
+      }
+    }
+
     await db.insert(forumPosts).values({
       id,
       authorId,
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      title: data.title,
+      content: data.content,
+      category: data.category,
+      parentId: data.parentId,
+      projectId: data.projectId,
+      rootPostId,
+      threadDepth,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
     });
-    
+
     return this.findById(id);
   }
 
@@ -260,8 +310,86 @@ export class ForumRepository {
       })
       .from(forumPosts)
       .where(eq(forumPosts.parentId, postId));
-    
+
     return result[0]?.count ?? 0;
+  }
+
+  /**
+   * Get all posts in a thread (root post + all nested replies)
+   * Returns flat list ordered for tree construction
+   */
+  async getThreadPosts(rootPostId: string, userId: string): Promise<ForumPostWithMetadata[]> {
+    return db
+      .select({
+        id: forumPosts.id,
+        title: forumPosts.title,
+        content: forumPosts.content,
+        category: forumPosts.category,
+        authorId: forumPosts.authorId,
+        parentId: forumPosts.parentId,
+        projectId: forumPosts.projectId,
+        rootPostId: forumPosts.rootPostId,
+        threadDepth: forumPosts.threadDepth,
+        isPinned: forumPosts.isPinned,
+        isLocked: forumPosts.isLocked,
+        lastActivityAt: forumPosts.lastActivityAt,
+        authorName: users.username,
+        authorPrivyDid: users.privyDid,
+        createdAt: forumPosts.createdAt,
+        updatedAt: forumPosts.updatedAt,
+        upvotes: sql<number>`COALESCE(
+          (SELECT SUM(vote_type) FROM forum_votes WHERE post_id = ${forumPosts.id}),
+          0
+        )`,
+        hasUpvoted: sql<number>`COALESCE(
+          (SELECT vote_type FROM forum_votes
+           WHERE post_id = ${forumPosts.id} AND user_id = ${userId}),
+          0
+        )`,
+        replyCount: sql<number>`COALESCE(
+          (SELECT COUNT(*) FROM forum_posts AS replies
+           WHERE replies.parent_id = ${forumPosts.id}),
+          0
+        )`,
+      })
+      .from(forumPosts)
+      .leftJoin(users, eq(forumPosts.authorId, users.id))
+      .where(
+        sql`${forumPosts.id} = ${rootPostId} OR ${forumPosts.rootPostId} = ${rootPostId}`
+      )
+      .orderBy(forumPosts.threadDepth, forumPosts.createdAt);
+  }
+
+  /**
+   * Check if a thread is locked (prevents new replies)
+   */
+  async isThreadLocked(postId: string): Promise<boolean> {
+    const post = await this.findById(postId);
+    if (!post) return false;
+
+    // Check the post itself or its root post
+    const rootId = post.rootPostId ?? post.id;
+    const rootPost = post.rootPostId ? await this.findById(rootId) : post;
+
+    return rootPost?.isLocked === 1;
+  }
+
+  /**
+   * Lock or unlock a thread (only the root post)
+   */
+  async setThreadLocked(postId: string, locked: boolean) {
+    await db.update(forumPosts)
+      .set({ isLocked: locked ? 1 : 0, updatedAt: new Date().toISOString() })
+      .where(eq(forumPosts.id, postId));
+  }
+
+  /**
+   * Pin or unpin a post
+   */
+  async setPostPinned(postId: string, pinned: boolean) {
+    await db.update(forumPosts)
+      .set({ isPinned: pinned ? 1 : 0, updatedAt: new Date().toISOString() })
+      .where(eq(forumPosts.id, postId));
   }
 }
 

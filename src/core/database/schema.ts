@@ -21,6 +21,19 @@ export const forumPosts = sqliteTable("forum_posts", {
   content: text("content").notNull(),
   category: text("category").default("General"),
   parentId: text("parent_id").references((): any => forumPosts.id), // Self-reference for replies
+
+  // Project association - allows forums to be tied to specific projects
+  projectId: text("project_id").references((): any => projects.id),
+
+  // Threading support for nested conversations
+  rootPostId: text("root_post_id").references((): any => forumPosts.id), // Points to thread root (null for root posts)
+  threadDepth: integer("thread_depth").notNull().default(0), // 0 = root, 1 = reply, 2+ = nested reply
+
+  // Thread management
+  isPinned: integer("is_pinned").notNull().default(0), // Boolean as integer
+  isLocked: integer("is_locked").notNull().default(0), // Boolean as integer - prevents new replies
+  lastActivityAt: text("last_activity_at").notNull().default(sql`CURRENT_TIMESTAMP`), // Updated on new replies
+
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
@@ -112,7 +125,7 @@ export const documents = sqliteTable("documents", {
   category: text("category").default("General"),
   mimeType: text("mime_type").notNull(),
   fileSize: integer("file_size").notNull(), // Size in bytes
-  pinataId: text("pinata_id").notNull().unique(), // Pinata file ID
+  pinataId: text("pinata_id").notNull(), // Pinata file ID - TODO: add unique constraint after sync
   cid: text("cid").notNull(), // IPFS content identifier
   network: text("network").notNull().default("private"), // "public" or "private"
   groupId: text("group_id"), // Pinata group ID for organization
@@ -156,6 +169,10 @@ export const forumPostsAuthorIdx = index("idx_forum_posts_author_id").on(forumPo
 export const forumPostsParentIdx = index("idx_forum_posts_parent_id").on(forumPosts.parentId);
 export const forumPostsCreatedAtIdx = index("idx_forum_posts_created_at").on(forumPosts.createdAt);
 export const forumPostsCategoryIdx = index("idx_forum_posts_category").on(forumPosts.category);
+export const forumPostsProjectIdx = index("idx_forum_posts_project_id").on(forumPosts.projectId);
+export const forumPostsRootPostIdx = index("idx_forum_posts_root_post_id").on(forumPosts.rootPostId);
+export const forumPostsLastActivityIdx = index("idx_forum_posts_last_activity").on(forumPosts.lastActivityAt);
+export const forumPostsIsPinnedIdx = index("idx_forum_posts_is_pinned").on(forumPosts.isPinned);
 
 export const forumVotesPostIdx = index("idx_forum_votes_post_id").on(forumVotes.postId);
 export const forumVotesUserIdx = index("idx_forum_votes_user_id").on(forumVotes.userId);
@@ -212,8 +229,18 @@ export const forumPostsRelations = relations(forumPosts, ({ one, many }) => ({
   parent: one(forumPosts, {
     fields: [forumPosts.parentId],
     references: [forumPosts.id],
+    relationName: "ParentPost",
   }),
-  replies: many(forumPosts),
+  rootPost: one(forumPosts, {
+    fields: [forumPosts.rootPostId],
+    references: [forumPosts.id],
+    relationName: "RootPost",
+  }),
+  project: one(projects, {
+    fields: [forumPosts.projectId],
+    references: [projects.id],
+  }),
+  replies: many(forumPosts, { relationName: "ParentPost" }),
   votes: many(forumVotes),
 }));
 
@@ -224,6 +251,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   collaborators: many(projectCollaborators),
   updates: many(projectUpdates),
+  forumPosts: many(forumPosts),
 }));
 
 export const meetingNotesRelations = relations(meetingNotes, ({ one }) => ({

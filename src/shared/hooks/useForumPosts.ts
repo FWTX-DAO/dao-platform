@@ -7,6 +7,7 @@ export interface ForumPost {
   content: string;
   author_name: string;
   author_id: string;
+  author_privy_did?: string | null;
   category: string;
   upvotes: number;
   reply_count: number;
