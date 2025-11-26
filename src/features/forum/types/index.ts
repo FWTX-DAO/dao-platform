@@ -25,8 +25,16 @@ export const CreatePostSchema = z.object({
 
 export type CreatePostInput = z.infer<typeof CreatePostSchema>;
 
-export interface PostFilters {
+export interface PaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface PostFilters extends PaginationParams {
   category?: string;
   authorId?: string;
   parentId?: string | null;
 }
+
+export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;

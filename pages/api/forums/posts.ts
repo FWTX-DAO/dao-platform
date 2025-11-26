@@ -18,6 +18,13 @@ export default async function handler(
     const user = await getOrCreateUser(privyDid, email);
 
     if (req.method === "GET") {
+      // Get pagination parameters
+      const { limit: limitParam, offset: offsetParam } = req.query;
+      const DEFAULT_PAGE_SIZE = 20;
+      const MAX_PAGE_SIZE = 100;
+      const limit = Math.min(parseInt(limitParam as string) || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+      const offset = parseInt(offsetParam as string) || 0;
+
       // Get all forum posts with vote counts and user vote status
       const posts = await db
         .select({
@@ -32,26 +39,28 @@ export default async function handler(
           updated_at: forumPosts.updatedAt,
           // Aggregate vote count
           upvotes: sql<number>`COALESCE(
-            (SELECT SUM(vote_type) FROM forum_votes WHERE post_id = ${forumPosts.id}), 
+            (SELECT SUM(vote_type) FROM forum_votes WHERE post_id = ${forumPosts.id}),
             0
           )`,
           // Check if current user has upvoted
           has_upvoted: sql<number>`COALESCE(
-            (SELECT vote_type FROM forum_votes 
-             WHERE post_id = ${forumPosts.id} AND user_id = ${user!.id}), 
+            (SELECT vote_type FROM forum_votes
+             WHERE post_id = ${forumPosts.id} AND user_id = ${user!.id}),
             0
           )`,
           // Count replies
           reply_count: sql<number>`COALESCE(
-            (SELECT COUNT(*) FROM forum_posts AS replies 
-             WHERE replies.parent_id = ${forumPosts.id}), 
+            (SELECT COUNT(*) FROM forum_posts AS replies
+             WHERE replies.parent_id = ${forumPosts.id}),
             0
           )`,
         })
         .from(forumPosts)
         .leftJoin(users, eq(forumPosts.authorId, users.id))
         .where(isNull(forumPosts.parentId))
-        .orderBy(sql`${forumPosts.createdAt} DESC`);
+        .orderBy(sql`${forumPosts.createdAt} DESC`)
+        .limit(limit)
+        .offset(offset);
 
       return res.status(200).json(posts);
     } 

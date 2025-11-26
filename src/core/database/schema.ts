@@ -174,6 +174,19 @@ export const documentsCategoryIdx = index("idx_documents_category").on(documents
 export const meetingNotesAuthorIdx = index("idx_meeting_notes_author_id").on(meetingNotes.authorId);
 export const meetingNotesDateIdx = index("idx_meeting_notes_date").on(meetingNotes.date);
 
+// Additional performance indexes for document-related tables
+export const documentAuditTrailDocumentIdx = index("idx_document_audit_trail_document_id").on(documentAuditTrail.documentId);
+export const documentAuditTrailUserIdx = index("idx_document_audit_trail_user_id").on(documentAuditTrail.userId);
+export const documentAuditTrailTimestampIdx = index("idx_document_audit_trail_timestamp").on(documentAuditTrail.timestamp);
+
+export const documentSharesDocumentIdx = index("idx_document_shares_document_id").on(documentShares.documentId);
+export const documentSharesSharedByIdx = index("idx_document_shares_shared_by_id").on(documentShares.sharedById);
+export const documentSharesSharedWithIdx = index("idx_document_shares_shared_with_id").on(documentShares.sharedWithId);
+
+// Members table indexes
+export const membersUserIdx = index("idx_members_user_id").on(members.userId);
+export const membersStatusIdx = index("idx_members_status").on(members.status);
+
 // Define relations for better query support
 export const usersRelations = relations(users, ({ one, many }) => ({
   forumPosts: many(forumPosts),
@@ -366,6 +379,8 @@ export const innovationBounties = sqliteTable("innovation_bounties", {
 // Indexes for innovation_bounties
 export const innovationBountiesSubmitterIdx = index("idx_innovation_bounties_submitter_id").on(innovationBounties.submitterId);
 export const innovationBountiesStatusIdx = index("idx_innovation_bounties_status").on(innovationBounties.status);
+export const innovationBountiesCategoryIdx = index("idx_innovation_bounties_category").on(innovationBounties.category);
+export const innovationBountiesCreatedAtIdx = index("idx_innovation_bounties_created_at").on(innovationBounties.createdAt);
 
 // Bounty Proposals table (links projects to bounties)
 export const bountyProposals = sqliteTable("bounty_proposals", {
@@ -411,6 +426,11 @@ export const bountyComments = sqliteTable("bounty_comments", {
 // Indexes for bounty_comments
 export const bountyCommentsBountyIdx = index("idx_bounty_comments_bounty_id").on(bountyComments.bountyId);
 export const bountyCommentsParentIdx = index("idx_bounty_comments_parent_id").on(bountyComments.parentId);
+export const bountyCommentsAuthorIdx = index("idx_bounty_comments_author_id").on(bountyComments.authorId);
+
+// Indexes for bounty_proposals
+export const bountyProposalsProjectIdx = index("idx_bounty_proposals_project_id").on(bountyProposals.projectId);
+export const bountyProposalsStatusIdx = index("idx_bounty_proposals_status").on(bountyProposals.status);
 
 // Define relations for bounty tables
 export const innovationBountiesRelations = relations(innovationBounties, ({ one, many }) => ({

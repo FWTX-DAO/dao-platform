@@ -17,8 +17,14 @@ export default async function handler(
     const user = await getOrCreateUser(privyDid, email);
 
     if (req.method === "GET") {
-      // Get query parameters for filtering
-      const { status, category, organizationType, search } = req.query;
+      // Get query parameters for filtering and pagination
+      const { status, category, organizationType, search, limit: limitParam, offset: offsetParam } = req.query;
+
+      // Apply pagination with sensible defaults to prevent unbounded queries
+      const DEFAULT_PAGE_SIZE = 20;
+      const MAX_PAGE_SIZE = 100;
+      const limit = Math.min(parseInt(limitParam as string) || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+      const offset = parseInt(offsetParam as string) || 0;
 
       // Build filter conditions
       const conditions = [];
@@ -80,7 +86,9 @@ export default async function handler(
         .from(innovationBounties)
         .leftJoin(users, eq(innovationBounties.submitterId, users.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(sql`${innovationBounties.createdAt} DESC`);
+        .orderBy(sql`${innovationBounties.createdAt} DESC`)
+        .limit(limit)
+        .offset(offset);
 
       // Filter out submitter info if anonymous
       const sanitizedBounties = bounties.map(bounty => ({

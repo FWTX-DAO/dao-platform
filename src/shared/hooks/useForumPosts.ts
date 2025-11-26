@@ -259,41 +259,64 @@ export const useUpdateForumPost = () => {
   });
 };
 
-export const useDeleteForumPost = () => {
+export const useDeleteForumPost = (parentId?: string | null) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteForumPost,
     onSuccess: (_, deletedPostId) => {
-      // Remove the post from the list
+      // Remove the post from the main posts list
       queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
-        return oldData ? oldData.filter(post => post.id !== deletedPostId) : [];
+        if (!oldData) return [];
+        // Also update reply count if this was a reply being deleted
+        return oldData
+          .filter(post => post.id !== deletedPostId)
+          .map(post => {
+            // If the deleted post was a reply to this post, decrement reply count
+            if (parentId && post.id === parentId) {
+              return { ...post, reply_count: Math.max(0, post.reply_count - 1) };
+            }
+            return post;
+          });
       });
-      
-      // Invalidate reply queries in case a reply was deleted
-      queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
+
+      // OPTIMIZED: Only invalidate the specific reply thread if we know the parent
+      if (parentId) {
+        queryClient.invalidateQueries({
+          queryKey: ["forum-replies", parentId],
+          exact: true,
+        });
+      }
+      // Note: If parentId is not provided, we don't invalidate all replies
+      // The caller should provide parentId when deleting a reply
     },
   });
 };
 
-export const useVoteOnPost = () => {
+export const useVoteOnPost = (parentId?: string | null) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: voteOnPost,
     onMutate: async ({ postId, voteType }) => {
+      // Cancel only relevant queries
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
-      await queryClient.cancelQueries({ queryKey: ["forum-replies"] });
-      
+      if (parentId) {
+        await queryClient.cancelQueries({ queryKey: ["forum-replies", parentId] });
+      }
+
       const previousPosts = queryClient.getQueryData<ForumPost[]>(["forum-posts"]);
-      
+      const previousReplies = parentId
+        ? queryClient.getQueryData<ForumPost[]>(["forum-replies", parentId])
+        : undefined;
+
       const updatePostVotesOptimistic = (posts: ForumPost[] | undefined): ForumPost[] => {
         return posts ? posts.map(post => {
           if (post.id === postId) {
             const currentlyUpvoted = post.has_upvoted === 1;
             let newUpvotes = post.upvotes;
             let newHasUpvoted = 0;
-            
+
             if (voteType === 1) {
               if (currentlyUpvoted) {
                 newUpvotes = post.upvotes - 1;
@@ -303,35 +326,48 @@ export const useVoteOnPost = () => {
                 newHasUpvoted = 1;
               }
             }
-            
+
             return { ...post, upvotes: newUpvotes, has_upvoted: newHasUpvoted };
           }
           return post;
         }) : [];
       };
 
+      // Update main posts
       queryClient.setQueryData(["forum-posts"], updatePostVotesOptimistic);
-      queryClient.setQueriesData({ queryKey: ["forum-replies"] }, updatePostVotesOptimistic);
-      
-      return { previousPosts };
+
+      // OPTIMIZED: Only update specific reply thread if we know the parent
+      if (parentId) {
+        queryClient.setQueryData(["forum-replies", parentId], updatePostVotesOptimistic);
+      }
+
+      return { previousPosts, previousReplies, parentId };
     },
     onError: (_err, _variables, context) => {
+      // Restore previous state on error
       if (context?.previousPosts) {
         queryClient.setQueryData(["forum-posts"], context.previousPosts);
       }
-      queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
+      // OPTIMIZED: Only restore specific reply thread
+      if (context?.parentId && context?.previousReplies) {
+        queryClient.setQueryData(["forum-replies", context.parentId], context.previousReplies);
+      }
     },
     onSuccess: (data, { postId }) => {
       const updatePostVotes = (posts: ForumPost[] | undefined) => {
-        return posts ? posts.map(post => 
-          post.id === postId 
+        return posts ? posts.map(post =>
+          post.id === postId
             ? { ...post, upvotes: data.upvotes, has_upvoted: data.hasUpvoted ? 1 : 0 }
             : post
         ) : [];
       };
 
       queryClient.setQueryData(["forum-posts"], updatePostVotes);
-      queryClient.setQueriesData({ queryKey: ["forum-replies"] }, updatePostVotes);
+
+      // OPTIMIZED: Only update specific reply thread if we know the parent
+      if (parentId) {
+        queryClient.setQueryData(["forum-replies", parentId], updatePostVotes);
+      }
     },
   });
 };

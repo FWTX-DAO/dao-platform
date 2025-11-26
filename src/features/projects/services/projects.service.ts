@@ -5,15 +5,13 @@ import type { CreateProjectInput, ProjectFilters, ProjectWithMetadata } from '..
 export class ProjectsService {
   constructor(private repository: ProjectsRepository) {}
 
+  /**
+   * Get projects with metadata using optimized single-query approach
+   * Eliminates N+1 problem by using SQL subquery instead of separate query per project
+   */
   async getProjectsWithMetadata(filters?: ProjectFilters): Promise<ProjectWithMetadata[]> {
-    const projectList = await this.repository.findAll(filters);
-    
-    return Promise.all(
-      projectList.map(async (project) => ({
-        ...project,
-        collaboratorCount: await this.repository.getCollaboratorCount(project.id),
-      }))
-    );
+    // Use optimized query that fetches all data in a single query
+    return this.repository.findAllWithMetadata(filters);
   }
 
   async getProjectById(id: string): Promise<ProjectWithMetadata> {

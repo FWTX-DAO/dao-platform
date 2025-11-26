@@ -49,8 +49,17 @@ export const CreateBountySchema = z.object({
 
 export type CreateBountyInput = z.infer<typeof CreateBountySchema>;
 
-export interface BountyFilters {
+export interface PaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface BountyFilters extends PaginationParams {
   status?: string;
   category?: string;
   submitterId?: string;
+  search?: string;
 }
+
+export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;

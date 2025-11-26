@@ -1,13 +1,14 @@
 import { db } from '@core/database';
 import { innovationBounties, users } from '@core/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { generateId } from '@shared/utils';
 import type { CreateBountyInput, BountyFilters } from '../types';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types';
 
 export class BountiesRepository {
   async findAll(filters?: BountyFilters) {
     const conditions = [];
-    
+
     if (filters?.status) {
       conditions.push(eq(innovationBounties.status, filters.status));
     }
@@ -19,6 +20,10 @@ export class BountiesRepository {
     if (filters?.submitterId) {
       conditions.push(eq(innovationBounties.submitterId, filters.submitterId));
     }
+
+    // Apply pagination with sensible defaults to prevent unbounded queries
+    const limit = Math.min(filters?.limit || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+    const offset = filters?.offset || 0;
 
     const query = db
       .select({
@@ -49,10 +54,17 @@ export class BountiesRepository {
       .$dynamic();
 
     if (conditions.length > 0) {
-      return query.where(and(...conditions)).orderBy(desc(innovationBounties.createdAt));
+      return query
+        .where(and(...conditions))
+        .orderBy(desc(innovationBounties.createdAt))
+        .limit(limit)
+        .offset(offset);
     }
-    
-    return query.orderBy(desc(innovationBounties.createdAt));
+
+    return query
+      .orderBy(desc(innovationBounties.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async findById(id: string) {
@@ -91,14 +103,12 @@ export class BountiesRepository {
   }
 
   async incrementViewCount(id: string) {
-    const bounty = await this.findById(id);
-    if (bounty) {
-      await db.update(innovationBounties)
-        .set({
-          viewCount: (bounty.viewCount || 0) + 1,
-        })
-        .where(eq(innovationBounties.id, id));
-    }
+    // Use atomic SQL increment to prevent race conditions
+    await db.update(innovationBounties)
+      .set({
+        viewCount: sql`COALESCE(${innovationBounties.viewCount}, 0) + 1`,
+      })
+      .where(eq(innovationBounties.id, id));
   }
 
   async updateStatus(id: string, status: string, screenedBy?: string, screeningNotes?: string) {

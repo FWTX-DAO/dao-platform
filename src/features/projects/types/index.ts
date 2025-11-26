@@ -33,7 +33,15 @@ export const CreateProjectSchema = z.object({
 
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 
-export interface ProjectFilters {
+export interface PaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface ProjectFilters extends PaginationParams {
   status?: string;
   creatorId?: string;
 }
+
+export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;

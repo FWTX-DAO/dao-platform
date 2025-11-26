@@ -5,17 +5,13 @@ import type { CreatePostInput, PostFilters, ForumPostWithMetadata } from '../typ
 export class ForumService {
   constructor(private repository: ForumRepository) {}
 
+  /**
+   * Get posts with metadata using optimized single-query approach
+   * Eliminates N+1 problem by using SQL subqueries instead of separate queries per post
+   */
   async getPostsWithMetadata(userId: string, filters?: PostFilters): Promise<ForumPostWithMetadata[]> {
-    const posts = await this.repository.findAll(filters);
-    
-    return Promise.all(
-      posts.map(async (post) => ({
-        ...post,
-        upvotes: await this.repository.getVoteCount(post.id),
-        hasUpvoted: await this.repository.getUserVote(post.id, userId),
-        replyCount: post.parentId === null ? await this.repository.getReplyCount(post.id) : 0,
-      }))
-    );
+    // Use optimized query that fetches all data in a single query
+    return this.repository.findAllWithMetadata(userId, filters);
   }
 
   async getPostById(id: string, userId: string): Promise<ForumPostWithMetadata> {

@@ -4,10 +4,17 @@ import { eq, sql, and, desc } from 'drizzle-orm';
 import { generateId } from '@shared/utils';
 import type { CreateProjectInput, ProjectFilters } from '../types';
 
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
 export class ProjectsRepository {
-  async findAll(filters?: ProjectFilters) {
+  /**
+   * Optimized query that fetches projects with collaborator count in a single query
+   * Eliminates N+1 problem by using SQL subquery
+   */
+  async findAllWithMetadata(filters?: ProjectFilters) {
     const conditions = [];
-    
+
     if (filters?.status) {
       conditions.push(eq(projects.status, filters.status));
     }
@@ -15,6 +22,62 @@ export class ProjectsRepository {
     if (filters?.creatorId) {
       conditions.push(eq(projects.creatorId, filters.creatorId));
     }
+
+    const limit = Math.min(filters?.limit || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+    const offset = filters?.offset || 0;
+
+    const query = db
+      .select({
+        id: projects.id,
+        creatorId: projects.creatorId,
+        title: projects.title,
+        description: projects.description,
+        githubRepo: projects.githubRepo,
+        intent: projects.intent,
+        benefitToFortWorth: projects.benefitToFortWorth,
+        status: projects.status,
+        tags: projects.tags,
+        creatorName: users.username,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+        // Include collaborator count in single query
+        collaboratorCount: sql<number>`COALESCE(
+          (SELECT COUNT(*) FROM project_collaborators WHERE project_id = ${projects.id}),
+          0
+        )`,
+      })
+      .from(projects)
+      .leftJoin(users, eq(projects.creatorId, users.id))
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      return query
+        .where(and(...conditions))
+        .orderBy(desc(projects.createdAt))
+        .limit(limit)
+        .offset(offset);
+    }
+
+    return query
+      .orderBy(desc(projects.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async findAll(filters?: ProjectFilters) {
+    const conditions = [];
+
+    if (filters?.status) {
+      conditions.push(eq(projects.status, filters.status));
+    }
+
+    if (filters?.creatorId) {
+      conditions.push(eq(projects.creatorId, filters.creatorId));
+    }
+
+    // Apply pagination with sensible defaults to prevent unbounded queries
+    const limit = Math.min(filters?.limit || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+    const offset = filters?.offset || 0;
 
     const query = db
       .select({
@@ -36,10 +99,17 @@ export class ProjectsRepository {
       .$dynamic();
 
     if (conditions.length > 0) {
-      return query.where(and(...conditions)).orderBy(desc(projects.createdAt));
+      return query
+        .where(and(...conditions))
+        .orderBy(desc(projects.createdAt))
+        .limit(limit)
+        .offset(offset);
     }
-    
-    return query.orderBy(desc(projects.createdAt));
+
+    return query
+      .orderBy(desc(projects.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async findById(id: string) {
