@@ -302,6 +302,21 @@ export default function LoginPage() {
               </p>
             </div>
           </div>
+
+          {/* Footer */}
+          <div className="pb-4 px-4 md:px-6 text-center">
+            <p className="text-xs text-slate-500">
+              Governed by{" "}
+              <a 
+                href="https://fwtx.city" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-emerald-400/70 hover:text-emerald-400 transition-colors underline"
+              >
+                Fort Worth DAO LCA
+              </a>
+            </p>
+          </div>
         </div>
       </main>
     </>
