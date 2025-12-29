@@ -129,9 +129,10 @@ const fetchBounties = async (filters?: {
   return response.json();
 };
 
-const fetchBountyDetails = async (bountyId: string): Promise<BountyDetails> => {
+const fetchBountyDetails = async (bountyId: string, includeAll?: boolean): Promise<BountyDetails> => {
   const accessToken = await getAccessToken();
-  const response = await fetch(`/api/bounties/${bountyId}`, {
+  const params = includeAll ? '?includeAll=true' : '';
+  const response = await fetch(`/api/bounties/${bountyId}${params}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -243,10 +244,10 @@ export const useBountiesInfinite = (filters?: {
   });
 };
 
-export const useBountyDetails = (bountyId: string | null) => {
+export const useBountyDetails = (bountyId: string | null, options?: { includeAll?: boolean }) => {
   return useQuery({
-    queryKey: queryKeys.bounties.detail(bountyId!),
-    queryFn: () => fetchBountyDetails(bountyId!),
+    queryKey: [...queryKeys.bounties.detail(bountyId!), options?.includeAll ? 'all' : 'public'],
+    queryFn: () => fetchBountyDetails(bountyId!, options?.includeAll),
     enabled: !!bountyId,
     staleTime: 10 * 1000, // Details are fresh for 10 seconds
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
@@ -398,11 +399,11 @@ export const useDeleteBounty = () => {
 // Prefetch hook for better UX
 export const usePrefetchBounty = () => {
   const queryClient = useQueryClient();
-  
-  return (bountyId: string) => {
+
+  return (bountyId: string, includeAll?: boolean) => {
     queryClient.prefetchQuery({
-      queryKey: queryKeys.bounties.detail(bountyId),
-      queryFn: () => fetchBountyDetails(bountyId),
+      queryKey: [...queryKeys.bounties.detail(bountyId), includeAll ? 'all' : 'public'],
+      queryFn: () => fetchBountyDetails(bountyId, includeAll),
       staleTime: 10 * 1000,
     });
   };

@@ -17,10 +17,12 @@ import {
 
 export default function BountyDetailPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, includeAll } = router.query;
   const { ready, authenticated } = usePrivy();
-  
-  const { data: bounty, isLoading, error } = useBountyDetails(id as string);
+
+  const { data: bounty, isLoading, error } = useBountyDetails(id as string, {
+    includeAll: includeAll === 'true'
+  });
 
   useEffect(() => {
     if (ready && !authenticated) {

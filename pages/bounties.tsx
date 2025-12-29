@@ -62,7 +62,7 @@ export default function BountiesPage() {
 
   // Prefetch bounty details on hover
   const handleBountyHover = (bountyId: string) => {
-    prefetchBounty(bountyId);
+    prefetchBounty(bountyId, statusFilter === "all");
   };
 
   // Manual refresh
@@ -271,7 +271,7 @@ export default function BountiesPage() {
                 <div
                   key={bounty.id}
                   className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-1"
-                  onClick={() => router.push(`/bounties/${bounty.id}`)}
+                  onClick={() => router.push(`/bounties/${bounty.id}${statusFilter === "all" ? "?includeAll=true" : ""}`)}
                   onMouseEnter={() => handleBountyHover(bounty.id)}
                 >
                   {/* Header */}

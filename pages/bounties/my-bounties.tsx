@@ -156,13 +156,13 @@ export default function MyBountiesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => router.push(`/bounties/${bounty.id}`)}
+                          onClick={() => router.push(`/bounties/${bounty.id}?includeAll=true`)}
                           className="text-violet-600 hover:text-violet-900"
                         >
                           View
                         </button>
                         <button
-                          onClick={() => router.push(`/bounties/${bounty.id}/edit`)}
+                          onClick={() => router.push(`/bounties/${bounty.id}/edit?includeAll=true`)}
                           className="text-violet-600 hover:text-violet-900"
                         >
                           <PencilIcon className="h-4 w-4" />

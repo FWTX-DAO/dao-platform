@@ -15,9 +15,11 @@ import {
 
 export default function EditBountyPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, includeAll } = router.query;
   const { ready, authenticated } = usePrivy();
-  const { data: bounty, isLoading } = useBountyDetails(id as string);
+  const { data: bounty, isLoading } = useBountyDetails(id as string, {
+    includeAll: includeAll === 'true'
+  });
   const updateBounty = useUpdateBounty();
   const deleteBounty = useDeleteBounty();
   

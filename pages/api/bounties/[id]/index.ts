@@ -70,9 +70,10 @@ export default async function handler(
 
       const bounty = bountyResult[0]!;
       
-      // Only show non-published bounties to their submitters
+      // Show non-published bounties only to their submitters OR when includeAll is passed (admin context)
+      const includeAll = req.query.includeAll === 'true';
       if (bounty.status !== "published" && bounty.status !== "assigned" && bounty.status !== "completed") {
-        if (bounty.submitterId !== user?.id) {
+        if (bounty.submitterId !== user?.id && !includeAll) {
           return res.status(404).json({ error: "Bounty not found" });
         }
       }
