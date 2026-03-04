@@ -3,10 +3,13 @@
 import { useProfile } from '@shared/hooks/useProfile';
 import { usePrivy } from '@privy-io/react-auth';
 import { PassportFull } from '@components/passport';
-import type { PassportData } from '@components/passport';
+import type { PassportData, PassportStamp } from '@components/passport';
+import { useMyStamps } from '@shared/hooks/usePassportStamps';
+import { Calendar } from 'lucide-react';
 
 export default function PassportPage() {
   const { data: profile, isLoading } = useProfile();
+  const { data: stamps } = useMyStamps();
   const { user } = usePrivy();
 
   if (isLoading) {
@@ -29,6 +32,15 @@ export default function PassportPage() {
     (a: any) => a.type === 'wallet'
   ) as any;
 
+  const passportStamps: PassportStamp[] = (stamps || []).map((s: any) => ({
+    id: s.id,
+    eventName: s.eventName,
+    eventDate: s.eventDate,
+    eventType: s.eventType,
+    pointsAwarded: s.pointsAwarded,
+    createdAt: s.createdAt,
+  }));
+
   const passportData: PassportData = {
     avatarUrl: profile.avatarUrl,
     username: profile.username,
@@ -46,6 +58,7 @@ export default function PassportPage() {
     walletAddress: walletAccount?.address || null,
     tierDisplayName: profile.tierDisplayName,
     roleNames: profile.roleNames,
+    stamps: passportStamps,
   };
 
   return (
@@ -66,6 +79,35 @@ export default function PassportPage() {
         <StatCard label="Profile Complete" value={`${profile.profileCompleteness}%`} />
         <StatCard label="Roles" value={profile.roleNames.length} />
       </div>
+
+      {/* Stamps section */}
+      {passportStamps.length > 0 && (
+        <div className="mt-10">
+          <h2 className="font-display text-xl text-gray-900 mb-4">Event Stamps</h2>
+          <div className="space-y-3">
+            {passportStamps.map((stamp) => (
+              <div
+                key={stamp.id}
+                className="flex items-center gap-4 bg-white rounded-lg border border-gray-200 p-4"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-dao-gold/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-dao-gold" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 truncate">{stamp.eventName}</div>
+                  <div className="text-xs text-gray-500">
+                    {stamp.eventType.charAt(0).toUpperCase() + stamp.eventType.slice(1)}
+                    {stamp.eventDate && ` \u00B7 ${new Date(stamp.eventDate).toLocaleDateString()}`}
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-dao-gold">
+                  +{stamp.pointsAwarded} pts
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { User } from 'lucide-react';
 import type { PassportData } from './types';
 import { generateMRZ } from './mrz-generator';
 import { GuillochePattern, PassportWatermark, SecurityBorder } from './passport-patterns';
+import { PassportStamps } from './passport-stamps';
 
 function truncateWallet(addr: string | null): string {
   if (!addr) return '---';
@@ -101,6 +102,16 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
                 {badge}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Stamps */}
+        {data.stamps && (
+          <div className="mb-2">
+            <div className="text-[7px] tracking-[0.15em] uppercase text-dao-cool/40 mb-1 text-center">
+              Stamps
+            </div>
+            <PassportStamps stamps={data.stamps} />
           </div>
         )}
 

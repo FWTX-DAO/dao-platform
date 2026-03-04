@@ -1,8 +1,8 @@
 'use server';
 
 import { requireAuth } from '@/app/_lib/auth';
-import { activitiesService } from '@features/activities';
-import { membersService } from '@features/members';
+import { activitiesService } from '@services/activities';
+import { membersService } from '@services/members';
 
 export async function getMyActivities(options?: { type?: string; limit?: number; offset?: number }) {
   const { user } = await requireAuth();

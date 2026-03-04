@@ -1,11 +1,19 @@
 'use server';
 
+import Stripe from 'stripe';
 import { requireAuth } from '@/app/_lib/auth';
-import { membersService } from '@features/members';
+import { membersService } from '@services/members';
+import { rbacService } from '@services/rbac';
 import { getOrCreateUser } from '@core/database/queries/users';
 import { db, members, users } from '@core/database';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+  return _stripe;
+}
 
 export async function listMembers() {
   await requireAuth();
@@ -95,7 +103,34 @@ export async function completeOnboarding(data: {
 
   const email = (claims as any).email || undefined;
   await getOrCreateUser(claims.userId, email);
-  await membersService.getOrCreateMember(user.id);
+  const member = await membersService.getOrCreateMember(user.id);
+
+  if (member) {
+    // Assign guest RBAC role for new free members (idempotent)
+    const existingRoles = await rbacService.getMemberRoles(member.id);
+    if (existingRoles.length === 0) {
+      await rbacService.assignRole(member.id, 'guest');
+    }
+
+    // Create Stripe customer for all users (pre-registers for future upgrades)
+    if (!member.stripeCustomerId) {
+      try {
+        const stripe = getStripe();
+        const customer = await stripe.customers.create({
+          email: data.email,
+          name: `${data.firstName} ${data.lastName}`,
+          metadata: { userId: user.id, memberId: member.id },
+        });
+        await db
+          .update(members)
+          .set({ stripeCustomerId: customer.id, updatedAt: new Date() })
+          .where(eq(members.id, member.id));
+      } catch (err) {
+        // Non-blocking — don't fail onboarding if Stripe is down
+        console.error('Failed to create Stripe customer during onboarding:', err);
+      }
+    }
+  }
 
   const result = await membersService.completeOnboarding(user.id, data);
   revalidatePath('/dashboard');

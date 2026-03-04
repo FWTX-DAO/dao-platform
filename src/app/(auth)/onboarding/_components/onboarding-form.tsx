@@ -4,13 +4,16 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { AnimatePresence } from 'framer-motion';
+import { getAccessToken } from '@privy-io/react-auth';
 import { onboardUser } from '@/app/_actions/users';
 import { completeOnboarding } from '@/app/_actions/members';
 import IndustrySelect from '@components/IndustrySelect';
 import { PassportCreationReveal } from '@components/passport';
 import type { PassportData } from '@components/passport';
+import { PlanSelector } from './plan-selector';
+import { useSubscriptionTiers } from '@shared/hooks/useSubscriptions';
 
-const STEPS = ['Identity', 'Professional', 'Community'] as const;
+const STEPS = ['Identity', 'Professional', 'Community', 'Membership'] as const;
 
 interface FormData {
   username: string;
@@ -83,6 +86,8 @@ export function OnboardingForm() {
   const [mounted, setMounted] = useState(false);
   const [showPassportReveal, setShowPassportReveal] = useState(false);
   const [passportData, setPassportData] = useState<PassportData | null>(null);
+  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  const { data: tiers = [] } = useSubscriptionTiers();
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -133,6 +138,28 @@ export function OnboardingForm() {
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
+  const handlePostOnboarding = async () => {
+    if (selectedTierId) {
+      // Paid tier selected — redirect to Stripe Checkout
+      try {
+        const accessToken = await getAccessToken();
+        const res = await fetch('/api/subscriptions/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ tierId: selectedTierId }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch {
+        // Fallback to dashboard if checkout fails
+      }
+    }
+    router.push('/dashboard');
+  };
+
   const handleSubmit = async () => {
     setGlobalError('');
     setIsSubmitting(true);
@@ -179,7 +206,7 @@ export function OnboardingForm() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         memberId: userResult.memberId || 'PENDING',
-        membershipType: 'community',
+        membershipType: selectedTierId ? 'member' : 'observer',
         joinedAt: new Date().toISOString(),
         contributionPoints: 0,
         votingPower: 0,
@@ -188,8 +215,10 @@ export function OnboardingForm() {
         city: formData.city || null,
         state: formData.state || null,
         walletAddress: walletAccount?.address || null,
-        tierDisplayName: 'Community',
-        roleNames: ['member'],
+        tierDisplayName: selectedTierId
+          ? tiers.find((t) => t.id === selectedTierId)?.displayName || 'Member'
+          : 'Observer',
+        roleNames: [selectedTierId ? 'member' : 'guest'],
       });
       setShowPassportReveal(true);
     } catch (err: any) {
@@ -210,7 +239,7 @@ export function OnboardingForm() {
       {showPassportReveal && passportData && (
         <PassportCreationReveal
           data={passportData}
-          onComplete={() => router.push('/passport')}
+          onComplete={handlePostOnboarding}
         />
       )}
     </AnimatePresence>
@@ -456,6 +485,11 @@ export function OnboardingForm() {
                 </div>
               )}
 
+              {/* Step 4: Membership */}
+              {step === 3 && (
+                <PlanSelector selectedTierId={selectedTierId} onSelect={setSelectedTierId} />
+              )}
+
               {globalError && (
                 <div className="mt-5 p-3 bg-red-500/10 border border-red-500/20 rounded">
                   <p className="text-sm text-red-400">{globalError}</p>
@@ -497,6 +531,8 @@ export function OnboardingForm() {
                         </svg>
                         Completing...
                       </span>
+                    ) : selectedTierId ? (
+                      'Join DAO & Subscribe'
                     ) : (
                       'Complete & Join DAO'
                     )}

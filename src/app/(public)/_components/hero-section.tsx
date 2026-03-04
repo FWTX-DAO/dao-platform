@@ -2,7 +2,97 @@
 
 import { useLogin } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+
+const MATRIX_CHARS =
+  'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF{}[]<>/\\|=+*&^%$#@!';
+
+function useMatrixRain(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
+  const columnsRef = useRef<number[]>([]);
+  const rafRef = useRef<number>(0);
+
+  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number) => {
+    // Semi-transparent black to create fade trail
+    ctx.fillStyle = 'rgba(10, 18, 38, 0.06)';
+    ctx.fillRect(0, 0, w, h);
+
+    const fontSize = 14;
+    const cols = Math.floor(w / fontSize);
+
+    // Initialize columns if needed
+    if (columnsRef.current.length !== cols) {
+      columnsRef.current = Array.from({ length: cols }, () =>
+        Math.random() * -100
+      );
+    }
+
+    const drops = columnsRef.current;
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+      const x = i * fontSize;
+      const y = drops[i] * fontSize;
+
+      // Head character — bright cyan-white
+      if (y > 0 && y < h) {
+        ctx.font = `${fontSize}px monospace`;
+        ctx.fillStyle = 'rgba(160, 220, 255, 0.9)';
+        ctx.fillText(char, x, y);
+
+        // Trail characters — blue shades with decreasing opacity
+        for (let t = 1; t <= 6; t++) {
+          const trailY = y - t * fontSize;
+          if (trailY > 0) {
+            const opacity = 0.5 - t * 0.07;
+            const green = 120 + Math.floor(Math.random() * 40);
+            const blue = 200 + Math.floor(Math.random() * 55);
+            ctx.fillStyle = `rgba(30, ${green}, ${blue}, ${opacity})`;
+            const trailChar = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+            ctx.fillText(trailChar, x, trailY);
+          }
+        }
+      }
+
+      drops[i] += 0.5 + Math.random() * 0.3;
+
+      // Reset with randomness for organic feel
+      if (drops[i] * fontSize > h && Math.random() > 0.975) {
+        drops[i] = Math.random() * -20;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      columnsRef.current = [];
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    let lastTime = 0;
+    const interval = 1000 / 20; // ~20 FPS for that choppy matrix feel
+
+    const loop = (time: number) => {
+      rafRef.current = requestAnimationFrame(loop);
+      if (time - lastTime < interval) return;
+      lastTime = time;
+      draw(ctx, canvas.width, canvas.height);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [canvasRef, draw]);
+}
 
 export function HeroSection() {
   const router = useRouter();
@@ -11,6 +101,9 @@ export function HeroSection() {
   });
 
   const [mounted, setMounted] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useMatrixRain(canvasRef);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -32,45 +125,11 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-dao-charcoal/95 via-dao-charcoal/80 to-dao-charcoal" />
       </div>
 
-      {/* Subtle horizontal scan lines */}
-      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-        <style>{`
-          @keyframes scan {
-            from { transform: translateY(-100%); }
-            to { transform: translateY(100vh); }
-          }
-          .scan-line {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(
-              90deg,
-              transparent 0%,
-              rgba(196, 150, 58, 0.08) 20%,
-              rgba(196, 150, 58, 0.12) 50%,
-              rgba(196, 150, 58, 0.08) 80%,
-              transparent 100%
-            );
-            animation: scan 12s linear infinite;
-          }
-          @keyframes gridFade {
-            0%, 100% { opacity: 0.03; }
-            50% { opacity: 0.06; }
-          }
-          .grid-overlay {
-            background-image:
-              linear-gradient(rgba(196, 150, 58, 0.06) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(196, 150, 58, 0.06) 1px, transparent 1px);
-            background-size: 60px 60px;
-            animation: gridFade 10s ease-in-out infinite;
-          }
-        `}</style>
-        <div className="absolute inset-0 grid-overlay" />
-        <div className="scan-line" style={{ animationDelay: '0s' }} />
-        <div className="scan-line" style={{ animationDelay: '4s' }} />
-        <div className="scan-line" style={{ animationDelay: '8s' }} />
-      </div>
+      {/* Blue Matrix rain overlay */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 z-10 pointer-events-none opacity-35"
+      />
 
       {/* Content */}
       <div className="relative z-20 flex flex-col min-h-screen">
@@ -123,8 +182,9 @@ export function HeroSection() {
               }}
             >
               <p className="text-dao-cool text-base md:text-lg lg:text-xl max-w-xl leading-relaxed">
-                Fort Worth&apos;s civic innovation laboratory — advancing cryptographic governance,
-                digital property rights, and AI literacy for our city&apos;s future.
+                Fort Worth DAO — advancing decentralized governance, cyber workforce
+                development, digital sovereignty, AI accelerationism, and civic
+                innovation lab for our City&apos;s future.
               </p>
             </div>
 

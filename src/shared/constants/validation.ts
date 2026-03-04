@@ -56,7 +56,7 @@ export const BOUNTY_STATUS_FILTERS = [
 ] as const;
 
 // Membership tiers
-export const MEMBERSHIP_TIERS = ['free', 'pro', 'annual'] as const;
+export const MEMBERSHIP_TIERS = ['free', 'monthly', 'annual'] as const;
 
 // Onboarding
 export const ONBOARDING_STATUSES = ['not_started', 'in_progress', 'completed'] as const;
@@ -89,6 +89,7 @@ export const ACTIVITY_TYPES = [
   'role_granted',
   'subscription_created',
   'comment_posted',
+  'event_attended',
 ] as const;
 
 // Points awarded per activity type
@@ -107,4 +108,5 @@ export const ACTIVITY_POINTS: Record<(typeof ACTIVITY_TYPES)[number], number> = 
   role_granted: 0,
   subscription_created: 0,
   comment_posted: 2,
+  event_attended: 5,
 } as const;

@@ -483,6 +483,24 @@ export const bountyComments = pgTable("bounty_comments", {
   index("idx_bounty_comments_author_id").on(table.authorId),
 ]);
 
+// Passport stamps for event attendance tracking
+export const passportStamps = pgTable("passport_stamps", {
+  id: text("id").primaryKey(),
+  memberId: text("member_id").notNull().references(() => members.id),
+  eventName: text("event_name").notNull(),
+  eventDate: timestamp("event_date", { withTimezone: true }),
+  eventType: text("event_type").notNull(),
+  description: text("description"),
+  issuedBy: text("issued_by").references(() => users.id),
+  pointsAwarded: integer("points_awarded").notNull().default(5),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_passport_stamps_member_id").on(table.memberId),
+  index("idx_passport_stamps_event_type").on(table.eventType),
+  index("idx_passport_stamps_member_created").on(table.memberId, table.createdAt),
+]);
+
 // ============================================================================
 // RELATIONS
 // ============================================================================
@@ -578,6 +596,7 @@ export const membersRelations = relations(members, ({ one, many }) => ({
   subscriptions: many(subscriptions),
   memberRoles: many(memberRoles),
   activities: many(memberActivities),
+  stamps: many(passportStamps),
 }));
 
 export const projectUpdatesRelations = relations(projectUpdates, ({ one }) => ({
@@ -752,6 +771,18 @@ export const memberActivitiesRelations = relations(memberActivities, ({ one }) =
   }),
 }));
 
+// Passport stamps relations
+export const passportStampsRelations = relations(passportStamps, ({ one }) => ({
+  member: one(members, {
+    fields: [passportStamps.memberId],
+    references: [members.id],
+  }),
+  issuer: one(users, {
+    fields: [passportStamps.issuedBy],
+    references: [users.id],
+  }),
+}));
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -806,3 +837,7 @@ export type NewMemberRole = InferInsertModel<typeof memberRoles>;
 // Activity types
 export type MemberActivity = InferSelectModel<typeof memberActivities>;
 export type NewMemberActivity = InferInsertModel<typeof memberActivities>;
+
+// Passport stamps types
+export type PassportStampRecord = InferSelectModel<typeof passportStamps>;
+export type NewPassportStampRecord = InferInsertModel<typeof passportStamps>;

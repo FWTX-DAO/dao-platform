@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { PrivyClient } from '@privy-io/server-auth';
-import { membersService } from '@features/members';
+import { membersService } from '@services/members';
 import { getOrCreateUser } from '@core/database/queries/users';
 
 let _stripe: Stripe | null = null;

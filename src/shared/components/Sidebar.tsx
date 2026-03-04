@@ -23,6 +23,7 @@ import {
   CreditCard,
   ShieldCheck,
   BookOpen,
+  Stamp,
 } from 'lucide-react';
 
 export type NavbarItem = {
@@ -207,6 +208,14 @@ function Sidebar() {
             >
               <ShieldCheck className="mr-3 h-4 w-4" />
               Admin Panel
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
+              onClick={() => handleNavigation('/admin/stamps')}
+            >
+              <Stamp className="mr-3 h-4 w-4" />
+              Stamps
             </Button>
           </div>
         </CollapsibleSection>

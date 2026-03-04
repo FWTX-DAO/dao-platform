@@ -1,7 +1,7 @@
 import { db } from './index';
 import { membershipTiers, roles, permissions, rolePermissions } from './schema';
 import { generateId } from '../../shared/utils/id-generator';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 
 const RBAC_RESOURCES = ['forum', 'projects', 'bounties', 'members', 'documents', 'meetings', 'admin'] as const;
 const RBAC_ACTIONS = ['create', 'read', 'update', 'delete', 'manage'] as const;
@@ -15,7 +15,7 @@ async function seedRbac() {
   const tierCount = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(membershipTiers)
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   if (tierCount === 0) {
     console.log('  Inserting membership tiers...');
@@ -33,11 +33,12 @@ async function seedRbac() {
       },
       {
         id: generateId(),
-        name: 'pro',
-        displayName: 'Pro ($5/mo)',
-        description: 'Enhanced member benefits',
+        name: 'monthly',
+        displayName: 'Monthly ($5/mo)',
+        description: 'Full DAO membership billed monthly',
         priceCents: 500,
         billingInterval: 'month',
+        stripePriceId: process.env.STRIPE_PRICE_MONTHLY ?? null,
         features: [
           'Forum access',
           'Project creation & collaboration',
@@ -53,9 +54,10 @@ async function seedRbac() {
         id: generateId(),
         name: 'annual',
         displayName: 'Annual ($49/yr)',
-        description: 'Best value — all Pro features at a discount',
+        description: 'Best value — all membership features at a discount',
         priceCents: 4900,
         billingInterval: 'year',
+        stripePriceId: process.env.STRIPE_PRICE_ANNUAL ?? null,
         features: [
           'Everything in Pro',
           '2 months free vs monthly',
@@ -71,13 +73,29 @@ async function seedRbac() {
     console.log(`  Tiers already exist (${tierCount} rows) — skipping`);
   }
 
+  // Update stripePriceId from env vars on existing rows (re-runnable)
+  if (process.env.STRIPE_PRICE_MONTHLY) {
+    await db.update(membershipTiers)
+      .set({ stripePriceId: process.env.STRIPE_PRICE_MONTHLY, updatedAt: new Date() })
+      .where(eq(membershipTiers.name, 'monthly'));
+    // Also update legacy 'pro' tier name if it exists
+    await db.update(membershipTiers)
+      .set({ stripePriceId: process.env.STRIPE_PRICE_MONTHLY, name: 'monthly', displayName: 'Monthly ($5/mo)', updatedAt: new Date() })
+      .where(eq(membershipTiers.name, 'pro'));
+  }
+  if (process.env.STRIPE_PRICE_ANNUAL) {
+    await db.update(membershipTiers)
+      .set({ stripePriceId: process.env.STRIPE_PRICE_ANNUAL, updatedAt: new Date() })
+      .where(eq(membershipTiers.name, 'annual'));
+  }
+
   // --------------------------------------------------------
   // 2. Roles
   // --------------------------------------------------------
   const roleCount = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(roles)
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   if (roleCount === 0) {
     console.log('  Inserting roles...');
@@ -126,7 +144,7 @@ async function seedRbac() {
   const permCount = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(permissions)
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   if (permCount === 0) {
     console.log('  Inserting permissions...');
@@ -153,7 +171,7 @@ async function seedRbac() {
   const rpCount = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(rolePermissions)
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   if (rpCount === 0) {
     console.log('  Linking role-permissions...');

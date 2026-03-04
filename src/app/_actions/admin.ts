@@ -1,7 +1,7 @@
 'use server';
 
 import { requireAuth } from '@/app/_lib/auth';
-import { rbacService } from '@features/rbac';
+import { rbacService } from '@services/rbac';
 import { revalidatePath } from 'next/cache';
 
 export async function getRoles() {

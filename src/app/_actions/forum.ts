@@ -1,7 +1,7 @@
 'use server';
 
 import { requireAuth } from '@/app/_lib/auth';
-import { forumService } from '@features/forum';
+import { forumService } from '@services/forum';
 import { db, forumVotes } from '@core/database';
 import { eq, and } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';

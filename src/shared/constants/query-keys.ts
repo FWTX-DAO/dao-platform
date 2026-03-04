@@ -56,4 +56,9 @@ export const queryKeys = {
     permissions: (id: string) => [...queryKeys.roles.detail(id), 'permissions'] as const,
     memberRoles: (memberId: string) => [...queryKeys.roles.all(), 'member', memberId] as const,
   },
+  stamps: {
+    all: () => ['stamps'] as const,
+    my: () => [...queryKeys.stamps.all(), 'my'] as const,
+    member: (id: string) => [...queryKeys.stamps.all(), 'member', id] as const,
+  },
 } as const;

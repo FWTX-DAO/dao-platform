@@ -11,10 +11,11 @@
     "format": "npx prettier --write \"{__tests__,components,pages,styles,src}/**/*.{ts,tsx,js,jsx}\"",
     "lint": "eslint . && npx prettier --check \"{__tests__,components,pages,styles,src}/**/*.{ts,tsx,js,jsx}\" && npx tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "dotenv -e .env.local -- tsx src/core/database/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:check": "drizzle-kit check",
+    "db:seed": "dotenv -e .env.local -- tsx src/core/database/seed.ts",
     "db:seed-rbac": "dotenv -e .env.local -- tsx src/core/database/seed-rbac.ts"
   },
   "dependencies": {

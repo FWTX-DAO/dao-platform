@@ -24,7 +24,7 @@
       "@/*": ["./src/*"],
       "@app/*": ["./src/app/*"],
       "@actions/*": ["./src/app/_actions/*"],
-      "@features/*": ["./src/features/*"],
+      "@services/*": ["./src/app/_services/*"],
       "@core/*": ["./src/core/*"],
       "@shared/*": ["./src/shared/*"],
       "@components/*": ["./src/shared/components/*"],

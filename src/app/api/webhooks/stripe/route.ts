@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { subscriptionsService } from '@features/subscriptions';
+import { subscriptionsService } from '@services/subscriptions';
 
 let _stripe: Stripe | null = null;
 function getStripe() {

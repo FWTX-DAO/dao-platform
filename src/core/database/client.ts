@@ -21,7 +21,7 @@ import {
 import { generateId } from '../../shared/utils/id-generator';
 
 async function trackActivity(userId: string, activityType: string, resourceType: string, resourceId: string) {
-  const { activitiesService } = await import('../../features/activities/services/activities.service');
+  const { activitiesService } = await import('../../app/_services/activities/services/activities.service');
   await activitiesService.trackActivity(userId, activityType as any, resourceType, resourceId);
 }
 

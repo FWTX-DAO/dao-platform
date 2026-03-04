@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { PrivyClient } from '@privy-io/server-auth';
-import { membersService } from '@features/members';
+import { membersService } from '@services/members';
 import { getOrCreateUser } from '@core/database/queries/users';
-import { db, membershipTiers } from '@core/database';
+import { db, membershipTiers, members } from '@core/database';
 import { eq } from 'drizzle-orm';
 
 let _stripe: Stripe | null = null;
@@ -53,7 +53,10 @@ export async function POST(request: Request) {
   }
 
   const tier = await db.select().from(membershipTiers).where(eq(membershipTiers.id, tierId)).limit(1);
-  if (!tier[0] || !tier[0].stripePriceId) {
+  const priceId = tier[0]?.stripePriceId
+    || (tier[0]?.name === 'monthly' || tier[0]?.name === 'pro' ? process.env.STRIPE_PRICE_MONTHLY : null)
+    || (tier[0]?.name === 'annual' ? process.env.STRIPE_PRICE_ANNUAL : null);
+  if (!tier[0] || !priceId) {
     return NextResponse.json({ error: 'Invalid tier or missing Stripe price' }, { status: 400 });
   }
 
@@ -65,12 +68,18 @@ export async function POST(request: Request) {
       metadata: { userId: user.id, memberId: member.id },
     });
     stripeCustomerId = customer.id;
+
+    // Persist stripeCustomerId to members table
+    await db
+      .update(members)
+      .set({ stripeCustomerId, updatedAt: new Date() })
+      .where(eq(members.id, member.id));
   }
 
   const session = await stripe.checkout.sessions.create({
     customer: stripeCustomerId,
     mode: 'subscription',
-    line_items: [{ price: tier[0].stripePriceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions?success=true`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/subscriptions?canceled=true`,
     metadata: { memberId: member.id, tierId },

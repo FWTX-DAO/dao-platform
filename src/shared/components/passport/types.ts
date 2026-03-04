@@ -1,3 +1,12 @@
+export interface PassportStamp {
+  id: string;
+  eventName: string;
+  eventDate: string | null;
+  eventType: string;
+  pointsAwarded: number;
+  createdAt: string;
+}
+
 export interface PassportData {
   avatarUrl: string | null;
   username: string | null;
@@ -15,4 +24,5 @@ export interface PassportData {
   walletAddress: string | null;
   tierDisplayName: string | null;
   roleNames: string[];
+  stamps?: PassportStamp[];
 }

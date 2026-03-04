@@ -5,6 +5,7 @@ import {
   getActiveSubscription as getActiveSubAction,
 } from '@/app/_actions/subscriptions';
 import { queryKeys } from '@shared/constants/query-keys';
+import { useAuthReady } from './useAuthReady';
 
 export interface SubscriptionTier {
   id: string;
@@ -38,17 +39,21 @@ export interface ActiveSubscription {
 }
 
 export const useSubscriptionTiers = () => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.subscriptions.tiers(),
     queryFn: () => getTiersAction() as unknown as Promise<SubscriptionTier[]>,
+    enabled: authReady,
     staleTime: 10 * 60 * 1000,
   });
 };
 
 export const useActiveSubscription = () => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.subscriptions.active(),
     queryFn: () => getActiveSubAction() as unknown as Promise<ActiveSubscription | null>,
+    enabled: authReady,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -83,6 +88,9 @@ const createPortalSession = async (): Promise<{ url: string }> => {
 export const useCreateCheckout = () => {
   return useMutation({
     mutationFn: createCheckoutSession,
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+    },
   });
 };
 

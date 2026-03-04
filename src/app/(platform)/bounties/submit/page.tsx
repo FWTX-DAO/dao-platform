@@ -3,10 +3,24 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateBounty } from '@hooks/useBounties';
+import { useEntitlements } from '@hooks/useEntitlements';
+import { UpgradeCTA } from '@components/UpgradeCTA';
 
 export default function SubmitBountyPage() {
   const router = useRouter();
   const createMutation = useCreateBounty();
+  const { can } = useEntitlements();
+
+  if (!can.submitBounty) {
+    return (
+      <div className="max-w-2xl space-y-6">
+        <h1 className="text-3xl font-bold text-gray-900">Submit a Bounty</h1>
+        <UpgradeCTA allowed={false} feature="submit bounties" mode="banner">
+          <span />
+        </UpgradeCTA>
+      </div>
+    );
+  }
   const [formData, setFormData] = useState({
     title: '',
     problemStatement: '',

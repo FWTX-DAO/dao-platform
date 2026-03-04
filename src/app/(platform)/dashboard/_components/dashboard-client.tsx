@@ -5,6 +5,8 @@ import { useMemo, useCallback } from 'react';
 import { useDashboardData, type MembershipData } from '@hooks/useDashboard';
 import { formatDate } from '@utils/format';
 import ActivityFeed from '@components/ActivityFeed';
+import { useEntitlements } from '@hooks/useEntitlements';
+import { UpgradeCTA } from '@components/UpgradeCTA';
 import {
   UsersIcon,
   DocumentTextIcon,
@@ -20,6 +22,7 @@ import {
 
 export function DashboardClient() {
   const { dashboardStats, membershipData, isLoading } = useDashboardData();
+  const { can } = useEntitlements();
 
   const calculateTenure = useCallback((joinedAt: string) => {
     const joined = new Date(joinedAt);
@@ -58,13 +61,15 @@ export function DashboardClient() {
           <p className="mt-2 text-gray-600">Fort Worth TX DAO Overview</p>
         </div>
         <div className="flex gap-3">
-          <Link
-            href="/innovation-lab"
-            className="inline-flex items-center px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            New Project
-          </Link>
+          <UpgradeCTA allowed={can.createProject} feature="create projects">
+            <Link
+              href="/innovation-lab"
+              className="inline-flex items-center px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              New Project
+            </Link>
+          </UpgradeCTA>
           <Link
             href="/forums"
             className="inline-flex items-center px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition"
@@ -234,10 +239,12 @@ export function DashboardClient() {
                   <RocketLaunchIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">No active projects yet</p>
                   <p className="text-gray-500 text-sm mt-1">Be the first to propose a civic innovation project!</p>
-                  <Link href="/innovation-lab" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition">
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Submit Project
-                  </Link>
+                  <UpgradeCTA allowed={can.createProject} feature="create projects">
+                    <Link href="/innovation-lab" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition">
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Submit Project
+                    </Link>
+                  </UpgradeCTA>
                 </div>
               ) : (
                 <div className="space-y-3">

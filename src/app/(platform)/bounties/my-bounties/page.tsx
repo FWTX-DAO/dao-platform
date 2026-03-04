@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import { useBounties } from '@hooks/useBounties';
 import { usePrivy } from '@privy-io/react-auth';
+import { useEntitlements } from '@hooks/useEntitlements';
+import { UpgradeCTA } from '@components/UpgradeCTA';
 
 export default function MyBountiesPage() {
   const { data: bounties = [], isLoading } = useBounties();
   const { user } = usePrivy();
+  const { can } = useEntitlements();
 
   const myBounties = bounties.filter((b: any) => b.submitterId === user?.id);
 
@@ -16,9 +19,11 @@ export default function MyBountiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">My Bounties</h1>
-        <Link href="/bounties/submit" className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm">
-          Submit New
-        </Link>
+        <UpgradeCTA allowed={can.submitBounty} feature="submit bounties">
+          <Link href="/bounties/submit" className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm">
+            Submit New
+          </Link>
+        </UpgradeCTA>
       </div>
       {myBounties.length === 0 ? (
         <div className="py-8 text-center text-gray-500">You haven&apos;t submitted any bounties yet.</div>
