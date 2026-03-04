@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAccessToken } from "@privy-io/react-auth";
+import {
+  getPosts as getPostsAction,
+  getReplies as getRepliesAction,
+  createPost as createPostAction,
+  updatePost as updatePostAction,
+  deletePost as deletePostAction,
+  vote as voteAction,
+} from "@/app/_actions/forum";
 
 export interface ForumPost {
   id: string;
@@ -30,135 +37,41 @@ export interface ForumPostUpdate {
   category: string;
 }
 
-const fetchForumPosts = async (): Promise<ForumPost[]> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/forums/posts", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch posts: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const fetchForumReplies = async (postId: string): Promise<ForumPost[]> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/forums/posts/${postId}/replies`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch replies: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const createForumPost = async (postData: ForumPostInput): Promise<ForumPost> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/forums/posts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(postData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to create post: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const updateForumPost = async (postData: ForumPostUpdate): Promise<ForumPost> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/forums/posts", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(postData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to update post: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const deleteForumPost = async (postId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/forums/posts", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ id: postId }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete post: ${response.statusText}`);
-  }
-};
-
-const voteOnPost = async ({ postId, voteType }: { postId: string; voteType: number }) => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/forums/vote", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ postId, voteType }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to vote: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
 // Query Hooks
 export const useForumPosts = () => {
   return useQuery({
     queryKey: ["forum-posts"],
-    queryFn: fetchForumPosts,
-    staleTime: 1000 * 60, // 1 minute
+    queryFn: () => getPostsAction() as Promise<ForumPost[]>,
+    staleTime: 1000 * 60,
   });
 };
 
 export const useForumReplies = (postId: string | null) => {
   return useQuery({
     queryKey: ["forum-replies", postId],
-    queryFn: () => fetchForumReplies(postId!),
+    queryFn: () => getRepliesAction(postId!) as Promise<ForumPost[]>,
     enabled: !!postId,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
   });
 };
 
 // Mutation Hooks
 export const useCreateForumPost = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: createForumPost,
+    mutationFn: (postData: ForumPostInput) =>
+      createPostAction({
+        title: postData.title,
+        content: postData.content,
+        category: postData.category,
+        parentId: postData.parent_id,
+      }) as Promise<ForumPost>,
     onMutate: async (newPost) => {
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
-      
+
       const previousPosts = queryClient.getQueryData<ForumPost[]>(["forum-posts"]);
-      
+
       const optimisticPost: ForumPost = {
         id: `temp-${Date.now()}`,
         title: newPost.title,
@@ -171,17 +84,17 @@ export const useCreateForumPost = () => {
         created_at: new Date().toISOString(),
         has_upvoted: 0,
       };
-      
+
       if (newPost.parent_id) {
-        queryClient.setQueryData<ForumPost[]>(["forum-replies", newPost.parent_id], (old) => 
+        queryClient.setQueryData<ForumPost[]>(["forum-replies", newPost.parent_id], (old) =>
           old ? [optimisticPost, ...old] : [optimisticPost]
         );
       } else {
-        queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) => 
+        queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) =>
           old ? [optimisticPost, ...old] : [optimisticPost]
         );
       }
-      
+
       return { previousPosts, parentId: newPost.parent_id };
     },
     onError: (_err, _newPost, context) => {
@@ -192,22 +105,12 @@ export const useCreateForumPost = () => {
         queryClient.invalidateQueries({ queryKey: ["forum-replies", context.parentId] });
       }
     },
-    onSuccess: (newPost, variables) => {
+    onSuccess: (_result, variables) => {
       if (variables.parent_id) {
-        queryClient.setQueryData(["forum-replies", variables.parent_id], (oldData: ForumPost[] | undefined) => {
-          return oldData ? [newPost, ...oldData.filter(p => !p.id.startsWith('temp-'))] : [newPost];
-        });
-        queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
-          return oldData ? oldData.map(post => 
-            post.id === variables.parent_id 
-              ? { ...post, reply_count: post.reply_count + 1 }
-              : post
-          ) : [];
-        });
+        queryClient.invalidateQueries({ queryKey: ["forum-replies", variables.parent_id] });
+        queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
       } else {
-        queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
-          return oldData ? [newPost, ...oldData.filter(p => !p.id.startsWith('temp-'))] : [newPost];
-        });
+        queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
       }
     },
   });
@@ -217,7 +120,12 @@ export const useUpdateForumPost = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: updateForumPost,
+    mutationFn: (postData: ForumPostUpdate) =>
+      updatePostAction(postData.id, {
+        title: postData.title,
+        content: postData.content,
+        category: postData.category,
+      }),
     onMutate: async (updatedPost) => {
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
 
@@ -238,24 +146,12 @@ export const useUpdateForumPost = () => {
         queryClient.setQueryData(["forum-posts"], context.previousPosts);
       }
     },
-    onSuccess: (updatedPost, variables) => {
-      queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
-        return oldData ? oldData.map(post =>
-          post.id === updatedPost.id ? updatedPost : post
-        ) : [updatedPost];
-      });
-
-      // OPTIMIZED: Only invalidate specific reply thread if this is a reply
-      const parentId = (variables as any).parent_id || (updatedPost as any).parent_id;
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
+      const parentId = (variables as any).parent_id;
       if (parentId) {
-        queryClient.invalidateQueries({
-          queryKey: ["forum-replies", parentId],
-          exact: true // Important: Don't invalidate all reply threads
-        });
+        queryClient.invalidateQueries({ queryKey: ["forum-replies", parentId], exact: true });
       }
-
-      // Removed: queryClient.invalidateQueries({ queryKey: ["forum-replies"] });
-      // This was invalidating ALL reply threads unnecessarily
     },
   });
 };
@@ -264,16 +160,13 @@ export const useDeleteForumPost = (parentId?: string | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteForumPost,
+    mutationFn: (postId: string) => deletePostAction(postId),
     onSuccess: (_, deletedPostId) => {
-      // Remove the post from the main posts list
       queryClient.setQueryData(["forum-posts"], (oldData: ForumPost[] | undefined) => {
         if (!oldData) return [];
-        // Also update reply count if this was a reply being deleted
         return oldData
           .filter(post => post.id !== deletedPostId)
           .map(post => {
-            // If the deleted post was a reply to this post, decrement reply count
             if (parentId && post.id === parentId) {
               return { ...post, reply_count: Math.max(0, post.reply_count - 1) };
             }
@@ -281,15 +174,9 @@ export const useDeleteForumPost = (parentId?: string | null) => {
           });
       });
 
-      // OPTIMIZED: Only invalidate the specific reply thread if we know the parent
       if (parentId) {
-        queryClient.invalidateQueries({
-          queryKey: ["forum-replies", parentId],
-          exact: true,
-        });
+        queryClient.invalidateQueries({ queryKey: ["forum-replies", parentId], exact: true });
       }
-      // Note: If parentId is not provided, we don't invalidate all replies
-      // The caller should provide parentId when deleting a reply
     },
   });
 };
@@ -298,9 +185,9 @@ export const useVoteOnPost = (parentId?: string | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: voteOnPost,
+    mutationFn: ({ postId, voteType }: { postId: string; voteType: number }) =>
+      voteAction(postId, voteType),
     onMutate: async ({ postId, voteType }) => {
-      // Cancel only relevant queries
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
       if (parentId) {
         await queryClient.cancelQueries({ queryKey: ["forum-replies", parentId] });
@@ -334,10 +221,7 @@ export const useVoteOnPost = (parentId?: string | null) => {
         }) : [];
       };
 
-      // Update main posts
       queryClient.setQueryData(["forum-posts"], updatePostVotesOptimistic);
-
-      // OPTIMIZED: Only update specific reply thread if we know the parent
       if (parentId) {
         queryClient.setQueryData(["forum-replies", parentId], updatePostVotesOptimistic);
       }
@@ -345,29 +229,17 @@ export const useVoteOnPost = (parentId?: string | null) => {
       return { previousPosts, previousReplies, parentId };
     },
     onError: (_err, _variables, context) => {
-      // Restore previous state on error
       if (context?.previousPosts) {
         queryClient.setQueryData(["forum-posts"], context.previousPosts);
       }
-      // OPTIMIZED: Only restore specific reply thread
       if (context?.parentId && context?.previousReplies) {
         queryClient.setQueryData(["forum-replies", context.parentId], context.previousReplies);
       }
     },
-    onSuccess: (data, { postId }) => {
-      const updatePostVotes = (posts: ForumPost[] | undefined) => {
-        return posts ? posts.map(post =>
-          post.id === postId
-            ? { ...post, upvotes: data.upvotes, has_upvoted: data.hasUpvoted ? 1 : 0 }
-            : post
-        ) : [];
-      };
-
-      queryClient.setQueryData(["forum-posts"], updatePostVotes);
-
-      // OPTIMIZED: Only update specific reply thread if we know the parent
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
       if (parentId) {
-        queryClient.setQueryData(["forum-replies", parentId], updatePostVotes);
+        queryClient.invalidateQueries({ queryKey: ["forum-replies", parentId] });
       }
     },
   });

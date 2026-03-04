@@ -1,6 +1,6 @@
 import React, { useCallback, memo } from "react";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { AnimatedMenuToggle } from "./ui/sidebar";
 import { useSidebar } from "../contexts/SidebarContext";
 

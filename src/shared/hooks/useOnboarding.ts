@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAccessToken } from '@privy-io/react-auth';
+import { completeOnboarding as completeOnboardingAction } from '@/app/_actions/members';
 import { queryKeys } from '@shared/constants/query-keys';
 
 export interface CompleteOnboardingInput {
@@ -19,29 +19,11 @@ export interface CompleteOnboardingInput {
   zip?: string;
 }
 
-const completeOnboarding = async (data: CompleteOnboardingInput): Promise<unknown> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch('/api/members/onboard', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `Onboarding failed: ${response.statusText}`);
-  }
-  const json = await response.json();
-  return json.data ?? json;
-};
-
 export const useCompleteOnboarding = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: completeOnboarding,
+    mutationFn: (data: CompleteOnboardingInput) => completeOnboardingAction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.stats() });

@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter, usePathname } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import Image from 'next/image';
 import { Button } from './ui/button';
@@ -92,10 +92,11 @@ UserAvatar.displayName = 'UserAvatar';
 
 function Sidebar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = usePrivy();
   const { isOpen, close } = useSidebar();
   const { data: profile } = useProfile();
-  const currentPath = router.pathname;
+  const currentPath = pathname;
   const isAdmin = profile?.roleNames?.includes('admin');
 
   const isActive = useCallback((href: string) => currentPath === href, [currentPath]);

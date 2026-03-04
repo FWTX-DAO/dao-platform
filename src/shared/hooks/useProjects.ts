@@ -1,5 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAccessToken } from "@privy-io/react-auth";
+import {
+  getProjects as getProjectsAction,
+  getProjectById as getProjectByIdAction,
+  getProjectUpdates as getProjectUpdatesAction,
+  createProject as createProjectAction,
+  updateProject as updateProjectAction,
+  deleteProject as deleteProjectAction,
+  createProjectUpdate as createProjectUpdateAction,
+  joinProject as joinProjectAction,
+} from "@/app/_actions/projects";
 
 export interface Project {
   id: string;
@@ -70,180 +79,52 @@ export interface ProjectUpdateData {
   status?: string;
 }
 
-const fetchProjects = async (): Promise<Project[]> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/projects", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch projects: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const fetchProjectDetails = async (projectId: string): Promise<ProjectDetails> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/projects/${projectId}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch project details: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const fetchProjectUpdates = async (projectId: string): Promise<ProjectUpdate[]> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/projects/${projectId}/updates`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch project updates: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const createProject = async (projectData: ProjectInput): Promise<Project> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/projects", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(projectData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to create project: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const updateProject = async (projectData: ProjectUpdateData): Promise<Project> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/projects", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(projectData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to update project: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const deleteProject = async (projectId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/projects", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ id: projectId }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete project: ${response.statusText}`);
-  }
-};
-
-const createProjectUpdate = async ({ 
-  projectId, 
-  updateData 
-}: { 
-  projectId: string; 
-  updateData: ProjectUpdateInput 
-}): Promise<ProjectUpdate> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/projects/${projectId}/updates`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(updateData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to create project update: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const joinProject = async (projectId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/projects/${projectId}/join`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to join project: ${response.statusText}`);
-  }
-};
-
 // Query Hooks
 export const useProjects = () => {
   return useQuery({
     queryKey: ["projects"],
-    queryFn: fetchProjects,
-    staleTime: 1000 * 60, // 1 minute
+    queryFn: () => getProjectsAction() as Promise<Project[]>,
+    staleTime: 1000 * 60,
   });
 };
 
 export const useProjectDetails = (projectId: string | null) => {
   return useQuery({
     queryKey: ["project-details", projectId],
-    queryFn: () => fetchProjectDetails(projectId!),
+    queryFn: () => getProjectByIdAction(projectId!) as Promise<ProjectDetails>,
     enabled: !!projectId,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
   });
 };
 
 export const useProjectUpdates = (projectId: string | null) => {
   return useQuery({
     queryKey: ["project-updates", projectId],
-    queryFn: () => fetchProjectUpdates(projectId!),
+    queryFn: () => getProjectUpdatesAction(projectId!) as Promise<ProjectUpdate[]>,
     enabled: !!projectId,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
   });
 };
 
 // Mutation Hooks
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: createProject,
+    mutationFn: (projectData: ProjectInput) =>
+      createProjectAction({
+        title: projectData.title,
+        description: projectData.description,
+        githubRepo: projectData.githubRepo,
+        intent: projectData.intent,
+        benefit: projectData.benefitToFortWorth,
+        tags: Array.isArray(projectData.tags) ? projectData.tags.join(',') : projectData.tags,
+        status: projectData.status,
+      }),
     onMutate: async (newProject) => {
       await queryClient.cancelQueries({ queryKey: ["projects"] });
-      
       const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
-      
+
       const optimisticProject: Project = {
         id: `temp-${Date.now()}`,
         title: newProject.title,
@@ -258,11 +139,11 @@ export const useCreateProject = () => {
         created_at: new Date().toISOString(),
         collaborators: 1,
       };
-      
-      queryClient.setQueryData<Project[]>(["projects"], (old) => 
+
+      queryClient.setQueryData<Project[]>(["projects"], (old) =>
         old ? [optimisticProject, ...old] : [optimisticProject]
       );
-      
+
       return { previousProjects };
     },
     onError: (_err, _newProject, context) => {
@@ -270,27 +151,34 @@ export const useCreateProject = () => {
         queryClient.setQueryData(["projects"], context.previousProjects);
       }
     },
-    onSuccess: (newProject) => {
-      queryClient.setQueryData(["projects"], (oldData: Project[] | undefined) => {
-        return oldData ? [newProject, ...oldData.filter(p => !p.id.startsWith('temp-'))] : [newProject];
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 };
 
 export const useUpdateProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: updateProject,
+    mutationFn: (projectData: ProjectUpdateData) =>
+      updateProjectAction(projectData.id, {
+        title: projectData.title,
+        description: projectData.description,
+        githubRepo: projectData.githubRepo,
+        intent: projectData.intent,
+        benefit: projectData.benefitToFortWorth,
+        tags: Array.isArray(projectData.tags) ? projectData.tags.join(',') : projectData.tags,
+        status: projectData.status,
+      }),
     onMutate: async (updatedProjectData) => {
       await queryClient.cancelQueries({ queryKey: ["projects"] });
       await queryClient.cancelQueries({ queryKey: ["project-details", updatedProjectData.id] });
-      
+
       const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
       const previousDetails = queryClient.getQueryData<ProjectDetails>(["project-details", updatedProjectData.id]);
-      
-      queryClient.setQueryData<Project[]>(["projects"], (old) => 
+
+      queryClient.setQueryData<Project[]>(["projects"], (old) =>
         old ? old.map((project): Project => {
           if (project.id === updatedProjectData.id) {
             return {
@@ -308,7 +196,7 @@ export const useUpdateProject = () => {
           return project;
         }) : []
       );
-      
+
       return { previousProjects, previousDetails };
     },
     onError: (_err, updatedProjectData, context) => {
@@ -319,30 +207,22 @@ export const useUpdateProject = () => {
         queryClient.setQueryData(["project-details", updatedProjectData.id], context.previousDetails);
       }
     },
-    onSuccess: (updatedProject) => {
-      queryClient.setQueryData(["projects"], (oldData: Project[] | undefined) => {
-        return oldData ? oldData.map(project => 
-          project.id === updatedProject.id ? updatedProject : project
-        ) : [updatedProject];
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["project-details", updatedProject.id] });
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-details", variables.id] });
     },
   });
 };
 
 export const useDeleteProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: deleteProject,
+    mutationFn: (projectId: string) => deleteProjectAction(projectId),
     onSuccess: (_, deletedProjectId) => {
-      // Remove the project from the list
       queryClient.setQueryData(["projects"], (oldData: Project[] | undefined) => {
         return oldData ? oldData.filter(project => project.id !== deletedProjectId) : [];
       });
-      
-      // Remove project details from cache
       queryClient.removeQueries({ queryKey: ["project-details", deletedProjectId] });
       queryClient.removeQueries({ queryKey: ["project-updates", deletedProjectId] });
     },
@@ -351,14 +231,15 @@ export const useDeleteProject = () => {
 
 export const useCreateProjectUpdate = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: createProjectUpdate,
-    onSuccess: (newUpdate, { projectId }) => {
-      // Add the new update to the beginning of the updates list
-      queryClient.setQueryData(["project-updates", projectId], (oldData: ProjectUpdate[] | undefined) => {
-        return oldData ? [newUpdate, ...oldData] : [newUpdate];
-      });
+    mutationFn: ({ projectId, updateData }: { projectId: string; updateData: ProjectUpdateInput }) =>
+      createProjectUpdateAction(projectId, {
+        title: updateData.title,
+        content: updateData.content,
+      }),
+    onSuccess: (_result, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ["project-updates", projectId] });
     },
   });
 };
@@ -367,7 +248,7 @@ export const useJoinProject = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: joinProject,
+    mutationFn: (projectId: string) => joinProjectAction(projectId),
     onMutate: async (projectId) => {
       await queryClient.cancelQueries({ queryKey: ["projects"] });
       await queryClient.cancelQueries({ queryKey: ["project-details", projectId] });
@@ -375,7 +256,6 @@ export const useJoinProject = () => {
       const previousProjects = queryClient.getQueryData<Project[]>(["projects"]);
       const previousDetails = queryClient.getQueryData<ProjectDetails>(["project-details", projectId]);
 
-      // Optimistic update to project list
       queryClient.setQueryData<Project[]>(["projects"], (old) =>
         old ? old.map(project =>
           project.id === projectId
@@ -384,7 +264,6 @@ export const useJoinProject = () => {
         ) : []
       );
 
-      // Optimistic update to project details
       if (previousDetails) {
         queryClient.setQueryData<ProjectDetails>(["project-details", projectId], {
           ...previousDetails,
@@ -396,21 +275,12 @@ export const useJoinProject = () => {
       return { previousProjects, previousDetails };
     },
     onError: (_err, projectId, context) => {
-      // Rollback on error
       if (context?.previousProjects) {
         queryClient.setQueryData(["projects"], context.previousProjects);
       }
       if (context?.previousDetails) {
         queryClient.setQueryData(["project-details", projectId], context.previousDetails);
       }
-    },
-    onSuccess: () => {
-      // OPTIMIZED: Don't invalidate - optimistic update is already correct
-      // The server response will update the cache automatically if there's a mismatch
-      // This prevents unnecessary refetches and loading flashes
-
-      // Removed: queryClient.invalidateQueries({ queryKey: ["project-details", projectId] });
-      // Removed: queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 };

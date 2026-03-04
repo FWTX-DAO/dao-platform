@@ -1,4 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getDocuments as getDocumentsAction,
+  createDocument as createDocumentAction,
+  updateDocument as updateDocumentAction,
+  deleteDocument as deleteDocumentAction,
+} from "@/app/_actions/documents";
 import { getAccessToken } from "@privy-io/react-auth";
 
 export interface Document {
@@ -60,87 +66,6 @@ export interface UploadResult {
   mimeType: string;
 }
 
-const fetchDocuments = async (params?: {
-  category?: string;
-  search?: string;
-  user_id?: string;
-}): Promise<DocumentWithUploader[]> => {
-  const accessToken = await getAccessToken();
-  const searchParams = new URLSearchParams();
-  
-  if (params?.category) searchParams.append("category", params.category);
-  if (params?.search) searchParams.append("search", params.search);
-  if (params?.user_id) searchParams.append("user_id", params.user_id);
-  
-  const url = `/api/documents${searchParams.toString() ? `?${searchParams}` : ""}`;
-  
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch documents: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const fetchDocument = async (id: string): Promise<DocumentWithUploader> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/documents/${id}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch document: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-
-
-
-
-
-
-const updateDocument = async (documentData: DocumentUpdate): Promise<DocumentWithUploader> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/documents/${documentData.id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(documentData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to update document: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const deleteDocument = async (documentId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/documents/${documentId}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete document: ${response.statusText}`);
-  }
-};
-
 // Query Hooks
 export const useDocuments = (params?: {
   category?: string;
@@ -149,17 +74,21 @@ export const useDocuments = (params?: {
 }) => {
   return useQuery({
     queryKey: ["documents", params],
-    queryFn: () => fetchDocuments(params),
-    staleTime: 1000 * 60 * 3, // 3 minutes
+    queryFn: () => getDocumentsAction({ search: params?.search, category: params?.category }),
+    staleTime: 1000 * 60 * 3,
   });
 };
 
 export const useDocument = (id: string | null) => {
   return useQuery({
     queryKey: ["document", id],
-    queryFn: () => fetchDocument(id!),
+    queryFn: () => getDocumentsAction().then(docs => {
+      const doc = (docs as any[]).find((d: any) => d.id === id);
+      if (!doc) throw new Error('Document not found');
+      return doc;
+    }),
     enabled: !!id,
-    staleTime: 1000 * 60 * 3, // 3 minutes
+    staleTime: 1000 * 60 * 3,
   });
 };
 
@@ -171,7 +100,7 @@ const convertFileToBase64 = (file: File): Promise<string> => {
       if (typeof result === 'string') {
         const base64Parts = result.split(',');
         if (base64Parts.length > 1 && base64Parts[1]) {
-          resolve(base64Parts[1]); // Remove data:type;base64, prefix
+          resolve(base64Parts[1]);
         } else {
           reject(new Error('Invalid data URL format'));
         }
@@ -184,12 +113,11 @@ const convertFileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+// File upload still uses fetch for large file handling (server actions have size limits)
 const uploadFileToServer = async (file: File, metadata: any): Promise<any> => {
   const accessToken = await getAccessToken();
-  
-  // Convert file to base64
   const fileBase64 = await convertFileToBase64(file);
-  
+
   const response = await fetch("/api/documents/server-upload", {
     method: "POST",
     headers: {
@@ -220,20 +148,18 @@ const uploadFileToServer = async (file: File, metadata: any): Promise<any> => {
 // Mutation Hooks
 export const useUploadDocument = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ file, metadata }: { 
-      file: File; 
-      metadata: Omit<DocumentInput, 'pinataId' | 'cid' | 'mimeType' | 'fileSize'> 
+    mutationFn: async ({ file, metadata }: {
+      file: File;
+      metadata: Omit<DocumentInput, 'pinataId' | 'cid' | 'mimeType' | 'fileSize'>
     }) => {
-      const result = await uploadFileToServer(file, metadata);
-      return result;
+      return uploadFileToServer(file, metadata);
     },
     onMutate: async ({ file, metadata }) => {
       await queryClient.cancelQueries({ queryKey: ["documents"] });
-      
       const previousDocuments = queryClient.getQueryData<DocumentWithUploader[]>(["documents"]);
-      
+
       const optimisticDoc: DocumentWithUploader = {
         document: {
           id: `temp-${Date.now()}`,
@@ -258,11 +184,11 @@ export const useUploadDocument = () => {
           username: 'You',
         },
       };
-      
-      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) => 
+
+      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) =>
         old ? [optimisticDoc, ...old] : [optimisticDoc]
       );
-      
+
       return { previousDocuments };
     },
     onError: (_err, _variables, context) => {
@@ -278,53 +204,42 @@ export const useUploadDocument = () => {
 
 export const useUpdateDocument = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: updateDocument,
+    mutationFn: (documentData: DocumentUpdate) =>
+      updateDocumentAction(documentData.id, documentData),
     onMutate: async (updatedDoc) => {
       await queryClient.cancelQueries({ queryKey: ["documents"] });
-      await queryClient.cancelQueries({ queryKey: ["document", updatedDoc.id] });
-      
+
       const previousDocuments = queryClient.getQueryData<DocumentWithUploader[]>(["documents"]);
-      const previousDocument = queryClient.getQueryData<DocumentWithUploader>(["document", updatedDoc.id]);
-      
-      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) => 
-        old ? old.map((doc): DocumentWithUploader => 
-          doc.document.id === updatedDoc.id 
+
+      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) =>
+        old ? old.map((doc): DocumentWithUploader =>
+          doc.document.id === updatedDoc.id
             ? {
-                ...doc,
-                document: {
-                  ...doc.document,
-                  name: updatedDoc.name || doc.document.name,
-                  description: updatedDoc.description || doc.document.description,
-                  category: updatedDoc.category || doc.document.category,
-                  tags: updatedDoc.tags || doc.document.tags,
-                  isPublic: updatedDoc.isPublic !== undefined ? (updatedDoc.isPublic ? 1 : 0) : doc.document.isPublic,
-                  updatedAt: new Date().toISOString(),
-                },
-              }
+              ...doc,
+              document: {
+                ...doc.document,
+                name: updatedDoc.name || doc.document.name,
+                description: updatedDoc.description || doc.document.description,
+                category: updatedDoc.category || doc.document.category,
+                tags: updatedDoc.tags || doc.document.tags,
+                isPublic: updatedDoc.isPublic !== undefined ? (updatedDoc.isPublic ? 1 : 0) : doc.document.isPublic,
+                updatedAt: new Date().toISOString(),
+              },
+            }
             : doc
         ) : []
       );
-      
-      return { previousDocuments, previousDocument };
+
+      return { previousDocuments };
     },
-    onError: (_err, updatedDoc, context) => {
+    onError: (_err, _updatedDoc, context) => {
       if (context?.previousDocuments) {
         queryClient.setQueryData(["documents"], context.previousDocuments);
       }
-      if (context?.previousDocument) {
-        queryClient.setQueryData(["document", updatedDoc.id], context.previousDocument);
-      }
     },
-    onSuccess: (updatedDocument, variables) => {
-      queryClient.setQueryData(["documents"], (oldData: DocumentWithUploader[] | undefined) => {
-        return oldData ? oldData.map(doc => 
-          doc.document.id === variables.id ? updatedDocument : doc
-        ) : [updatedDocument];
-      });
-      
-      queryClient.setQueryData(["document", variables.id], updatedDocument);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
@@ -332,19 +247,14 @@ export const useUpdateDocument = () => {
 
 export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: deleteDocument,
+    mutationFn: (documentId: string) => deleteDocumentAction(documentId),
     onSuccess: (_, deletedDocumentId) => {
-      // Remove the document from all lists
       queryClient.setQueryData(["documents"], (oldData: DocumentWithUploader[] | undefined) => {
         return oldData ? oldData.filter(doc => doc.document.id !== deletedDocumentId) : [];
       });
-      
-      // Remove the individual document query
       queryClient.removeQueries({ queryKey: ["document", deletedDocumentId] });
-      
-      // Invalidate all document queries to be safe
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });

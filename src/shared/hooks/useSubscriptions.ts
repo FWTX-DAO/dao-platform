@@ -1,5 +1,9 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAccessToken } from '@privy-io/react-auth';
+import {
+  getSubscriptionTiers as getTiersAction,
+  getActiveSubscription as getActiveSubAction,
+} from '@/app/_actions/subscriptions';
 import { queryKeys } from '@shared/constants/query-keys';
 
 export interface SubscriptionTier {
@@ -33,23 +37,23 @@ export interface ActiveSubscription {
   updatedAt: string;
 }
 
-const fetchTiers = async (): Promise<SubscriptionTier[]> => {
-  const response = await fetch('/api/subscriptions/tiers');
-  if (!response.ok) throw new Error(`Failed to fetch tiers: ${response.statusText}`);
-  const json = await response.json();
-  return json.data ?? json;
-};
-
-const fetchActiveSubscription = async (): Promise<ActiveSubscription | null> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch('/api/subscriptions', {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export const useSubscriptionTiers = () => {
+  return useQuery({
+    queryKey: queryKeys.subscriptions.tiers(),
+    queryFn: () => getTiersAction() as Promise<SubscriptionTier[]>,
+    staleTime: 10 * 60 * 1000,
   });
-  if (!response.ok) throw new Error(`Failed to fetch subscription: ${response.statusText}`);
-  const json = await response.json();
-  return json.data ?? json;
 };
 
+export const useActiveSubscription = () => {
+  return useQuery({
+    queryKey: queryKeys.subscriptions.active(),
+    queryFn: () => getActiveSubAction() as Promise<ActiveSubscription | null>,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// Stripe checkout/portal remain as fetch calls since they involve external redirects
 const createCheckoutSession = async (tierId: string): Promise<{ url: string }> => {
   const accessToken = await getAccessToken();
   const response = await fetch('/api/subscriptions/checkout', {
@@ -74,22 +78,6 @@ const createPortalSession = async (): Promise<{ url: string }> => {
   if (!response.ok) throw new Error(`Failed to create portal session: ${response.statusText}`);
   const json = await response.json();
   return json.data ?? json;
-};
-
-export const useSubscriptionTiers = () => {
-  return useQuery({
-    queryKey: queryKeys.subscriptions.tiers(),
-    queryFn: fetchTiers,
-    staleTime: 10 * 60 * 1000,
-  });
-};
-
-export const useActiveSubscription = () => {
-  return useQuery({
-    queryKey: queryKeys.subscriptions.active(),
-    queryFn: fetchActiveSubscription,
-    staleTime: 5 * 60 * 1000,
-  });
 };
 
 export const useCreateCheckout = () => {

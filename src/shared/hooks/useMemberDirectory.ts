@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { getAccessToken } from '@privy-io/react-auth';
+import { searchMembers } from '@/app/_actions/members';
 import { queryKeys } from '@shared/constants/query-keys';
 
 export interface DirectoryMember {
@@ -26,29 +26,10 @@ export interface DirectoryFilters {
   offset?: number;
 }
 
-const fetchDirectory = async (filters: DirectoryFilters): Promise<DirectoryMember[]> => {
-  const accessToken = await getAccessToken();
-  const params = new URLSearchParams();
-  if (filters.city) params.set('city', filters.city);
-  if (filters.industry) params.set('industry', filters.industry);
-  if (filters.availability) params.set('availability', filters.availability);
-  if (filters.search) params.set('search', filters.search);
-  if (filters.limit) params.set('limit', String(filters.limit));
-  if (filters.offset) params.set('offset', String(filters.offset));
-  const qs = params.toString();
-
-  const response = await fetch(`/api/members/search${qs ? `?${qs}` : ''}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) throw new Error(`Failed to fetch directory: ${response.statusText}`);
-  const json = await response.json();
-  return json.data ?? json;
-};
-
 export const useMemberDirectory = (filters: DirectoryFilters) => {
   return useQuery({
     queryKey: queryKeys.members.directory(filters as Record<string, unknown>),
-    queryFn: () => fetchDirectory(filters),
+    queryFn: () => searchMembers(filters) as Promise<DirectoryMember[]>,
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });

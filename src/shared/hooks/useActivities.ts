@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAccessToken } from '@privy-io/react-auth';
+import {
+  getMyActivities as getMyActivitiesAction,
+  getPlatformFeed as getPlatformFeedAction,
+  getMemberActivities as getMemberActivitiesAction,
+} from '@/app/_actions/activities';
 import { queryKeys } from '@shared/constants/query-keys';
 
 export interface Activity {
@@ -32,47 +36,10 @@ export interface ActivityFilters {
   offset?: number;
 }
 
-const fetchMyActivities = async (filters?: ActivityFilters): Promise<Activity[]> => {
-  const accessToken = await getAccessToken();
-  const params = new URLSearchParams();
-  if (filters?.type) params.set('type', filters.type);
-  if (filters?.limit) params.set('limit', String(filters.limit));
-  if (filters?.offset) params.set('offset', String(filters.offset));
-  const qs = params.toString();
-
-  const response = await fetch(`/api/activities${qs ? `?${qs}` : ''}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) throw new Error(`Failed to fetch activities: ${response.statusText}`);
-  const json = await response.json();
-  return json.data ?? json;
-};
-
-const fetchPlatformFeed = async (limit?: number): Promise<PlatformActivity[]> => {
-  const accessToken = await getAccessToken();
-  const qs = limit ? `?limit=${limit}` : '';
-  const response = await fetch(`/api/activities/feed${qs}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) throw new Error(`Failed to fetch feed: ${response.statusText}`);
-  const json = await response.json();
-  return json.data ?? json;
-};
-
-const fetchMemberActivities = async (memberId: string): Promise<Activity[]> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/members/${memberId}/activities`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) throw new Error(`Failed to fetch member activities: ${response.statusText}`);
-  const json = await response.json();
-  return json.data ?? json;
-};
-
 export const useMyActivities = (filters?: ActivityFilters) => {
   return useQuery({
     queryKey: [...queryKeys.activities.all(), filters] as const,
-    queryFn: () => fetchMyActivities(filters),
+    queryFn: () => getMyActivitiesAction(filters) as Promise<Activity[]>,
     staleTime: 60 * 1000,
   });
 };
@@ -80,7 +47,7 @@ export const useMyActivities = (filters?: ActivityFilters) => {
 export const usePlatformFeed = (limit?: number) => {
   return useQuery({
     queryKey: queryKeys.activities.feed(),
-    queryFn: () => fetchPlatformFeed(limit),
+    queryFn: () => getPlatformFeedAction(limit) as Promise<PlatformActivity[]>,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -89,7 +56,7 @@ export const usePlatformFeed = (limit?: number) => {
 export const useMemberActivities = (memberId: string | null) => {
   return useQuery({
     queryKey: queryKeys.activities.member(memberId!),
-    queryFn: () => fetchMemberActivities(memberId!),
+    queryFn: () => getMemberActivitiesAction(memberId!) as Promise<Activity[]>,
     enabled: !!memberId,
     staleTime: 60 * 1000,
   });

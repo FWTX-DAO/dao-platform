@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import { getAccessToken } from "@privy-io/react-auth";
+import {
+  getBounties as getBountiesAction,
+  getBountyById as getBountyByIdAction,
+  createBounty as createBountyAction,
+  updateBounty as updateBountyAction,
+  deleteBounty as deleteBountyAction,
+} from "@/app/_actions/bounties";
 import { queryKeys, optimisticHelpers, invalidationPatterns } from "../utils/query-client";
 
 export interface Bounty {
@@ -93,118 +99,6 @@ export interface BountyInput {
   submitForReview?: boolean;
 }
 
-// API Functions
-const fetchBounties = async (filters?: {
-  status?: string;
-  category?: string;
-  organizationType?: string;
-  search?: string;
-  includeAll?: boolean;
-  limit?: number;
-  offset?: number;
-}): Promise<Bounty[]> => {
-  const accessToken = await getAccessToken();
-  
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, value.toString());
-      }
-    });
-  }
-  
-  const response = await fetch(`/api/bounties?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error: any = new Error(`Failed to fetch bounties: ${response.statusText}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.json();
-};
-
-const fetchBountyDetails = async (bountyId: string, includeAll?: boolean): Promise<BountyDetails> => {
-  const accessToken = await getAccessToken();
-  const params = includeAll ? '?includeAll=true' : '';
-  const response = await fetch(`/api/bounties/${bountyId}${params}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error: any = new Error(`Failed to fetch bounty details: ${response.statusText}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.json();
-};
-
-const createBounty = async (bountyData: BountyInput): Promise<Bounty> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/bounties", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(bountyData),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || `Failed to create bounty: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const updateBounty = async ({ 
-  id, 
-  ...updates 
-}: BountyInput & { id: string }): Promise<Bounty> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/bounties", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ id, ...updates }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || `Failed to update bounty: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const deleteBounty = async (bountyId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/bounties", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ id: bountyId }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || `Failed to delete bounty: ${response.statusText}`);
-  }
-};
-
 // Optimized Query Hooks
 export const useBounties = (filters?: {
   status?: string;
@@ -215,10 +109,10 @@ export const useBounties = (filters?: {
 }) => {
   return useQuery({
     queryKey: queryKeys.bounties.list(filters),
-    queryFn: () => fetchBounties(filters),
-    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchInterval: filters?.status === "published" ? 60 * 1000 : false, // Auto-refetch published bounties every minute
+    queryFn: () => getBountiesAction(filters) as Promise<Bounty[]>,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: filters?.status === "published" ? 60 * 1000 : false,
   });
 };
 
@@ -232,8 +126,8 @@ export const useBountiesInfinite = (filters?: {
 }) => {
   return useInfiniteQuery({
     queryKey: [...queryKeys.bounties.list(filters), "infinite"],
-    queryFn: ({ pageParam = 0 }) => 
-      fetchBounties({ ...filters, limit: filters?.limit || 20, offset: pageParam }),
+    queryFn: ({ pageParam = 0 }) =>
+      getBountiesAction({ ...filters }) as Promise<Bounty[]>,
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * (filters?.limit || 20);
       return lastPage.length === (filters?.limit || 20) ? totalFetched : undefined;
@@ -247,28 +141,23 @@ export const useBountiesInfinite = (filters?: {
 export const useBountyDetails = (bountyId: string | null, options?: { includeAll?: boolean }) => {
   return useQuery({
     queryKey: [...queryKeys.bounties.detail(bountyId!), options?.includeAll ? 'all' : 'public'],
-    queryFn: () => fetchBountyDetails(bountyId!, options?.includeAll),
+    queryFn: () => getBountyByIdAction(bountyId!) as Promise<BountyDetails>,
     enabled: !!bountyId,
-    staleTime: 10 * 1000, // Details are fresh for 10 seconds
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 10 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
 // Optimized Mutation Hooks with optimistic updates
 export const useCreateBounty = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: createBounty,
-    // Optimistic update
+    mutationFn: (bountyData: BountyInput) => createBountyAction(bountyData as Record<string, any>),
     onMutate: async (newBounty) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.bounties.lists() });
-      
-      // Snapshot previous value
       const previousBounties = queryClient.getQueryData(queryKeys.bounties.lists());
-      
-      // Optimistically update to the new value
+
       const optimisticBounty: Bounty = {
         id: `temp-${Date.now()}`,
         title: newBounty.title,
@@ -283,22 +172,19 @@ export const useCreateBounty = () => {
         isAnonymous: newBounty.isAnonymous ? 1 : 0,
         createdAt: new Date().toISOString(),
       };
-      
+
       queryClient.setQueryData(
         queryKeys.bounties.lists(),
         (old: Bounty[] | undefined) => optimisticHelpers.addToList(old, optimisticBounty)
       );
-      
-      // Return context with snapshot
+
       return { previousBounties };
     },
-    // On error, revert to previous value
     onError: (_err, _newBounty, context) => {
       if (context?.previousBounties) {
         queryClient.setQueryData(queryKeys.bounties.lists(), context.previousBounties);
       }
     },
-    // Always refetch after error or success
     onSettled: () => {
       invalidationPatterns.smartInvalidate(queryClient, "bounties", "create");
     },
@@ -307,38 +193,31 @@ export const useCreateBounty = () => {
 
 export const useUpdateBounty = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: updateBounty,
-    // Optimistic update
+    mutationFn: ({ id, ...updates }: BountyInput & { id: string }) =>
+      updateBountyAction(id, updates as Record<string, any>),
     onMutate: async (updatedBounty) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        queryKey: queryKeys.bounties.detail(updatedBounty.id) 
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.bounties.detail(updatedBounty.id)
       });
-      
-      // Snapshot previous values
+
       const previousBounty = queryClient.getQueryData(
         queryKeys.bounties.detail(updatedBounty.id)
       );
       const previousBounties = queryClient.getQueryData(queryKeys.bounties.lists());
-      
-      // Optimistically update bounty details
+
       queryClient.setQueryData(
         queryKeys.bounties.detail(updatedBounty.id),
-        (old: BountyDetails | undefined) => ({
-          ...old,
-          ...updatedBounty,
-        })
+        (old: BountyDetails | undefined) => ({ ...old, ...updatedBounty })
       );
-      
-      // Optimistically update in list
+
       queryClient.setQueryData(
         queryKeys.bounties.lists(),
-        (old: Bounty[] | undefined) => 
+        (old: Bounty[] | undefined) =>
           optimisticHelpers.updateInList(old, updatedBounty as any)
       );
-      
+
       return { previousBounty, previousBounties };
     },
     onError: (_err, updatedBounty, context) => {
@@ -360,29 +239,23 @@ export const useUpdateBounty = () => {
 
 export const useDeleteBounty = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: deleteBounty,
-    // Optimistic update
+    mutationFn: (bountyId: string) => deleteBountyAction(bountyId),
     onMutate: async (bountyId) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.bounties.lists() });
-      
-      // Snapshot previous value
       const previousBounties = queryClient.getQueryData(queryKeys.bounties.lists());
-      
-      // Optimistically remove from list
+
       queryClient.setQueryData(
         queryKeys.bounties.lists(),
-        (old: Bounty[] | undefined) => 
+        (old: Bounty[] | undefined) =>
           optimisticHelpers.removeFromList(old, bountyId)
       );
-      
-      // Remove from cache
-      queryClient.removeQueries({ 
-        queryKey: queryKeys.bounties.detail(bountyId) 
+
+      queryClient.removeQueries({
+        queryKey: queryKeys.bounties.detail(bountyId)
       });
-      
+
       return { previousBounties };
     },
     onError: (_err, _bountyId, context) => {
@@ -403,13 +276,13 @@ export const usePrefetchBounty = () => {
   return (bountyId: string, includeAll?: boolean) => {
     queryClient.prefetchQuery({
       queryKey: [...queryKeys.bounties.detail(bountyId), includeAll ? 'all' : 'public'],
-      queryFn: () => fetchBountyDetails(bountyId, includeAll),
+      queryFn: () => getBountyByIdAction(bountyId) as Promise<BountyDetails>,
       staleTime: 10 * 1000,
     });
   };
 };
 
-// Utility function to format bounty amount
+// Utility functions (unchanged)
 export const formatBountyAmount = (amountInCents?: number | null): string => {
   if (!amountInCents) return "Open";
   return new Intl.NumberFormat("en-US", {
@@ -420,7 +293,6 @@ export const formatBountyAmount = (amountInCents?: number | null): string => {
   }).format(amountInCents / 100);
 };
 
-// Utility function to get status color
 export const getBountyStatusColor = (status: string): string => {
   const statusColors: Record<string, string> = {
     published: "bg-green-100 text-green-800",
@@ -431,7 +303,6 @@ export const getBountyStatusColor = (status: string): string => {
   return statusColors[status] || "bg-gray-100 text-gray-800";
 };
 
-// Utility function to get organization type label
 export const getOrgTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
     civic: "Civic Organization",

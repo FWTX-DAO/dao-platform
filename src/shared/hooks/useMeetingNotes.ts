@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAccessToken } from "@privy-io/react-auth";
+import {
+  getMeetingNotes as getMeetingNotesAction,
+  createMeetingNote as createMeetingNoteAction,
+} from "@/app/_actions/meeting-notes";
 
 export interface MeetingNote {
   id: string;
@@ -25,59 +28,32 @@ export interface MeetingNoteInput {
   tags?: string | string[];
 }
 
-const fetchMeetingNotes = async (): Promise<MeetingNote[]> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/meeting-notes", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch meeting notes: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const createMeetingNote = async (noteData: MeetingNoteInput): Promise<MeetingNote> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/meeting-notes", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(noteData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to create meeting note: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-// Query Hooks
 export const useMeetingNotes = () => {
   return useQuery({
     queryKey: ["meeting-notes"],
-    queryFn: fetchMeetingNotes,
-    staleTime: 1000 * 60 * 3, // 3 minutes
+    queryFn: () => getMeetingNotesAction() as Promise<MeetingNote[]>,
+    staleTime: 1000 * 60 * 3,
   });
 };
 
-// Mutation Hooks
 export const useCreateMeetingNote = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: createMeetingNote,
+    mutationFn: (noteData: MeetingNoteInput) =>
+      createMeetingNoteAction({
+        title: noteData.title,
+        date: noteData.date,
+        attendees: Array.isArray(noteData.attendees) ? noteData.attendees.join(', ') : noteData.attendees,
+        agenda: noteData.agenda,
+        notes: noteData.notes,
+        actionItems: Array.isArray(noteData.actionItems) ? noteData.actionItems.join(', ') : noteData.actionItems,
+        tags: Array.isArray(noteData.tags) ? noteData.tags.join(', ') : noteData.tags,
+      }),
     onMutate: async (newNote) => {
       await queryClient.cancelQueries({ queryKey: ["meeting-notes"] });
-      
       const previousNotes = queryClient.getQueryData<MeetingNote[]>(["meeting-notes"]);
-      
+
       const optimisticNote: MeetingNote = {
         id: `temp-${Date.now()}`,
         title: newNote.title,
@@ -91,11 +67,11 @@ export const useCreateMeetingNote = () => {
         author_id: 'temp',
         created_at: new Date().toISOString(),
       };
-      
-      queryClient.setQueryData<MeetingNote[]>(["meeting-notes"], (old) => 
+
+      queryClient.setQueryData<MeetingNote[]>(["meeting-notes"], (old) =>
         old ? [optimisticNote, ...old] : [optimisticNote]
       );
-      
+
       return { previousNotes };
     },
     onError: (_err, _newNote, context) => {
@@ -103,10 +79,8 @@ export const useCreateMeetingNote = () => {
         queryClient.setQueryData(["meeting-notes"], context.previousNotes);
       }
     },
-    onSuccess: (newNote) => {
-      queryClient.setQueryData(["meeting-notes"], (oldData: MeetingNote[] | undefined) => {
-        return oldData ? [newNote, ...oldData.filter(n => !n.id.startsWith('temp-'))] : [newNote];
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meeting-notes"] });
     },
   });
 };

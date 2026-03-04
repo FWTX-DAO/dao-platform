@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   Home,
@@ -36,7 +36,7 @@ interface FloatingNavProps {
 }
 
 const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
-  const router = useRouter();
+  const pathname = usePathname();
   const [active, setActive] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, left: 0 });
   const containerRef = useRef<HTMLElement>(null);
@@ -44,12 +44,11 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
 
   // Determine active item based on current route
   useEffect(() => {
-    const currentPath = router.pathname;
-    const activeIndex = items.findIndex((item) => item.href === currentPath);
+    const activeIndex = items.findIndex((item) => item.href === pathname);
     if (activeIndex !== -1) {
       setActive(activeIndex);
     }
-  }, [router.pathname, items]);
+  }, [pathname, items]);
 
   // Update indicator position when active changes or resize
   useEffect(() => {
