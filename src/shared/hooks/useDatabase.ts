@@ -3,10 +3,7 @@ import { getUserProfile } from '@/app/_actions/users';
 import { getMemberProfile } from '@/app/_actions/members';
 
 export function useDatabase() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  return { loading, error };
+  return { loading: false, error: null };
 }
 
 export function useUser() {

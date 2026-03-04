@@ -69,7 +69,7 @@ export interface UpdateProfileInput {
 export const useProfile = () => {
   return useQuery({
     queryKey: queryKeys.members.profile(),
-    queryFn: () => getMemberProfile() as Promise<MemberProfile>,
+    queryFn: () => getMemberProfile() as unknown as Promise<MemberProfile>,
     staleTime: 5 * 60 * 1000,
   });
 };

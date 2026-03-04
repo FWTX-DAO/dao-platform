@@ -42,10 +42,12 @@ export async function onboardUser(data: { username: string; bio: string | null }
     .where(eq(members.userId, user.id))
     .limit(1);
 
+  let memberId: string;
   if (memberRecord.length === 0) {
+    memberId = generateId();
     const now = new Date();
     await db.insert(members).values({
-      id: generateId(),
+      id: memberId,
       userId: user.id,
       membershipType: 'basic',
       contributionPoints: 0,
@@ -55,10 +57,12 @@ export async function onboardUser(data: { username: string; bio: string | null }
       createdAt: now,
       updatedAt: now,
     });
+  } else {
+    memberId = memberRecord[0]!.id;
   }
 
   revalidatePath('/dashboard');
-  return { success: true, user: updatedUser };
+  return { success: true, user: updatedUser, memberId };
 }
 
 export async function getUserProfile() {

@@ -5,12 +5,14 @@ import { pinataHelpers } from '@shared/utils/api-helpers';
 import { db, documents } from '@core/database';
 import { generateId } from '@utils/id-generator';
 
-const privy = new PrivyClient(
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!,
-);
+let _privy: PrivyClient | null = null;
+function getPrivy() {
+  if (!_privy) _privy = new PrivyClient(process.env.NEXT_PUBLIC_PRIVY_APP_ID!, process.env.PRIVY_APP_SECRET!);
+  return _privy;
+}
 
 export async function POST(request: Request) {
+  const privy = getPrivy();
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
     return NextResponse.json({ error: 'Missing auth token' }, { status: 401 });

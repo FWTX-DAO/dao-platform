@@ -2,21 +2,26 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { PrivyClient } from '@privy-io/server-auth';
 import { membersService } from '@features/members';
-import { subscriptionsService } from '@features/subscriptions';
 import { getOrCreateUser } from '@core/database/queries/users';
 import { db, membershipTiers } from '@core/database';
 import { eq } from 'drizzle-orm';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-01-28.clover',
-});
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+  return _stripe;
+}
 
-const privy = new PrivyClient(
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!,
-);
+let _privy: PrivyClient | null = null;
+function getPrivy() {
+  if (!_privy) _privy = new PrivyClient(process.env.NEXT_PUBLIC_PRIVY_APP_ID!, process.env.PRIVY_APP_SECRET!);
+  return _privy;
+}
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
+  const privy = getPrivy();
+
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
     return NextResponse.json({ error: 'Missing auth token' }, { status: 401 });
@@ -36,6 +41,9 @@ export async function POST(request: Request) {
   }
 
   const member = await membersService.getOrCreateMember(user.id);
+  if (!member) {
+    return NextResponse.json({ error: 'Could not create member' }, { status: 500 });
+  }
 
   const body = await request.json();
   const { tierId } = body;
@@ -53,7 +61,7 @@ export async function POST(request: Request) {
   let stripeCustomerId = member.stripeCustomerId;
   if (!stripeCustomerId) {
     const customer = await stripe.customers.create({
-      email: user.email || undefined,
+      email: (claims as any).email || undefined,
       metadata: { userId: user.id, memberId: member.id },
     });
     stripeCustomerId = customer.id;

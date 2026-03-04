@@ -31,7 +31,7 @@ export interface MeetingNoteInput {
 export const useMeetingNotes = () => {
   return useQuery({
     queryKey: ["meeting-notes"],
-    queryFn: () => getMeetingNotesAction() as Promise<MeetingNote[]>,
+    queryFn: () => getMeetingNotesAction() as unknown as Promise<MeetingNote[]>,
     staleTime: 1000 * 60 * 3,
   });
 };

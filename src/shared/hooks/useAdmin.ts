@@ -40,7 +40,7 @@ export interface MemberRoleAssignment {
 export const useRoles = () => {
   return useQuery({
     queryKey: queryKeys.roles.all(),
-    queryFn: () => getRolesAction() as Promise<Role[]>,
+    queryFn: () => getRolesAction() as unknown as Promise<Role[]>,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -48,7 +48,7 @@ export const useRoles = () => {
 export const useRolePermissions = (roleId: string | null) => {
   return useQuery({
     queryKey: queryKeys.roles.permissions(roleId!),
-    queryFn: () => getRolePermissionsAction(roleId!) as Promise<Permission[]>,
+    queryFn: () => getRolePermissionsAction(roleId!) as unknown as Promise<Permission[]>,
     enabled: !!roleId,
     staleTime: 5 * 60 * 1000,
   });
@@ -68,7 +68,7 @@ export const useUpdateRolePermissions = () => {
 export const useMemberRoles = (memberId: string | null) => {
   return useQuery({
     queryKey: queryKeys.roles.memberRoles(memberId!),
-    queryFn: () => getMemberRolesAction(memberId!) as Promise<MemberRoleAssignment[]>,
+    queryFn: () => getMemberRolesAction(memberId!) as unknown as Promise<MemberRoleAssignment[]>,
     enabled: !!memberId,
     staleTime: 60 * 1000,
   });

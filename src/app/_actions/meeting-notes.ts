@@ -1,7 +1,6 @@
 'use server';
 
 import { requireAuth } from '@/app/_lib/auth';
-import { meetingNotesService } from '@features/meeting-notes';
 import { db, meetingNotes, users } from '@core/database';
 import { eq, desc } from 'drizzle-orm';
 import { generateId } from '@utils/id-generator';
@@ -40,20 +39,17 @@ export async function createMeetingNote(data: {
   const { user } = await requireAuth();
 
   const id = generateId();
-  const now = new Date();
 
   await db.insert(meetingNotes).values({
     id,
     authorId: user.id,
     title: data.title,
     date: data.date,
-    attendees: data.attendees || null,
-    agenda: data.agenda || null,
-    notes: data.notes || null,
-    actionItems: data.actionItems || null,
-    tags: data.tags || null,
-    createdAt: now,
-    updatedAt: now,
+    attendees: data.attendees,
+    agenda: data.agenda,
+    notes: data.notes || '',
+    actionItems: data.actionItems,
+    tags: data.tags,
   });
 
   revalidatePath('/meeting-notes');

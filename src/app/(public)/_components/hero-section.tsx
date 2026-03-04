@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 export function HeroSection() {
   const router = useRouter();
   const { login } = useLogin({
-    onComplete: () => router.push('/'),
+    onComplete: () => router.push('/dashboard'),
   });
 
   const [mounted, setMounted] = useState(false);

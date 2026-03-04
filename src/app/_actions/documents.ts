@@ -7,7 +7,7 @@ import { generateId } from '@utils/id-generator';
 import { revalidatePath } from 'next/cache';
 
 export async function getDocuments(filters?: { search?: string; category?: string }) {
-  const { user } = await requireAuth();
+  await requireAuth();
 
   const conditions = [eq(documents.status, 'active')];
   if (filters?.search) {

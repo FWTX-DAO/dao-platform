@@ -4,16 +4,22 @@ import { PrivyClient } from '@privy-io/server-auth';
 import { membersService } from '@features/members';
 import { getOrCreateUser } from '@core/database/queries/users';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-01-28.clover',
-});
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+  return _stripe;
+}
 
-const privy = new PrivyClient(
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!,
-);
+let _privy: PrivyClient | null = null;
+function getPrivy() {
+  if (!_privy) _privy = new PrivyClient(process.env.NEXT_PUBLIC_PRIVY_APP_ID!, process.env.PRIVY_APP_SECRET!);
+  return _privy;
+}
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
+  const privy = getPrivy();
+
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
     return NextResponse.json({ error: 'Missing auth token' }, { status: 401 });
@@ -33,6 +39,9 @@ export async function POST(request: Request) {
   }
 
   const member = await membersService.getOrCreateMember(user.id);
+  if (!member) {
+    return NextResponse.json({ error: 'Could not create member' }, { status: 500 });
+  }
 
   if (!member.stripeCustomerId) {
     return NextResponse.json({ error: 'No Stripe customer found. Subscribe to a plan first.' }, { status: 400 });

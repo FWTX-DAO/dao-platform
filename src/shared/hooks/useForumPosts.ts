@@ -41,7 +41,7 @@ export interface ForumPostUpdate {
 export const useForumPosts = () => {
   return useQuery({
     queryKey: ["forum-posts"],
-    queryFn: () => getPostsAction() as Promise<ForumPost[]>,
+    queryFn: () => getPostsAction() as unknown as Promise<ForumPost[]>,
     staleTime: 1000 * 60,
   });
 };
@@ -49,7 +49,7 @@ export const useForumPosts = () => {
 export const useForumReplies = (postId: string | null) => {
   return useQuery({
     queryKey: ["forum-replies", postId],
-    queryFn: () => getRepliesAction(postId!) as Promise<ForumPost[]>,
+    queryFn: () => getRepliesAction(postId!) as unknown as Promise<ForumPost[]>,
     enabled: !!postId,
     staleTime: 1000 * 60,
   });
@@ -66,7 +66,7 @@ export const useCreateForumPost = () => {
         content: postData.content,
         category: postData.category,
         parentId: postData.parent_id,
-      }) as Promise<ForumPost>,
+      }) as unknown as Promise<ForumPost>,
     onMutate: async (newPost) => {
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
 

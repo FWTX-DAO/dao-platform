@@ -29,7 +29,7 @@ export interface DirectoryFilters {
 export const useMemberDirectory = (filters: DirectoryFilters) => {
   return useQuery({
     queryKey: queryKeys.members.directory(filters as Record<string, unknown>),
-    queryFn: () => searchMembers(filters) as Promise<DirectoryMember[]>,
+    queryFn: () => searchMembers(filters) as unknown as Promise<DirectoryMember[]>,
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });

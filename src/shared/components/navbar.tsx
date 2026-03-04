@@ -14,7 +14,7 @@ function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-lg">
+    <nav className="bg-dao-dark border-b border-dao-border sticky top-0 z-50 shadow-lg">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Left side: Hamburger Menu + Logo */}
@@ -22,7 +22,7 @@ function Navbar() {
             <AnimatedMenuToggle toggle={toggle} isOpen={isOpen} />
 
             <button
-              className="flex items-center gap-3 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
+              className="flex items-center gap-3 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dao-dark rounded"
               onClick={() => handleNavigation("/dashboard")}
               aria-label="Go to dashboard"
             >

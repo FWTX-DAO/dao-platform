@@ -13,7 +13,7 @@ export const AnimatedMenuToggle = ({ toggle, isOpen }: AnimatedMenuToggleProps) 
   <button
     onClick={toggle}
     aria-label="Toggle menu"
-    className="flex items-center justify-center w-10 h-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded z-50"
+    className="flex items-center justify-center w-10 h-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dao-dark rounded z-50"
   >
     <motion.svg
       width="24"
@@ -22,7 +22,7 @@ export const AnimatedMenuToggle = ({ toggle, isOpen }: AnimatedMenuToggleProps) 
       initial="closed"
       animate={isOpen ? "open" : "closed"}
       transition={{ duration: 0.3 }}
-      className="text-gray-300"
+      className="text-dao-cool"
     >
       <motion.path
         fill="transparent"
@@ -75,7 +75,7 @@ export const CollapsibleSection = ({
   return (
     <div className="mb-4">
       <button
-        className="w-full flex items-center justify-between py-2 px-4 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
+        className="w-full flex items-center justify-between py-2 px-4 rounded-xl hover:bg-dao-surface/50 text-dao-cool hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
@@ -169,15 +169,15 @@ export const AnimatedSidebar = ({
               exit="hidden"
               variants={mobileSidebarVariants}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="md:hidden fixed top-0 left-0 h-screen w-64 z-40 bg-gray-800 text-white shadow-xl"
+              className="md:hidden fixed top-0 left-0 h-screen w-64 z-40 bg-dao-dark text-white shadow-xl"
             >
               <div className="flex flex-col h-full">
                 {/* Top section with logo/branding space */}
-                <div className="h-16 flex items-center justify-between px-4 border-b border-gray-700">
+                <div className="h-16 flex items-center justify-between px-4 border-b border-dao-border">
                   <span className="text-white font-semibold">Navigation</span>
                   <button
                     onClick={onClose}
-                    className="text-gray-300 hover:text-white hover:bg-gray-700 rounded p-2 transition-colors"
+                    className="text-dao-cool hover:text-white hover:bg-dao-surface rounded p-2 transition-colors"
                     aria-label="Close menu"
                   >
                     <X className="h-5 w-5" />
@@ -186,7 +186,7 @@ export const AnimatedSidebar = ({
 
                 {/* Profile Section */}
                 {profileSection && (
-                  <div className="p-4 border-b border-gray-700">
+                  <div className="p-4 border-b border-dao-border">
                     {profileSection}
                   </div>
                 )}
@@ -198,7 +198,7 @@ export const AnimatedSidebar = ({
 
                 {/* Footer / Action Button */}
                 {footerSection && (
-                  <div className="p-4 border-t border-gray-700">
+                  <div className="p-4 border-t border-dao-border">
                     {footerSection}
                   </div>
                 )}
@@ -213,13 +213,13 @@ export const AnimatedSidebar = ({
         initial={false}
         animate={{ x: isOpen ? 0 : -280 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white shadow-xl border-r border-gray-700 z-40"
+        className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-64 bg-dao-dark text-white shadow-xl border-r border-dao-border z-40"
       >
         {/* Top spacer to account for navbar */}
-        <div className="h-16 border-b border-gray-700" />
+        <div className="h-16 border-b border-dao-border" />
         {/* Profile Section */}
         {profileSection && (
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 border-b border-dao-border">
             {profileSection}
           </div>
         )}
@@ -231,7 +231,7 @@ export const AnimatedSidebar = ({
 
         {/* Footer / Action Button */}
         {footerSection && (
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-4 border-t border-dao-border">
             {footerSection}
           </div>
         )}

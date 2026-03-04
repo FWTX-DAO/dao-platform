@@ -26,12 +26,12 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 4rem; /* Account for sticky navbar (h-16 = 64px = 4rem) */
-    background-color: #0a0d11;
+    background-color: #0f1b33;
   }
 
   body {
     font-family: 'Adelle Sans', system-ui, -apple-system, sans-serif;
-    background-color: #0a0d11;
+    background-color: #0f1b33;
   }
 }
 

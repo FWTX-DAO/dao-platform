@@ -2,9 +2,8 @@
 
 import { requireAuth } from '@/app/_lib/auth';
 import { forumService } from '@features/forum';
-import { db, forumPosts, forumVotes } from '@core/database';
+import { db, forumVotes } from '@core/database';
 import { eq, and } from 'drizzle-orm';
-import { generateId } from '@utils/id-generator';
 import { revalidatePath } from 'next/cache';
 
 export async function getPosts(filters?: { category?: string; projectId?: string }) {
@@ -29,7 +28,7 @@ export async function getThread(postId: string) {
 
 export async function createPost(data: { title: string; content: string; category?: string; parentId?: string; projectId?: string }) {
   const { user } = await requireAuth();
-  const result = await forumService.createPost(data, user.id);
+  const result = await forumService.createPost({ ...data, category: data.category || 'General' }, user.id);
   revalidatePath('/forums');
   return result;
 }
@@ -69,17 +68,14 @@ export async function vote(postId: string, voteType: number) {
     // Update existing vote
     await db
       .update(forumVotes)
-      .set({ voteType, updatedAt: new Date() })
+      .set({ voteType })
       .where(and(eq(forumVotes.postId, postId), eq(forumVotes.userId, user.id)));
   } else {
     // Create new vote
     await db.insert(forumVotes).values({
-      id: generateId(),
       postId,
       userId: user.id,
       voteType,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
   }
 

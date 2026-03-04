@@ -83,7 +83,7 @@ export interface ProjectUpdateData {
 export const useProjects = () => {
   return useQuery({
     queryKey: ["projects"],
-    queryFn: () => getProjectsAction() as Promise<Project[]>,
+    queryFn: () => getProjectsAction() as unknown as Promise<Project[]>,
     staleTime: 1000 * 60,
   });
 };
@@ -91,7 +91,7 @@ export const useProjects = () => {
 export const useProjectDetails = (projectId: string | null) => {
   return useQuery({
     queryKey: ["project-details", projectId],
-    queryFn: () => getProjectByIdAction(projectId!) as Promise<ProjectDetails>,
+    queryFn: () => getProjectByIdAction(projectId!) as unknown as Promise<ProjectDetails>,
     enabled: !!projectId,
     staleTime: 1000 * 60,
   });
@@ -100,7 +100,7 @@ export const useProjectDetails = (projectId: string | null) => {
 export const useProjectUpdates = (projectId: string | null) => {
   return useQuery({
     queryKey: ["project-updates", projectId],
-    queryFn: () => getProjectUpdatesAction(projectId!) as Promise<ProjectUpdate[]>,
+    queryFn: () => getProjectUpdatesAction(projectId!) as unknown as Promise<ProjectUpdate[]>,
     enabled: !!projectId,
     staleTime: 1000 * 60,
   });

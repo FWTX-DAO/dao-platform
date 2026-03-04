@@ -3,9 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
+import { AnimatePresence } from 'framer-motion';
 import { onboardUser } from '@/app/_actions/users';
 import { completeOnboarding } from '@/app/_actions/members';
 import IndustrySelect from '@components/IndustrySelect';
+import { PassportCreationReveal } from '@components/passport';
+import type { PassportData } from '@components/passport';
 
 const STEPS = ['Identity', 'Professional', 'Community'] as const;
 
@@ -64,7 +67,8 @@ const selectBase =
 function validateUsernameFormat(username: string) {
   if (!username || username.trim().length < 3) return { valid: false, error: 'Username must be at least 3 characters' };
   if (username.length > 30) return { valid: false, error: 'Username must be 30 characters or less' };
-  if (!/^[a-zA-Z0-9_-]+$/.test(username)) return { valid: false, error: 'Letters, numbers, underscores, hyphens only' };
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(username))
+    return { valid: false, error: 'Must start with a letter or number. Letters, numbers, underscores, hyphens only' };
   return { valid: true, error: null };
 }
 
@@ -77,6 +81,8 @@ export function OnboardingForm() {
   const [globalError, setGlobalError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showPassportReveal, setShowPassportReveal] = useState(false);
+  const [passportData, setPassportData] = useState<PassportData | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -162,7 +168,30 @@ export function OnboardingForm() {
         zip: formData.zip.trim() || undefined,
       });
 
-      router.push('/dashboard');
+      // Build passport data and show reveal
+      const walletAccount = user?.linkedAccounts?.find(
+        (a: any) => a.type === 'wallet'
+      ) as any;
+
+      setPassportData({
+        avatarUrl: null,
+        username: formData.username,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        memberId: userResult.memberId || 'PENDING',
+        membershipType: 'community',
+        joinedAt: new Date().toISOString(),
+        contributionPoints: 0,
+        votingPower: 0,
+        skills: formData.skills || null,
+        civicInterests: formData.civicInterests || null,
+        city: formData.city || null,
+        state: formData.state || null,
+        walletAddress: walletAccount?.address || null,
+        tierDisplayName: 'Community',
+        roleNames: ['member'],
+      });
+      setShowPassportReveal(true);
     } catch (err: any) {
       setGlobalError(err.message || 'An error occurred. Please try again.');
       setIsSubmitting(false);
@@ -176,6 +205,15 @@ export function OnboardingForm() {
     (formData.email === user?.email?.address || formData.email === (user?.google as any)?.email);
 
   return (
+    <>
+    <AnimatePresence>
+      {showPassportReveal && passportData && (
+        <PassportCreationReveal
+          data={passportData}
+          onComplete={() => router.push('/passport')}
+        />
+      )}
+    </AnimatePresence>
     <main className="relative min-h-screen bg-dao-charcoal overflow-hidden selection:bg-dao-gold/30 selection:text-dao-warm">
       <div className="absolute inset-0 pointer-events-none">
         <style>{`
@@ -481,5 +519,6 @@ export function OnboardingForm() {
         </div>
       </div>
     </main>
+    </>
   );
 }

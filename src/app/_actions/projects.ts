@@ -1,7 +1,6 @@
 'use server';
 
 import { requireAuth } from '@/app/_lib/auth';
-import { projectsService } from '@features/projects';
 import { forumService } from '@features/forum';
 import {
   db,
@@ -11,12 +10,12 @@ import {
   projectUpdates,
   members,
 } from '@core/database';
-import { eq, desc, sql, or } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { generateId } from '@utils/id-generator';
 import { revalidatePath } from 'next/cache';
 
 export async function getProjects() {
-  const { user } = await requireAuth();
+  await requireAuth();
 
   return db
     .select({
@@ -52,7 +51,7 @@ export async function getProjectById(id: string) {
         status: projects.status,
         githubRepo: projects.githubRepo,
         intent: projects.intent,
-        benefit: projects.benefit,
+        benefit: projects.benefitToFortWorth,
         tags: projects.tags,
         creator_name: users.username,
         creator_id: projects.creatorId,
@@ -65,7 +64,6 @@ export async function getProjectById(id: string) {
       .limit(1),
     db
       .select({
-        id: projectCollaborators.id,
         userId: projectCollaborators.userId,
         username: users.username,
         role: projectCollaborators.role,
@@ -111,9 +109,9 @@ export async function createProject(data: {
     title: data.title,
     description: data.description,
     status: data.status || 'active',
-    githubRepo: data.githubRepo || null,
-    intent: data.intent || null,
-    benefit: data.benefit || null,
+    githubRepo: data.githubRepo || '',
+    intent: data.intent || '',
+    benefitToFortWorth: data.benefit || '',
     tags: data.tags || null,
     createdAt: now,
     updatedAt: now,
@@ -168,11 +166,9 @@ export async function joinProject(id: string) {
 
   const now = new Date();
   await db.insert(projectCollaborators).values({
-    id: generateId(),
     projectId: id,
     userId: user.id,
     role: 'contributor',
-    joinedAt: now,
   });
 
   // Award contribution points
@@ -233,7 +229,7 @@ export async function getProjectForum(projectId: string) {
 
 export async function createProjectForumPost(projectId: string, data: { title: string; content: string; category?: string }) {
   const { user } = await requireAuth();
-  const result = await forumService.createPost({ ...data, projectId }, user.id);
+  const result = await forumService.createPost({ ...data, category: data.category || 'General', projectId }, user.id);
   revalidatePath(`/innovation-lab/${projectId}`);
   return result;
 }

@@ -14,7 +14,7 @@ export interface Member {
 export const useMembers = () => {
   return useQuery({
     queryKey: ["members"],
-    queryFn: () => listMembers() as Promise<Member[]>,
+    queryFn: () => listMembers() as unknown as Promise<Member[]>,
     staleTime: 1000 * 60 * 5,
   });
 };

@@ -39,7 +39,7 @@ export interface ActivityFilters {
 export const useMyActivities = (filters?: ActivityFilters) => {
   return useQuery({
     queryKey: [...queryKeys.activities.all(), filters] as const,
-    queryFn: () => getMyActivitiesAction(filters) as Promise<Activity[]>,
+    queryFn: () => getMyActivitiesAction(filters) as unknown as Promise<Activity[]>,
     staleTime: 60 * 1000,
   });
 };
@@ -47,7 +47,7 @@ export const useMyActivities = (filters?: ActivityFilters) => {
 export const usePlatformFeed = (limit?: number) => {
   return useQuery({
     queryKey: queryKeys.activities.feed(),
-    queryFn: () => getPlatformFeedAction(limit) as Promise<PlatformActivity[]>,
+    queryFn: () => getPlatformFeedAction(limit) as unknown as Promise<PlatformActivity[]>,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -56,7 +56,7 @@ export const usePlatformFeed = (limit?: number) => {
 export const useMemberActivities = (memberId: string | null) => {
   return useQuery({
     queryKey: queryKeys.activities.member(memberId!),
-    queryFn: () => getMemberActivitiesAction(memberId!) as Promise<Activity[]>,
+    queryFn: () => getMemberActivitiesAction(memberId!) as unknown as Promise<Activity[]>,
     enabled: !!memberId,
     staleTime: 60 * 1000,
   });

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getDocuments as getDocumentsAction,
-  createDocument as createDocumentAction,
   updateDocument as updateDocumentAction,
   deleteDocument as deleteDocumentAction,
 } from "@/app/_actions/documents";

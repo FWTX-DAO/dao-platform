@@ -22,6 +22,7 @@ import {
   Activity,
   CreditCard,
   ShieldCheck,
+  BookOpen,
 } from 'lucide-react';
 
 export type NavbarItem = {
@@ -32,6 +33,7 @@ export type NavbarItem = {
 };
 
 const navigationItems: NavbarItem[] = [
+  { id: 'passport', name: 'Passport', href: '/passport', icon: BookOpen },
   { id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: Home },
   { id: 'forums', name: 'Forums', href: '/forums', icon: MessageSquare },
   { id: 'bounties', name: 'Bounties', href: '/bounties', icon: Trophy },
@@ -53,8 +55,8 @@ const SidebarItem = memo(({ item, isActive, onClick }: SidebarItemProps) => {
       variant="ghost"
       className={`w-full justify-start transition-all duration-200 ${
         isActive
-          ? 'bg-gray-700 text-white hover:bg-gray-600'
-          : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+          ? 'bg-dao-surface text-white hover:bg-dao-surface/80'
+          : 'text-dao-cool hover:text-white hover:bg-dao-surface/50'
       }`}
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
@@ -69,7 +71,7 @@ SidebarItem.displayName = 'SidebarItem';
 
 const UserAvatar = memo(({ src, size = 40 }: { src: string; size?: number }) => (
   <div
-    className="relative rounded-full overflow-hidden bg-gray-600 flex items-center justify-center"
+    className="relative rounded-full overflow-hidden bg-dao-surface flex items-center justify-center"
     style={{ width: size, height: size }}
   >
     <Image
@@ -84,7 +86,7 @@ const UserAvatar = memo(({ src, size = 40 }: { src: string; size?: number }) => 
         e.currentTarget.nextElementSibling?.classList.remove('hidden');
       }}
     />
-    <User className="h-6 w-6 text-gray-300 hidden" />
+    <User className="h-6 w-6 text-dao-cool hidden" />
   </div>
 ));
 
@@ -128,7 +130,7 @@ function Sidebar() {
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-white truncate">{userInfo.email}</p>
         {userInfo.id && (
-          <p className="text-sm text-gray-400 truncate">{userInfo.id}...</p>
+          <p className="text-sm text-dao-cool/70 truncate">{userInfo.id}...</p>
         )}
       </div>
     </div>
@@ -154,7 +156,7 @@ function Sidebar() {
         <div className="space-y-1">
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
             onClick={() => handleNavigation('/members')}
           >
             <Users className="mr-3 h-4 w-4" />
@@ -162,7 +164,7 @@ function Sidebar() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
             onClick={() => handleNavigation('/directory')}
           >
             <Search className="mr-3 h-4 w-4" />
@@ -170,7 +172,7 @@ function Sidebar() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
             onClick={() => handleNavigation('/activity')}
           >
             <Activity className="mr-3 h-4 w-4" />
@@ -178,7 +180,7 @@ function Sidebar() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
             onClick={() => handleNavigation('/subscriptions')}
           >
             <CreditCard className="mr-3 h-4 w-4" />
@@ -186,7 +188,7 @@ function Sidebar() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
             onClick={() => window.open('https://t.me/fwtxdao', '_blank')}
           >
             <Send className="mr-3 h-4 w-4" />
@@ -200,7 +202,7 @@ function Sidebar() {
           <div className="space-y-1">
             <Button
               variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+              className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
               onClick={() => handleNavigation('/admin')}
             >
               <ShieldCheck className="mr-3 h-4 w-4" />
@@ -214,14 +216,14 @@ function Sidebar() {
         <div className="space-y-1">
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50 text-sm"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50 text-sm"
             onClick={() => window.open('https://constitution.fwtx.city', '_blank')}
           >
             About DAO
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50 text-sm"
+            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50 text-sm"
             onClick={() => window.open('https://github.com/fwtx-dao', '_blank')}
           >
             GitHub
@@ -236,7 +238,7 @@ function Sidebar() {
     <div className="space-y-2">
       <Button
         variant="ghost"
-        className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
+        className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface"
         onClick={() => handleNavigation('/profile')}
       >
         <User className="mr-3 h-4 w-4" />
@@ -244,7 +246,7 @@ function Sidebar() {
       </Button>
       <Button
         variant="ghost"
-        className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
+        className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface"
         onClick={() => handleNavigation('/settings')}
       >
         <Settings className="mr-3 h-4 w-4" />

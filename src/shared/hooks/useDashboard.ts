@@ -81,7 +81,7 @@ export interface MembershipData {
 export const useDashboardData = () => {
   const statsQuery = useQuery({
     queryKey: ["dashboard", "stats"],
-    queryFn: () => getDashboardStats() as Promise<DashboardStats>,
+    queryFn: () => getDashboardStats() as unknown as Promise<DashboardStats>,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -90,7 +90,7 @@ export const useDashboardData = () => {
 
   const membershipQuery = useQuery({
     queryKey: ["dashboard", "membership"],
-    queryFn: () => getMemberStats() as Promise<MembershipData>,
+    queryFn: () => getMemberStats() as unknown as Promise<MembershipData>,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,

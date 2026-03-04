@@ -109,7 +109,7 @@ export const useBounties = (filters?: {
 }) => {
   return useQuery({
     queryKey: queryKeys.bounties.list(filters),
-    queryFn: () => getBountiesAction(filters) as Promise<Bounty[]>,
+    queryFn: () => getBountiesAction(filters) as unknown as Promise<Bounty[]>,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchInterval: filters?.status === "published" ? 60 * 1000 : false,
@@ -126,8 +126,8 @@ export const useBountiesInfinite = (filters?: {
 }) => {
   return useInfiniteQuery({
     queryKey: [...queryKeys.bounties.list(filters), "infinite"],
-    queryFn: ({ pageParam = 0 }) =>
-      getBountiesAction({ ...filters }) as Promise<Bounty[]>,
+    queryFn: () =>
+      getBountiesAction({ ...filters }) as unknown as Promise<Bounty[]>,
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * (filters?.limit || 20);
       return lastPage.length === (filters?.limit || 20) ? totalFetched : undefined;
@@ -141,7 +141,7 @@ export const useBountiesInfinite = (filters?: {
 export const useBountyDetails = (bountyId: string | null, options?: { includeAll?: boolean }) => {
   return useQuery({
     queryKey: [...queryKeys.bounties.detail(bountyId!), options?.includeAll ? 'all' : 'public'],
-    queryFn: () => getBountyByIdAction(bountyId!) as Promise<BountyDetails>,
+    queryFn: () => getBountyByIdAction(bountyId!) as unknown as Promise<BountyDetails>,
     enabled: !!bountyId,
     staleTime: 10 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -276,7 +276,7 @@ export const usePrefetchBounty = () => {
   return (bountyId: string, includeAll?: boolean) => {
     queryClient.prefetchQuery({
       queryKey: [...queryKeys.bounties.detail(bountyId), includeAll ? 'all' : 'public'],
-      queryFn: () => getBountyByIdAction(bountyId) as Promise<BountyDetails>,
+      queryFn: () => getBountyByIdAction(bountyId) as unknown as Promise<BountyDetails>,
       staleTime: 10 * 1000,
     });
   };

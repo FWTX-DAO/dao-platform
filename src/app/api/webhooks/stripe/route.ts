@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { subscriptionsService } from '@features/subscriptions';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-01-28.clover',
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+  return _stripe;
+}
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
   const sig = request.headers.get('stripe-signature');
   if (!sig) {
     return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });

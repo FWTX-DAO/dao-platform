@@ -4,7 +4,7 @@ import { requireAuth } from '@/app/_lib/auth';
 import { membersService } from '@features/members';
 import { getOrCreateUser } from '@core/database/queries/users';
 import { db, members, users } from '@core/database';
-import { eq, and } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 export async function listMembers() {
@@ -48,21 +48,10 @@ export async function getMemberStats() {
 
   const [member, forumPosts, projects, meetingNotes, votesReceived] = await Promise.all([
     db.select().from(members).where(eq(members.userId, user.id)).limit(1),
-    db.select({ count: db.$count(db.select().from(members)) }).from(members).limit(0).then(() => {
-      // Use raw count query
-      return db.execute<{ count: number }>(
-        `SELECT COUNT(*) as count FROM forum_posts WHERE author_id = '${user.id}' AND parent_id IS NULL`
-      );
-    }),
-    db.execute<{ count: number }>(
-      `SELECT COUNT(*) as count FROM projects WHERE creator_id = '${user.id}'`
-    ),
-    db.execute<{ count: number }>(
-      `SELECT COUNT(*) as count FROM meeting_notes WHERE author_id = '${user.id}'`
-    ),
-    db.execute<{ count: number }>(
-      `SELECT COUNT(*) as count FROM forum_votes fv INNER JOIN forum_posts fp ON fv.post_id = fp.id WHERE fp.author_id = '${user.id}' AND fv.vote_type = 1`
-    ),
+    db.execute(sql`SELECT COUNT(*) as count FROM forum_posts WHERE author_id = ${user.id} AND parent_id IS NULL`),
+    db.execute(sql`SELECT COUNT(*) as count FROM projects WHERE creator_id = ${user.id}`),
+    db.execute(sql`SELECT COUNT(*) as count FROM meeting_notes WHERE author_id = ${user.id}`),
+    db.execute(sql`SELECT COUNT(*) as count FROM forum_votes fv INNER JOIN forum_posts fp ON fv.post_id = fp.id WHERE fp.author_id = ${user.id} AND fv.vote_type = 1`),
   ]);
 
   const memberData = member[0];

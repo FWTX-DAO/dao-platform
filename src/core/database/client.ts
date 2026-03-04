@@ -19,7 +19,11 @@ import {
   type NewDocumentAuditTrail
 } from './schema';
 import { generateId } from '../../shared/utils/id-generator';
-import { activitiesService } from '../../features/activities/services/activities.service';
+
+async function trackActivity(userId: string, activityType: string, resourceType: string, resourceId: string) {
+  const { activitiesService } = await import('../../features/activities/services/activities.service');
+  await activitiesService.trackActivity(userId, activityType as any, resourceType, resourceId);
+}
 
 // User operations
 export const userOperations = {
@@ -101,7 +105,7 @@ export const forumOperations = {
     await db.insert(forumPosts).values(newPost);
 
     // Track activity + award contribution points
-    await activitiesService.trackActivity(post.authorId, 'forum_post', 'forum_post', newPost.id);
+    await trackActivity(post.authorId, 'forum_post', 'forum_post', newPost.id);
 
     return newPost;
   },
@@ -184,7 +188,7 @@ export const projectOperations = {
     });
 
     // Track activity + award contribution points
-    await activitiesService.trackActivity(project.creatorId, 'project_created', 'project', newProject.id);
+    await trackActivity(project.creatorId, 'project_created', 'project', newProject.id);
 
     return newProject;
   },
@@ -217,7 +221,7 @@ export const projectOperations = {
     });
 
     // Track activity + award contribution points
-    await activitiesService.trackActivity(userId, 'project_joined', 'project', projectId);
+    await trackActivity(userId, 'project_joined', 'project', projectId);
   }
 };
 
@@ -232,7 +236,7 @@ export const meetingNotesOperations = {
     await db.insert(meetingNotes).values(newNote);
 
     // Track activity + award contribution points
-    await activitiesService.trackActivity(note.authorId, 'meeting_created', 'meeting_note', newNote.id);
+    await trackActivity(note.authorId, 'meeting_created', 'meeting_note', newNote.id);
 
     return newNote;
   },
@@ -285,7 +289,7 @@ export const documentOperations = {
     });
 
     // Track activity + award contribution points
-    await activitiesService.trackActivity(document.uploaderId, 'document_uploaded', 'document', newDocument.id);
+    await trackActivity(document.uploaderId, 'document_uploaded', 'document', newDocument.id);
 
     return newDocument;
   },

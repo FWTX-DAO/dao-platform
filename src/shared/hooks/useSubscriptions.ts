@@ -40,7 +40,7 @@ export interface ActiveSubscription {
 export const useSubscriptionTiers = () => {
   return useQuery({
     queryKey: queryKeys.subscriptions.tiers(),
-    queryFn: () => getTiersAction() as Promise<SubscriptionTier[]>,
+    queryFn: () => getTiersAction() as unknown as Promise<SubscriptionTier[]>,
     staleTime: 10 * 60 * 1000,
   });
 };
@@ -48,7 +48,7 @@ export const useSubscriptionTiers = () => {
 export const useActiveSubscription = () => {
   return useQuery({
     queryKey: queryKeys.subscriptions.active(),
-    queryFn: () => getActiveSubAction() as Promise<ActiveSubscription | null>,
+    queryFn: () => getActiveSubAction() as unknown as Promise<ActiveSubscription | null>,
     staleTime: 5 * 60 * 1000,
   });
 };

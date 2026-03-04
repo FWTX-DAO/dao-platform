@@ -97,6 +97,8 @@ export async function updateUserProfile(
     avatarUrl?: string;
   }
 ) {
+  invalidateUserCache(privyDid);
+
   const updated = await db
     .update(users)
     .set({
@@ -106,7 +108,11 @@ export async function updateUserProfile(
     .where(eq(users.privyDid, privyDid))
     .returning();
 
-  return updated[0];
+  const user = updated[0];
+  if (user) {
+    setCachedUser(privyDid, user);
+  }
+  return user;
 }
 
 /**

@@ -11,5 +11,6 @@ export async function getSubscriptionTiers() {
 export async function getActiveSubscription() {
   const { user } = await requireAuth();
   const member = await membersService.getOrCreateMember(user.id);
+  if (!member) return null;
   return subscriptionsService.getActiveSubscription(member.id);
 }
