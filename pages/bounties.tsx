@@ -1,17 +1,17 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@components/AppLayout";
-import { 
-  useBounties, 
+import {
+  useBounties,
   usePrefetchBounty,
-  formatBountyAmount, 
+  formatBountyAmount,
   getBountyStatusColor,
-  getOrgTypeLabel 
+  getOrgTypeLabel
 } from "@hooks/useBounties";
 import { queryKeys } from "@utils/query-client";
-import { 
+import {
   BriefcaseIcon,
   PlusIcon,
   BuildingOfficeIcon,
@@ -23,6 +23,36 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+
+// Static arrays moved outside component to prevent recreation on each render
+const CATEGORIES = [
+  "all",
+  "infrastructure",
+  "sustainability",
+  "public-safety",
+  "education",
+  "healthcare",
+  "transportation",
+  "economic-development",
+  "civic-engagement",
+  "other"
+] as const;
+
+const ORG_TYPES = [
+  "all",
+  "civic",
+  "commercial",
+  "non-profit",
+  "government",
+  "educational"
+] as const;
+
+const STATUSES = [
+  "published",
+  "assigned",
+  "completed",
+  "all"
+] as const;
 
 export default function BountiesPage() {
   const router = useRouter();
@@ -46,13 +76,16 @@ export default function BountiesPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: bounties, isLoading, error, refetch, isRefetching } = useBounties({
+  // Memoize filters object to prevent unnecessary query re-runs
+  const filters = useMemo(() => ({
     status: statusFilter === "all" ? undefined : statusFilter,
     category: categoryFilter === "all" ? undefined : categoryFilter,
     organizationType: orgTypeFilter === "all" ? undefined : orgTypeFilter,
     search: debouncedSearchTerm || undefined,
     includeAll: statusFilter === "all",
-  });
+  }), [statusFilter, categoryFilter, orgTypeFilter, debouncedSearchTerm]);
+
+  const { data: bounties, isLoading, error, refetch, isRefetching } = useBounties(filters);
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -60,10 +93,10 @@ export default function BountiesPage() {
     }
   }, [ready, authenticated, router]);
 
-  // Prefetch bounty details on hover
-  const handleBountyHover = (bountyId: string) => {
+  // Memoize prefetch handler to prevent recreation on each render
+  const handleBountyHover = useCallback((bountyId: string) => {
     prefetchBounty(bountyId, statusFilter === "all");
-  };
+  }, [prefetchBounty, statusFilter]);
 
   // Manual refresh
   const handleRefresh = () => {
@@ -72,35 +105,6 @@ export default function BountiesPage() {
   };
 
   if (!ready || !authenticated) return null;
-
-  const categories = [
-    "all",
-    "infrastructure",
-    "sustainability", 
-    "public-safety",
-    "education",
-    "healthcare",
-    "transportation",
-    "economic-development",
-    "civic-engagement",
-    "other"
-  ];
-
-  const orgTypes = [
-    "all",
-    "civic",
-    "commercial",
-    "non-profit",
-    "government",
-    "educational"
-  ];
-
-  const statuses = [
-    "published",
-    "assigned",
-    "completed",
-    "all"
-  ];
 
   return (
     <AppLayout title="Innovation Bounties - Fort Worth TX DAO">
@@ -164,7 +168,7 @@ export default function BountiesPage() {
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap gap-2">
               {/* Status Filter Pills */}
-              {statuses.map((status) => (
+              {STATUSES.map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
@@ -200,7 +204,7 @@ export default function BountiesPage() {
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                   >
-                    {categories.map((cat) => (
+                    {CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat === "all" ? "All Categories" : cat.split("-").map(word => 
                           word.charAt(0).toUpperCase() + word.slice(1)
@@ -218,7 +222,7 @@ export default function BountiesPage() {
                     onChange={(e) => setOrgTypeFilter(e.target.value)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                   >
-                    {orgTypes.map((type) => (
+                    {ORG_TYPES.map((type) => (
                       <option key={type} value={type}>
                         {type === "all" ? "All Types" : getOrgTypeLabel(type)}
                       </option>

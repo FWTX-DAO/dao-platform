@@ -33,5 +33,27 @@ export const queryKeys = {
     all: () => ['members'] as const,
     list: () => [...queryKeys.members.all(), 'list'] as const,
     stats: () => [...queryKeys.members.all(), 'stats'] as const,
+    profile: () => [...queryKeys.members.all(), 'profile'] as const,
+    directory: (filters?: Record<string, unknown>) => [...queryKeys.members.all(), 'directory', filters] as const,
+    detail: (id: string) => [...queryKeys.members.all(), id] as const,
+    roles: (id: string) => [...queryKeys.members.detail(id), 'roles'] as const,
+    activities: (id: string) => [...queryKeys.members.detail(id), 'activities'] as const,
+  },
+  subscriptions: {
+    all: () => ['subscriptions'] as const,
+    active: () => [...queryKeys.subscriptions.all(), 'active'] as const,
+    tiers: () => [...queryKeys.subscriptions.all(), 'tiers'] as const,
+    detail: (id: string) => [...queryKeys.subscriptions.all(), id] as const,
+  },
+  activities: {
+    all: () => ['activities'] as const,
+    feed: () => [...queryKeys.activities.all(), 'feed'] as const,
+    member: (id: string) => [...queryKeys.activities.all(), 'member', id] as const,
+  },
+  roles: {
+    all: () => ['roles'] as const,
+    detail: (id: string) => [...queryKeys.roles.all(), id] as const,
+    permissions: (id: string) => [...queryKeys.roles.detail(id), 'permissions'] as const,
+    memberRoles: (memberId: string) => [...queryKeys.roles.all(), 'member', memberId] as const,
   },
 } as const;

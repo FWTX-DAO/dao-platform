@@ -27,11 +27,18 @@ export class ForumService {
       throw new NotFoundError('Post');
     }
 
+    // Parallelize independent queries for better performance
+    const [upvotes, hasUpvoted, replyCount] = await Promise.all([
+      this.repository.getVoteCount(id),
+      this.repository.getUserVote(id, userId),
+      this.repository.getReplyCount(id),
+    ]);
+
     return {
       ...post,
-      upvotes: await this.repository.getVoteCount(id),
-      hasUpvoted: await this.repository.getUserVote(id, userId),
-      replyCount: await this.repository.getReplyCount(id),
+      upvotes,
+      hasUpvoted,
+      replyCount,
     };
   }
 

@@ -27,7 +27,7 @@ export default async function handler(
     
     const isAdmin = memberInfo.length > 0 && 
       (memberInfo[0]?.membershipType === "council" || 
-       memberInfo[0]?.specialRoles?.includes("screener"));
+       (Array.isArray(memberInfo[0]?.specialRoles) && memberInfo[0]?.specialRoles.includes("screener")));
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Unauthorized - Admin access required" });

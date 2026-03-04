@@ -63,9 +63,9 @@ export default function WalletList() {
           <button
             onClick={() => handleCreateWallet("ethereum")}
             disabled={isCreating}
-            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed"
+            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
-            {isCreating ? "Creating..." : "Create Ethereum Embedded Wallet"}
+            {isCreating ? "Creating…" : "Create Ethereum Embedded Wallet"}
           </button>
         </div>
       ) : (
@@ -83,9 +83,9 @@ export default function WalletList() {
           <button
             onClick={() => handleCreateWallet("solana")}
             disabled={isCreating}
-            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed"
+            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
-            {isCreating ? "Creating..." : "Create Solana Embedded Wallet"}
+            {isCreating ? "Creating…" : "Create Solana Embedded Wallet"}
           </button>
         </div>
       ) : (

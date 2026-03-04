@@ -128,15 +128,15 @@ export class ProjectsRepository {
       id,
       creatorId,
       ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     
     await db.insert(projectCollaborators).values({
       projectId: id,
       userId: creatorId,
       role: 'owner',
-      joinedAt: new Date().toISOString(),
+      joinedAt: new Date(),
     });
     
     return this.findById(id);
@@ -144,7 +144,7 @@ export class ProjectsRepository {
 
   async update(id: string, data: Partial<CreateProjectInput>) {
     await db.update(projects)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(projects.id, id));
     
     return this.findById(id);
@@ -170,7 +170,7 @@ export class ProjectsRepository {
       projectId,
       userId,
       role,
-      joinedAt: new Date().toISOString(),
+      joinedAt: new Date(),
     });
   }
 

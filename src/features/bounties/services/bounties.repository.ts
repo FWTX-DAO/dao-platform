@@ -79,20 +79,27 @@ export class BountiesRepository {
 
   async create(data: CreateBountyInput, submitterId: string) {
     const id = generateId();
+    const { deadline, isAnonymous, ...rest } = data;
     await db.insert(innovationBounties).values({
       id,
       submitterId,
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      ...rest,
+      deadline: deadline ? new Date(deadline) : null,
+      isAnonymous: !!isAnonymous,
     });
-    
+
     return this.findById(id);
   }
 
   async update(id: string, data: Partial<CreateBountyInput>) {
+    const { deadline, isAnonymous, ...rest } = data;
     await db.update(innovationBounties)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({
+        ...rest,
+        ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
+        ...(isAnonymous !== undefined && { isAnonymous: !!isAnonymous }),
+        updatedAt: new Date(),
+      })
       .where(eq(innovationBounties.id, id));
     
     return this.findById(id);
@@ -114,12 +121,12 @@ export class BountiesRepository {
   async updateStatus(id: string, status: string, screenedBy?: string, screeningNotes?: string) {
     const updates: any = {
       status,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     };
 
     if (screenedBy) {
       updates.screenedBy = screenedBy;
-      updates.screenedAt = new Date().toISOString();
+      updates.screenedAt = new Date();
     }
 
     if (screeningNotes) {
@@ -127,7 +134,7 @@ export class BountiesRepository {
     }
 
     if (status === 'published') {
-      updates.publishedAt = new Date().toISOString();
+      updates.publishedAt = new Date();
     }
 
     await db.update(innovationBounties)

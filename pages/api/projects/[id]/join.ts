@@ -25,60 +25,56 @@ export default async function handler(
 
     // Get or create user
     const user = await getOrCreateUser(privyDid, email);
+    const now = new Date();
 
-    // Check if already a collaborator
-    const existing = await db
-      .select()
-      .from(projectCollaborators)
-      .where(
-        and(
+    // Parallelize independent read queries
+    const [existing, memberRecord] = await Promise.all([
+      db.select()
+        .from(projectCollaborators)
+        .where(and(
           eq(projectCollaborators.projectId, projectId),
           eq(projectCollaborators.userId, user!.id)
-        )
-      )
-      .limit(1);
+        ))
+        .limit(1),
+      db.select()
+        .from(members)
+        .where(eq(members.userId, user!.id))
+        .limit(1),
+    ]);
 
     if (existing.length > 0) {
       return res.status(400).json({ error: "Already a collaborator" });
     }
 
-    // Add as collaborator
-    await db.insert(projectCollaborators).values({
-      projectId,
-      userId: user!.id,
-      role: "contributor",
-      joinedAt: new Date().toISOString(),
-    });
-
-    // Award contribution points
-    const memberRecord = await db
-      .select()
-      .from(members)
-      .where(eq(members.userId, user!.id))
-      .limit(1);
-
-    if (memberRecord.length > 0) {
-      await db
-        .update(members)
-        .set({
-          contributionPoints: memberRecord[0]!.contributionPoints + 10,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(members.userId, user!.id));
-    } else {
-      // Create member record if doesn't exist
-      await db.insert(members).values({
-        id: generateId(),
+    // Parallelize write operations
+    await Promise.all([
+      // Add as collaborator
+      db.insert(projectCollaborators).values({
+        projectId,
         userId: user!.id,
-        membershipType: "basic",
-        contributionPoints: 10,
-        votingPower: 1,
-        status: "active",
-        joinedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
+        role: "contributor",
+        joinedAt: now,
+      }),
+      // Award contribution points or create member
+      memberRecord.length > 0
+        ? db.update(members)
+            .set({
+              contributionPoints: memberRecord[0]!.contributionPoints + 10,
+              updatedAt: now,
+            })
+            .where(eq(members.userId, user!.id))
+        : db.insert(members).values({
+            id: generateId(),
+            userId: user!.id,
+            membershipType: "basic",
+            contributionPoints: 10,
+            votingPower: 1,
+            status: "active",
+            joinedAt: now,
+            createdAt: now,
+            updatedAt: now,
+          }),
+    ]);
 
     return res.status(200).json({ 
       success: true,

@@ -1,15 +1,16 @@
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@components/AppLayout";
+import ActivityFeed from "@components/ActivityFeed";
 import { needsOnboarding } from "@utils/onboarding";
 import { useDashboardData, type MembershipData } from "@hooks/useDashboard";
 import { prefetchUtils } from "@utils/query-client";
-import { 
-  UsersIcon, 
-  DocumentTextIcon, 
+import {
+  UsersIcon,
+  DocumentTextIcon,
   RocketLaunchIcon,
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
@@ -53,35 +54,43 @@ export default function DashboardPage() {
     }
   }, [authenticated, dashboardStats, queryClient]);
 
-  const calculateTenure = (joinedAt: string) => {
+  // Memoize tenure calculation to prevent recreation on each render
+  const calculateTenure = useCallback((joinedAt: string) => {
     const joined = new Date(joinedAt);
     const now = new Date();
     const daysDiff = Math.floor((now.getTime() - joined.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysDiff < 1) return "Just joined";
     if (daysDiff === 1) return "1 day";
     if (daysDiff < 30) return `${daysDiff} days`;
-    
-    const monthsDiff = (now.getFullYear() - joined.getFullYear()) * 12 + 
+
+    const monthsDiff = (now.getFullYear() - joined.getFullYear()) * 12 +
                       (now.getMonth() - joined.getMonth());
-    
+
     if (monthsDiff === 1) return "1 month";
     if (monthsDiff < 12) return `${monthsDiff} months`;
-    
+
     const years = Math.floor(monthsDiff / 12);
     const remainingMonths = monthsDiff % 12;
-    
+
     if (remainingMonths === 0) return `${years} year${years > 1 ? 's' : ''}`;
     return `${years} year${years > 1 ? 's' : ''}, ${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`;
-  };
+  }, []);
 
-  const getActivityLevel = (stats: MembershipData['stats']) => {
+  // Memoize activity level calculation
+  const getActivityLevel = useCallback((stats: MembershipData['stats']) => {
     const total = stats.forumPosts + stats.projects + stats.meetingNotes;
     if (total === 0) return { level: "Getting Started", color: "text-gray-600", message: "Start contributing to earn points!" };
     if (total < 5) return { level: "Active", color: "text-blue-600", message: "Keep up the great work!" };
     if (total < 10) return { level: "Engaged", color: "text-green-600", message: "You're making an impact!" };
     return { level: "Champion", color: "text-violet-600", message: "Outstanding contribution!" };
-  };
+  }, []);
+
+  // Memoize activity level result for current membership data
+  const activityLevel = useMemo(() =>
+    membershipData ? getActivityLevel(membershipData.stats) : null,
+    [membershipData, getActivityLevel]
+  );
 
   const formatDate = (dateString: string) => {
     try {
@@ -180,8 +189,8 @@ export default function DashboardPage() {
                       <CheckCircleIcon className="h-6 w-6 mr-2 text-violet-600" />
                       Your Membership
                     </h2>
-                    <p className={`mt-1 text-sm font-medium ${getActivityLevel(membershipData.stats).color}`}>
-                      {getActivityLevel(membershipData.stats).level} · {getActivityLevel(membershipData.stats).message}
+                    <p className={`mt-1 text-sm font-medium ${activityLevel?.color}`}>
+                      {activityLevel?.level} · {activityLevel?.message}
                     </p>
                   </div>
                   <Link href="/settings" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
@@ -471,6 +480,8 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+
+            <ActivityFeed variant="platform" limit={5} showHeader />
           </>
         )}
       </div>

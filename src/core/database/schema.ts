@@ -1,45 +1,46 @@
-import { sql } from "drizzle-orm";
-import { text, sqliteTable, integer, primaryKey, index } from "drizzle-orm/sqlite-core";
+import { text, pgTable, integer, boolean, timestamp, jsonb, primaryKey, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Users table - syncs with Privy authentication
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(), // Using text for UUID-like IDs
-  privyDid: text("privy_did").unique().notNull(), // Privy's decentralized ID
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  privyDid: text("privy_did").unique().notNull(),
   username: text("username"),
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // Forum posts table
-export const forumPosts = sqliteTable("forum_posts", {
+export const forumPosts = pgTable("forum_posts", {
   id: text("id").primaryKey(),
   authorId: text("author_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   content: text("content").notNull(),
   category: text("category").default("General"),
-  parentId: text("parent_id").references((): any => forumPosts.id), // Self-reference for replies
-
-  // Project association - allows forums to be tied to specific projects
+  parentId: text("parent_id").references((): any => forumPosts.id),
   projectId: text("project_id").references((): any => projects.id),
-
-  // Threading support for nested conversations
-  rootPostId: text("root_post_id").references((): any => forumPosts.id), // Points to thread root (null for root posts)
-  threadDepth: integer("thread_depth").notNull().default(0), // 0 = root, 1 = reply, 2+ = nested reply
-
-  // Thread management
-  isPinned: integer("is_pinned").notNull().default(0), // Boolean as integer
-  isLocked: integer("is_locked").notNull().default(0), // Boolean as integer - prevents new replies
-  lastActivityAt: text("last_activity_at").notNull().default(sql`CURRENT_TIMESTAMP`), // Updated on new replies
-
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  rootPostId: text("root_post_id").references((): any => forumPosts.id),
+  threadDepth: integer("thread_depth").notNull().default(0),
+  isPinned: boolean("is_pinned").notNull().default(false),
+  isLocked: boolean("is_locked").notNull().default(false),
+  lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_forum_posts_author_id").on(table.authorId),
+  index("idx_forum_posts_parent_id").on(table.parentId),
+  index("idx_forum_posts_created_at").on(table.createdAt),
+  index("idx_forum_posts_category").on(table.category),
+  index("idx_forum_posts_project_id").on(table.projectId),
+  index("idx_forum_posts_root_post_id").on(table.rootPostId),
+  index("idx_forum_posts_last_activity").on(table.lastActivityAt),
+  index("idx_forum_posts_is_pinned").on(table.isPinned),
+]);
 
 // Projects table for Civic Innovation Lab
-export const projects = sqliteTable("projects", {
+export const projects = pgTable("projects", {
   id: text("id").primaryKey(),
   creatorId: text("creator_id").notNull().references(() => users.id),
   title: text("title").notNull(),
@@ -47,164 +48,445 @@ export const projects = sqliteTable("projects", {
   githubRepo: text("github_repo").notNull(),
   intent: text("intent").notNull(),
   benefitToFortWorth: text("benefit_to_fort_worth").notNull(),
-  status: text("status").default("proposed"), // proposed, active, completed
-  tags: text("tags"), // Comma-separated tags
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  status: text("status").default("proposed"),
+  tags: text("tags"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_projects_creator_id").on(table.creatorId),
+  index("idx_projects_status").on(table.status),
+  index("idx_projects_created_at").on(table.createdAt),
+]);
 
 // Meeting notes table
-export const meetingNotes = sqliteTable("meeting_notes", {
+export const meetingNotes = pgTable("meeting_notes", {
   id: text("id").primaryKey(),
   authorId: text("author_id").notNull().references(() => users.id),
   title: text("title").notNull(),
-  date: text("date").notNull(), // SQLite doesn't have native date type
-  attendees: text("attendees"), // Comma-separated attendees
+  date: text("date").notNull(),
+  attendees: text("attendees"),
   agenda: text("agenda"),
   notes: text("notes").notNull(),
-  actionItems: text("action_items"), // Newline-separated action items
-  tags: text("tags"), // Comma-separated tags
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  actionItems: text("action_items"),
+  tags: text("tags"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_meeting_notes_author_id").on(table.authorId),
+  index("idx_meeting_notes_date").on(table.date),
+]);
+
+// Membership tiers reference table (free, pro, annual)
+export const membershipTiers = pgTable("membership_tiers", {
+  id: text("id").primaryKey(),
+  name: text("name").unique().notNull(),
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  priceCents: integer("price_cents").notNull().default(0),
+  billingInterval: text("billing_interval").notNull().default("month"),
+  features: jsonb("features"),
+  stripePriceId: text("stripe_price_id"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_membership_tiers_name").on(table.name),
+  index("idx_membership_tiers_stripe_price_id").on(table.stripePriceId),
+]);
 
 // Members table for DAO membership
-export const members = sqliteTable("members", {
+export const members = pgTable("members", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id).unique(),
-  membershipType: text("membership_type").notNull().default("basic"), // basic, contributor, council
-  joinedAt: text("joined_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  expiresAt: text("expires_at"), // For membership expiration if needed
+  membershipType: text("membership_type").notNull().default("basic"),
+  joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
   contributionPoints: integer("contribution_points").notNull().default(0),
   votingPower: integer("voting_power").notNull().default(1),
-  badges: text("badges"), // JSON array of earned badges
-  specialRoles: text("special_roles"), // JSON array of special roles
-  status: text("status").notNull().default("active"), // active, inactive, suspended
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  badges: jsonb("badges"),
+  specialRoles: jsonb("special_roles"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+
+  // Contact / KYC-lite
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  email: text("email"),
+  phone: text("phone"),
+  preferredContactMethod: text("preferred_contact_method").default("email"),
+
+  // Career
+  employer: text("employer"),
+  jobTitle: text("job_title"),
+  industry: text("industry"),
+  yearsOfExperience: integer("years_of_experience"),
+
+  // Interests
+  civicInterests: jsonb("civic_interests"),
+  skills: jsonb("skills"),
+  availability: text("availability"),
+
+  // Location (Fort Worth focus)
+  city: text("city"),
+  state: text("state"),
+  zip: text("zip"),
+
+  // Social
+  linkedinUrl: text("linkedin_url"),
+  twitterUrl: text("twitter_url"),
+  githubUrl: text("github_url"),
+  websiteUrl: text("website_url"),
+
+  // Onboarding
+  profileCompleteness: integer("profile_completeness").notNull().default(0),
+  onboardingStatus: text("onboarding_status").notNull().default("not_started"),
+  termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+
+  // Stripe / Tier
+  stripeCustomerId: text("stripe_customer_id"),
+  currentTierId: text("current_tier_id").references(() => membershipTiers.id),
+}, (table) => [
+  index("idx_members_user_id").on(table.userId),
+  index("idx_members_status").on(table.status),
+  index("idx_members_onboarding_status").on(table.onboardingStatus),
+  index("idx_members_city").on(table.city),
+  index("idx_members_industry").on(table.industry),
+  index("idx_members_stripe_customer_id").on(table.stripeCustomerId),
+  index("idx_members_current_tier_id").on(table.currentTierId),
+]);
+
+// Subscriptions table for Stripe subscription tracking
+export const subscriptions = pgTable("subscriptions", {
+  id: text("id").primaryKey(),
+  memberId: text("member_id").notNull().references(() => members.id),
+  tierId: text("tier_id").notNull().references(() => membershipTiers.id),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripeCustomerId: text("stripe_customer_id").notNull(),
+  status: text("status").notNull().default("active"),
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  canceledAt: timestamp("canceled_at", { withTimezone: true }),
+  cancelReason: text("cancel_reason"),
+  trialEnd: timestamp("trial_end", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_subscriptions_member_id").on(table.memberId),
+  index("idx_subscriptions_tier_id").on(table.tierId),
+  index("idx_subscriptions_stripe_subscription_id").on(table.stripeSubscriptionId),
+  index("idx_subscriptions_status").on(table.status),
+  index("idx_subscriptions_customer_status").on(table.stripeCustomerId, table.status),
+]);
+
+// Payment history table for Stripe webhook records
+export const paymentHistory = pgTable("payment_history", {
+  id: text("id").primaryKey(),
+  subscriptionId: text("subscription_id").notNull().references(() => subscriptions.id),
+  stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+  amountCents: integer("amount_cents").notNull(),
+  currency: text("currency").notNull().default("usd"),
+  status: text("status").notNull(),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  failureReason: text("failure_reason"),
+  receiptUrl: text("receipt_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_payment_history_subscription_id").on(table.subscriptionId),
+  index("idx_payment_history_status").on(table.status),
+]);
+
+// RBAC: Roles table
+export const roles = pgTable("roles", {
+  id: text("id").primaryKey(),
+  name: text("name").unique().notNull(),
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  level: integer("level").notNull().default(0),
+  isSystem: boolean("is_system").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_roles_name").on(table.name),
+  index("idx_roles_level").on(table.level),
+]);
+
+// RBAC: Permissions table
+export const permissions = pgTable("permissions", {
+  id: text("id").primaryKey(),
+  resource: text("resource").notNull(),
+  action: text("action").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_permissions_resource_action").on(table.resource, table.action),
+]);
+
+// RBAC: Role-Permission junction table
+export const rolePermissions = pgTable("role_permissions", {
+  roleId: text("role_id").notNull().references(() => roles.id),
+  permissionId: text("permission_id").notNull().references(() => permissions.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.roleId, table.permissionId] }),
+  index("idx_role_permissions_role_id").on(table.roleId),
+  index("idx_role_permissions_permission_id").on(table.permissionId),
+]);
+
+// RBAC: Member-Role junction table (supports multiple roles per member)
+export const memberRoles = pgTable("member_roles", {
+  id: text("id").primaryKey(),
+  memberId: text("member_id").notNull().references(() => members.id),
+  roleId: text("role_id").notNull().references(() => roles.id),
+  grantedBy: text("granted_by").references(() => users.id),
+  grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_member_roles_member_id").on(table.memberId),
+  index("idx_member_roles_role_id").on(table.roleId),
+  index("idx_member_roles_member_role").on(table.memberId, table.roleId),
+  index("idx_member_roles_is_active").on(table.isActive),
+]);
+
+// Unified member activity tracking
+export const memberActivities = pgTable("member_activities", {
+  id: text("id").primaryKey(),
+  memberId: text("member_id").notNull().references(() => members.id),
+  activityType: text("activity_type").notNull(),
+  resourceType: text("resource_type"),
+  resourceId: text("resource_id"),
+  metadata: jsonb("metadata"),
+  pointsAwarded: integer("points_awarded").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_member_activities_member_id").on(table.memberId),
+  index("idx_member_activities_activity_type").on(table.activityType),
+  index("idx_member_activities_created_at").on(table.createdAt),
+  index("idx_member_activities_member_type").on(table.memberId, table.activityType),
+  index("idx_member_activities_member_created").on(table.memberId, table.createdAt),
+  index("idx_member_activities_resource").on(table.resourceType, table.resourceId),
+]);
 
 // Project collaborators junction table
-export const projectCollaborators = sqliteTable("project_collaborators", {
+export const projectCollaborators = pgTable("project_collaborators", {
   projectId: text("project_id").notNull().references(() => projects.id),
   userId: text("user_id").notNull().references(() => users.id),
   role: text("role").default("contributor"),
-  joinedAt: text("joined_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.projectId, table.userId] }),
-}));
+  joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.projectId, table.userId] }),
+  index("idx_project_collaborators_project_id").on(table.projectId),
+  index("idx_project_collaborators_user_id").on(table.userId),
+]);
 
 // Project updates table for tracking progress and announcements
-export const projectUpdates = sqliteTable("project_updates", {
+export const projectUpdates = pgTable("project_updates", {
   id: text("id").primaryKey(),
   projectId: text("project_id").notNull().references(() => projects.id),
   authorId: text("author_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  updateType: text("update_type").default("general"), // general, milestone, announcement, issue
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updateType: text("update_type").default("general"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // Forum votes table
-export const forumVotes = sqliteTable("forum_votes", {
+export const forumVotes = pgTable("forum_votes", {
   postId: text("post_id").notNull().references(() => forumPosts.id),
   userId: text("user_id").notNull().references(() => users.id),
-  voteType: integer("vote_type").notNull(), // 1 for upvote, -1 for downvote
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.postId, table.userId] }),
-}));
+  voteType: integer("vote_type").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.postId, table.userId] }),
+  index("idx_forum_votes_post_id").on(table.postId),
+  index("idx_forum_votes_user_id").on(table.userId),
+]);
 
 // Documents table for IPFS file management
-export const documents = sqliteTable("documents", {
+export const documents = pgTable("documents", {
   id: text("id").primaryKey(),
   uploaderId: text("uploader_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   description: text("description"),
   category: text("category").default("General"),
   mimeType: text("mime_type").notNull(),
-  fileSize: integer("file_size").notNull(), // Size in bytes
-  pinataId: text("pinata_id").notNull(), // Pinata file ID - TODO: add unique constraint after sync
-  cid: text("cid").notNull(), // IPFS content identifier
-  network: text("network").notNull().default("private"), // "public" or "private"
-  groupId: text("group_id"), // Pinata group ID for organization
-  keyvalues: text("keyvalues"), // JSON string for metadata key-value pairs
-  status: text("status").notNull().default("active"), // active, archived, deleted
-  isPublic: integer("is_public").notNull().default(0), // Boolean as integer (0/1)
-  tags: text("tags"), // Comma-separated tags
+  fileSize: integer("file_size").notNull(),
+  pinataId: text("pinata_id").notNull(),
+  cid: text("cid").notNull(),
+  network: text("network").notNull().default("private"),
+  groupId: text("group_id"),
+  keyvalues: jsonb("keyvalues"),
+  status: text("status").notNull().default("active"),
+  isPublic: boolean("is_public").notNull().default(false),
+  tags: text("tags"),
   accessCount: integer("access_count").notNull().default(0),
-  lastAccessedAt: text("last_accessed_at"),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_documents_uploader_id").on(table.uploaderId),
+  index("idx_documents_status").on(table.status),
+  index("idx_documents_category").on(table.category),
+]);
 
 // Document audit trail table for tracking changes and access
-export const documentAuditTrail = sqliteTable("document_audit_trail", {
+export const documentAuditTrail = pgTable("document_audit_trail", {
   id: text("id").primaryKey(),
   documentId: text("document_id").notNull().references(() => documents.id),
   userId: text("user_id").notNull().references(() => users.id),
-  action: text("action").notNull(), // uploaded, updated, accessed, deleted, shared, downloaded
-  metadata: text("metadata"), // JSON string for additional action-specific data
+  action: text("action").notNull(),
+  metadata: jsonb("metadata"),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
-  timestamp: text("timestamp").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_document_audit_trail_document_id").on(table.documentId),
+  index("idx_document_audit_trail_user_id").on(table.userId),
+  index("idx_document_audit_trail_timestamp").on(table.timestamp),
+]);
 
 // Document shares table for tracking shared access
-export const documentShares = sqliteTable("document_shares", {
+export const documentShares = pgTable("document_shares", {
   id: text("id").primaryKey(),
   documentId: text("document_id").notNull().references(() => documents.id),
   sharedById: text("shared_by_id").notNull().references(() => users.id),
-  sharedWithId: text("shared_with_id").references(() => users.id), // null for public shares
-  shareType: text("share_type").notNull().default("view"), // view, edit, admin
-  expiresAt: text("expires_at"), // Optional expiration
-  isActive: integer("is_active").notNull().default(1),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+  sharedWithId: text("shared_with_id").references(() => users.id),
+  shareType: text("share_type").notNull().default("view"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_document_shares_document_id").on(table.documentId),
+  index("idx_document_shares_shared_by_id").on(table.sharedById),
+  index("idx_document_shares_shared_with_id").on(table.sharedWithId),
+]);
 
-// Performance indexes for frequently queried columns
-export const forumPostsAuthorIdx = index("idx_forum_posts_author_id").on(forumPosts.authorId);
-export const forumPostsParentIdx = index("idx_forum_posts_parent_id").on(forumPosts.parentId);
-export const forumPostsCreatedAtIdx = index("idx_forum_posts_created_at").on(forumPosts.createdAt);
-export const forumPostsCategoryIdx = index("idx_forum_posts_category").on(forumPosts.category);
-export const forumPostsProjectIdx = index("idx_forum_posts_project_id").on(forumPosts.projectId);
-export const forumPostsRootPostIdx = index("idx_forum_posts_root_post_id").on(forumPosts.rootPostId);
-export const forumPostsLastActivityIdx = index("idx_forum_posts_last_activity").on(forumPosts.lastActivityAt);
-export const forumPostsIsPinnedIdx = index("idx_forum_posts_is_pinned").on(forumPosts.isPinned);
+// Innovation Bounties table
+export const innovationBounties = pgTable("innovation_bounties", {
+  id: text("id").primaryKey(),
 
-export const forumVotesPostIdx = index("idx_forum_votes_post_id").on(forumVotes.postId);
-export const forumVotesUserIdx = index("idx_forum_votes_user_id").on(forumVotes.userId);
+  // Organization Info
+  organizationName: text("organization_name").notNull(),
+  organizationType: text("organization_type").notNull(),
+  organizationContact: text("organization_contact"),
+  organizationWebsite: text("organization_website"),
 
-export const projectsCreatorIdx = index("idx_projects_creator_id").on(projects.creatorId);
-export const projectsStatusIdx = index("idx_projects_status").on(projects.status);
-export const projectsCreatedAtIdx = index("idx_projects_created_at").on(projects.createdAt);
+  // Sponsor Information
+  sponsorFirstName: text("sponsor_first_name"),
+  sponsorLastName: text("sponsor_last_name"),
+  sponsorEmail: text("sponsor_email"),
+  sponsorPhone: text("sponsor_phone"),
+  sponsorTitle: text("sponsor_title"),
+  sponsorDepartment: text("sponsor_department"),
+  sponsorLinkedIn: text("sponsor_linkedin"),
 
-export const projectCollaboratorsProjectIdx = index("idx_project_collaborators_project_id").on(projectCollaborators.projectId);
-export const projectCollaboratorsUserIdx = index("idx_project_collaborators_user_id").on(projectCollaborators.userId);
+  // Organization Details
+  organizationSize: text("organization_size"),
+  organizationIndustry: text("organization_industry"),
+  organizationAddress: text("organization_address"),
+  organizationCity: text("organization_city"),
+  organizationState: text("organization_state"),
+  organizationZip: text("organization_zip"),
 
-export const documentsUploaderIdx = index("idx_documents_uploader_id").on(documents.uploaderId);
-export const documentsStatusIdx = index("idx_documents_status").on(documents.status);
-export const documentsCategoryIdx = index("idx_documents_category").on(documents.category);
+  // Bounty Details
+  title: text("title").notNull(),
+  problemStatement: text("problem_statement").notNull(),
+  useCase: text("use_case").notNull(),
+  currentState: text("current_state"),
+  commonToolsUsed: text("common_tools_used"),
+  desiredOutcome: text("desired_outcome").notNull(),
 
-export const meetingNotesAuthorIdx = index("idx_meeting_notes_author_id").on(meetingNotes.authorId);
-export const meetingNotesDateIdx = index("idx_meeting_notes_date").on(meetingNotes.date);
+  // Technical Requirements
+  technicalRequirements: jsonb("technical_requirements"),
+  constraints: text("constraints"),
+  deliverables: text("deliverables"),
 
-// Additional performance indexes for document-related tables
-export const documentAuditTrailDocumentIdx = index("idx_document_audit_trail_document_id").on(documentAuditTrail.documentId);
-export const documentAuditTrailUserIdx = index("idx_document_audit_trail_user_id").on(documentAuditTrail.userId);
-export const documentAuditTrailTimestampIdx = index("idx_document_audit_trail_timestamp").on(documentAuditTrail.timestamp);
+  // Bounty Metadata
+  bountyAmount: integer("bounty_amount"),
+  bountyType: text("bounty_type").default("fixed"),
+  deadline: timestamp("deadline", { withTimezone: true }),
+  category: text("category"),
+  tags: text("tags"),
 
-export const documentSharesDocumentIdx = index("idx_document_shares_document_id").on(documentShares.documentId);
-export const documentSharesSharedByIdx = index("idx_document_shares_shared_by_id").on(documentShares.sharedById);
-export const documentSharesSharedWithIdx = index("idx_document_shares_shared_with_id").on(documentShares.sharedWithId);
+  // Status & Screening
+  status: text("status").default("draft"),
+  screeningNotes: text("screening_notes"),
+  screenedBy: text("screened_by").references(() => users.id),
+  screenedAt: timestamp("screened_at", { withTimezone: true }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
 
-// Members table indexes
-export const membersUserIdx = index("idx_members_user_id").on(members.userId);
-export const membersStatusIdx = index("idx_members_status").on(members.status);
+  // Submission & Ownership
+  submitterId: text("submitter_id").notNull().references(() => users.id),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
 
-// Define relations for better query support
+  // Metrics
+  viewCount: integer("view_count").notNull().default(0),
+  proposalCount: integer("proposal_count").notNull().default(0),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_innovation_bounties_submitter_id").on(table.submitterId),
+  index("idx_innovation_bounties_status").on(table.status),
+  index("idx_innovation_bounties_category").on(table.category),
+  index("idx_innovation_bounties_created_at").on(table.createdAt),
+]);
+
+// Bounty Proposals table (links projects to bounties)
+export const bountyProposals = pgTable("bounty_proposals", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull().references(() => innovationBounties.id),
+  projectId: text("project_id").references(() => projects.id),
+  proposerId: text("proposer_id").notNull().references(() => users.id),
+
+  // Proposal Details
+  proposalTitle: text("proposal_title").notNull(),
+  proposalDescription: text("proposal_description").notNull(),
+  approach: text("approach").notNull(),
+  timeline: text("timeline"),
+  budget: text("budget"),
+  teamMembers: jsonb("team_members"),
+
+  // Status
+  status: text("status").default("submitted"),
+  reviewNotes: text("review_notes"),
+  reviewedBy: text("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_bounty_proposals_bounty_id").on(table.bountyId),
+  index("idx_bounty_proposals_proposer_id").on(table.proposerId),
+  index("idx_bounty_proposals_project_id").on(table.projectId),
+  index("idx_bounty_proposals_status").on(table.status),
+]);
+
+// Bounty Comments table for discussion
+export const bountyComments = pgTable("bounty_comments", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull().references(() => innovationBounties.id),
+  authorId: text("author_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  parentId: text("parent_id").references((): any => bountyComments.id),
+  isInternal: boolean("is_internal").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("idx_bounty_comments_bounty_id").on(table.bountyId),
+  index("idx_bounty_comments_parent_id").on(table.parentId),
+  index("idx_bounty_comments_author_id").on(table.authorId),
+]);
+
+// ============================================================================
+// RELATIONS
+// ============================================================================
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   forumPosts: many(forumPosts),
   projects: many(projects),
@@ -219,6 +501,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [members.userId],
   }),
+  roleGrants: many(memberRoles),
 }));
 
 export const forumPostsRelations = relations(forumPosts, ({ one, many }) => ({
@@ -283,11 +566,18 @@ export const forumVotesRelations = relations(forumVotes, ({ one }) => ({
   }),
 }));
 
-export const membersRelations = relations(members, ({ one }) => ({
+export const membersRelations = relations(members, ({ one, many }) => ({
   user: one(users, {
     fields: [members.userId],
     references: [users.id],
   }),
+  currentTier: one(membershipTiers, {
+    fields: [members.currentTierId],
+    references: [membershipTiers.id],
+  }),
+  subscriptions: many(subscriptions),
+  memberRoles: many(memberRoles),
+  activities: many(memberActivities),
 }));
 
 export const projectUpdatesRelations = relations(projectUpdates, ({ one }) => ({
@@ -338,129 +628,6 @@ export const documentSharesRelations = relations(documentShares, ({ one }) => ({
   }),
 }));
 
-// Innovation Bounties table
-export const innovationBounties = sqliteTable("innovation_bounties", {
-  id: text("id").primaryKey(),
-  
-  // Organization Info
-  organizationName: text("organization_name").notNull(),
-  organizationType: text("organization_type").notNull(), // civic, commercial, non-profit
-  organizationContact: text("organization_contact"), // Email or contact info
-  organizationWebsite: text("organization_website"),
-  
-  // Sponsor Information
-  sponsorFirstName: text("sponsor_first_name"),
-  sponsorLastName: text("sponsor_last_name"),
-  sponsorEmail: text("sponsor_email"),
-  sponsorPhone: text("sponsor_phone"),
-  sponsorTitle: text("sponsor_title"),
-  sponsorDepartment: text("sponsor_department"),
-  sponsorLinkedIn: text("sponsor_linkedin"),
-  
-  // Organization Details
-  organizationSize: text("organization_size"), // 1-10, 11-50, 51-200, 201-500, 500+
-  organizationIndustry: text("organization_industry"),
-  organizationAddress: text("organization_address"),
-  organizationCity: text("organization_city"),
-  organizationState: text("organization_state"),
-  organizationZip: text("organization_zip"),
-  
-  // Bounty Details
-  title: text("title").notNull(),
-  problemStatement: text("problem_statement").notNull(),
-  useCase: text("use_case").notNull(),
-  currentState: text("current_state"), // Description of current solution/process
-  commonToolsUsed: text("common_tools_used"), // JSON array or comma-separated
-  desiredOutcome: text("desired_outcome").notNull(),
-  
-  // Technical Requirements
-  technicalRequirements: text("technical_requirements"), // JSON array
-  constraints: text("constraints"), // Budget, timeline, regulatory, etc.
-  deliverables: text("deliverables"), // Expected deliverables
-  
-  // Bounty Metadata
-  bountyAmount: integer("bounty_amount"), // In cents for precision
-  bountyType: text("bounty_type").default("fixed"), // fixed, milestone-based, equity
-  deadline: text("deadline"), // ISO date string
-  category: text("category"), // infrastructure, sustainability, public-safety, etc.
-  tags: text("tags"), // Comma-separated tags
-  
-  // Status & Screening
-  status: text("status").default("draft"), // draft, screening, published, assigned, completed, cancelled
-  screeningNotes: text("screening_notes"), // Internal notes from screening
-  screenedBy: text("screened_by").references(() => users.id),
-  screenedAt: text("screened_at"),
-  publishedAt: text("published_at"),
-  
-  // Submission & Ownership
-  submitterId: text("submitter_id").notNull().references(() => users.id),
-  isAnonymous: integer("is_anonymous").notNull().default(0), // Boolean as integer
-  
-  // Metrics
-  viewCount: integer("view_count").notNull().default(0),
-  proposalCount: integer("proposal_count").notNull().default(0),
-  
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Indexes for innovation_bounties
-export const innovationBountiesSubmitterIdx = index("idx_innovation_bounties_submitter_id").on(innovationBounties.submitterId);
-export const innovationBountiesStatusIdx = index("idx_innovation_bounties_status").on(innovationBounties.status);
-export const innovationBountiesCategoryIdx = index("idx_innovation_bounties_category").on(innovationBounties.category);
-export const innovationBountiesCreatedAtIdx = index("idx_innovation_bounties_created_at").on(innovationBounties.createdAt);
-
-// Bounty Proposals table (links projects to bounties)
-export const bountyProposals = sqliteTable("bounty_proposals", {
-  id: text("id").primaryKey(),
-  bountyId: text("bounty_id").notNull().references(() => innovationBounties.id),
-  projectId: text("project_id").references(() => projects.id), // Can link to existing project
-  proposerId: text("proposer_id").notNull().references(() => users.id),
-  
-  // Proposal Details
-  proposalTitle: text("proposal_title").notNull(),
-  proposalDescription: text("proposal_description").notNull(),
-  approach: text("approach").notNull(), // How they plan to solve it
-  timeline: text("timeline"), // Estimated timeline
-  budget: text("budget"), // Proposed budget breakdown if applicable
-  teamMembers: text("team_members"), // JSON array of team member info
-  
-  // Status
-  status: text("status").default("submitted"), // submitted, under_review, accepted, rejected, withdrawn
-  reviewNotes: text("review_notes"),
-  reviewedBy: text("reviewed_by").references(() => users.id),
-  reviewedAt: text("reviewed_at"),
-  
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Indexes for bounty_proposals
-export const bountyProposalsBountyIdx = index("idx_bounty_proposals_bounty_id").on(bountyProposals.bountyId);
-export const bountyProposalsProposerIdx = index("idx_bounty_proposals_proposer_id").on(bountyProposals.proposerId);
-
-// Bounty Comments table for discussion
-export const bountyComments = sqliteTable("bounty_comments", {
-  id: text("id").primaryKey(),
-  bountyId: text("bounty_id").notNull().references(() => innovationBounties.id),
-  authorId: text("author_id").notNull().references(() => users.id),
-  content: text("content").notNull(),
-  parentId: text("parent_id").references((): any => bountyComments.id), // For nested replies
-  isInternal: integer("is_internal").notNull().default(0), // Internal notes for screeners
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Indexes for bounty_comments
-export const bountyCommentsBountyIdx = index("idx_bounty_comments_bounty_id").on(bountyComments.bountyId);
-export const bountyCommentsParentIdx = index("idx_bounty_comments_parent_id").on(bountyComments.parentId);
-export const bountyCommentsAuthorIdx = index("idx_bounty_comments_author_id").on(bountyComments.authorId);
-
-// Indexes for bounty_proposals
-export const bountyProposalsProjectIdx = index("idx_bounty_proposals_project_id").on(bountyProposals.projectId);
-export const bountyProposalsStatusIdx = index("idx_bounty_proposals_status").on(bountyProposals.status);
-
-// Define relations for bounty tables
 export const innovationBountiesRelations = relations(innovationBounties, ({ one, many }) => ({
   submitter: one(users, {
     fields: [innovationBounties.submitterId],
@@ -511,7 +678,84 @@ export const bountyCommentsRelations = relations(bountyComments, ({ one, many })
   replies: many(bountyComments),
 }));
 
-// Type exports for TypeScript
+// Membership tiers relations
+export const membershipTiersRelations = relations(membershipTiers, ({ many }) => ({
+  subscriptions: many(subscriptions),
+  members: many(members),
+}));
+
+// Subscriptions relations
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  member: one(members, {
+    fields: [subscriptions.memberId],
+    references: [members.id],
+  }),
+  tier: one(membershipTiers, {
+    fields: [subscriptions.tierId],
+    references: [membershipTiers.id],
+  }),
+  payments: many(paymentHistory),
+}));
+
+// Payment history relations
+export const paymentHistoryRelations = relations(paymentHistory, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [paymentHistory.subscriptionId],
+    references: [subscriptions.id],
+  }),
+}));
+
+// Roles relations
+export const rolesRelations = relations(roles, ({ many }) => ({
+  rolePermissions: many(rolePermissions),
+  memberRoles: many(memberRoles),
+}));
+
+// Permissions relations
+export const permissionsRelations = relations(permissions, ({ many }) => ({
+  rolePermissions: many(rolePermissions),
+}));
+
+// Role permissions relations
+export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+  role: one(roles, {
+    fields: [rolePermissions.roleId],
+    references: [roles.id],
+  }),
+  permission: one(permissions, {
+    fields: [rolePermissions.permissionId],
+    references: [permissions.id],
+  }),
+}));
+
+// Member roles relations
+export const memberRolesRelations = relations(memberRoles, ({ one }) => ({
+  member: one(members, {
+    fields: [memberRoles.memberId],
+    references: [members.id],
+  }),
+  role: one(roles, {
+    fields: [memberRoles.roleId],
+    references: [roles.id],
+  }),
+  grantedByUser: one(users, {
+    fields: [memberRoles.grantedBy],
+    references: [users.id],
+  }),
+}));
+
+// Member activities relations
+export const memberActivitiesRelations = relations(memberActivities, ({ one }) => ({
+  member: one(members, {
+    fields: [memberActivities.memberId],
+    references: [members.id],
+  }),
+}));
+
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 export type User = InferSelectModel<typeof users>;
@@ -540,3 +784,25 @@ export type BountyProposal = InferSelectModel<typeof bountyProposals>;
 export type NewBountyProposal = InferInsertModel<typeof bountyProposals>;
 export type BountyComment = InferSelectModel<typeof bountyComments>;
 export type NewBountyComment = InferInsertModel<typeof bountyComments>;
+
+// Membership & Subscription types
+export type MembershipTier = InferSelectModel<typeof membershipTiers>;
+export type NewMembershipTier = InferInsertModel<typeof membershipTiers>;
+export type Subscription = InferSelectModel<typeof subscriptions>;
+export type NewSubscription = InferInsertModel<typeof subscriptions>;
+export type PaymentHistoryRecord = InferSelectModel<typeof paymentHistory>;
+export type NewPaymentHistoryRecord = InferInsertModel<typeof paymentHistory>;
+
+// RBAC types
+export type Role = InferSelectModel<typeof roles>;
+export type NewRole = InferInsertModel<typeof roles>;
+export type Permission = InferSelectModel<typeof permissions>;
+export type NewPermission = InferInsertModel<typeof permissions>;
+export type RolePermission = InferSelectModel<typeof rolePermissions>;
+export type NewRolePermission = InferInsertModel<typeof rolePermissions>;
+export type MemberRole = InferSelectModel<typeof memberRoles>;
+export type NewMemberRole = InferInsertModel<typeof memberRoles>;
+
+// Activity types
+export type MemberActivity = InferSelectModel<typeof memberActivities>;
+export type NewMemberActivity = InferInsertModel<typeof memberActivities>;

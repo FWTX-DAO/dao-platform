@@ -60,12 +60,12 @@ export default async function handler(
       pinataId: uploadResult.id,
       cid: uploadResult.cid,
       network: "private",
-      keyvalues: JSON.stringify({
+      keyvalues: {
         category: category || "General",
         uploadedBy: userId,
         description: description || "",
-      }),
-      isPublic: isPublic ? 1 : 0,
+      },
+      isPublic: !!isPublic,
       tags: tags || "",
     });
 

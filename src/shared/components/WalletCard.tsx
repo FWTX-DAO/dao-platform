@@ -139,25 +139,25 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={() => addSessionSigner(wallet.address)}
           disabled={isLoading || hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 ${
             isLoading || hasSessionSigners
               ? "bg-violet-400 cursor-not-allowed"
               : "bg-violet-600 hover:bg-violet-700"
           }`}
         >
-          {isLoading ? "Processing..." : "Add Session Signer"}
+          {isLoading ? "Processing…" : "Add Session Signer"}
         </button>
 
         <button
           onClick={() => removeSessionSigner(wallet.address)}
           disabled={isLoading || !hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 ${
             isLoading || !hasSessionSigners
               ? "bg-red-400 cursor-not-allowed"
               : "bg-red-600 hover:bg-red-700"
           }`}
         >
-          {isLoading ? "Processing..." : "Remove Session Signer"}
+          {isLoading ? "Processing…" : "Remove Session Signer"}
         </button>
       </div>
 
@@ -171,25 +171,25 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={handleRemoteSign}
           disabled={isRemoteSigning || !hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
             isRemoteSigning || !hasSessionSigners
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
-          {isRemoteSigning ? "Signing..." : "Sign message from server"}
+          {isRemoteSigning ? "Signing…" : "Sign message from server"}
         </button>
 
         <button
           onClick={handleClientSign}
           disabled={isClientSigning}
-          className={`text-sm py-2 px-4 rounded-md text-white ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
             isClientSigning
               ? "bg-green-400 cursor-not-allowed"
               : "bg-green-600 hover:bg-green-700"
           }`}
         >
-          {isClientSigning ? "Signing..." : "Sign message from client"}
+          {isClientSigning ? "Signing…" : "Sign message from client"}
         </button>
       </div>
     </div>

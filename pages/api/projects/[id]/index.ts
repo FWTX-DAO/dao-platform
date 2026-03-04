@@ -169,7 +169,7 @@ async function handleUpdateProject(req: NextApiRequest, res: NextApiResponse) {
         benefitToFortWorth,
         tags: tagsString,
         status: status || "proposed",
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       })
       .where(eq(projects.id, projectId));
 

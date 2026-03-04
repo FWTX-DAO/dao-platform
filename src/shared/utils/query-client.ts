@@ -75,19 +75,23 @@ export function createQueryClient() {
 
         // OPTIMIZED: Selective window focus refetch
         // Only refetch real-time data when user returns to tab
+        // Using Set for O(1) lookup instead of array.some()
         refetchOnWindowFocus: (query) => {
-          const realtimeKeys = [
+          const realtimeKeys = new Set([
             'forum-posts',
             'forum-replies',
             'bounties',
             'dashboard'
-          ];
+          ]);
 
-          return realtimeKeys.some(key =>
-            query.queryKey.some(k =>
-              typeof k === 'string' && k.includes(key)
-            )
-          );
+          for (const k of query.queryKey) {
+            if (typeof k === 'string') {
+              for (const key of realtimeKeys) {
+                if (k.includes(key)) return true;
+              }
+            }
+          }
+          return false;
         },
 
         // Refetch on reconnect
@@ -146,9 +150,11 @@ export const prefetchUtils = {
       queryFn: async () => {
         const params = new URLSearchParams();
         if (filters) {
-          Object.entries(filters).forEach(([key, value]) => {
-            if (value) params.append(key, value.toString());
-          });
+          for (const [key, value] of Object.entries(filters)) {
+            if (value !== undefined && value !== null) {
+              params.append(key, value.toString());
+            }
+          }
         }
 
         const response = await fetch(`/api/bounties?${params.toString()}`, {

@@ -8,7 +8,8 @@ import Image from 'next/image';
 
 const MemberCard = ({ member }: { member: any }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    // content-visibility: auto skips rendering off-screen cards for better performance
+    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 150px' }}>
       <div className="flex items-start gap-4">
         {/* Avatar */}
         <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">

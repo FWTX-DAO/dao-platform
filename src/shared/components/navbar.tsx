@@ -8,9 +8,10 @@ function Navbar() {
   const router = useRouter();
   const { toggle, isOpen } = useSidebar();
 
+  // router.push is stable, no dependency needed
   const handleNavigation = useCallback((href: string) => {
     router.push(href);
-  }, [router]);
+  }, []);
 
   return (
     <nav className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-lg">
@@ -21,18 +22,21 @@ function Navbar() {
             <AnimatedMenuToggle toggle={toggle} isOpen={isOpen} />
 
             <button
-              className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
+              className="flex items-center gap-3 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
               onClick={() => handleNavigation("/dashboard")}
               aria-label="Go to dashboard"
             >
               <Image
                 src="/logo.svg"
                 alt="Fort Worth TX DAO"
-                width={40}
-                height={40}
+                width={36}
+                height={36}
                 className="hover:opacity-80 transition-opacity"
                 priority
               />
+              <span className="text-white font-semibold text-lg tracking-tight hidden sm:block">
+                Fort Worth DAO
+              </span>
             </button>
           </div>
 

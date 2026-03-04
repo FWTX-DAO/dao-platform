@@ -14,6 +14,14 @@ import {
   innovationBounties,
   bountyProposals,
   bountyComments,
+  membershipTiers,
+  subscriptions,
+  paymentHistory,
+  roles,
+  permissions,
+  rolePermissions,
+  memberRoles,
+  memberActivities,
 } from '../../core/database/schema';
 
 export type User = InferSelectModel<typeof users>;
@@ -57,3 +65,30 @@ export type InsertBountyProposal = InferInsertModel<typeof bountyProposals>;
 
 export type BountyComment = InferSelectModel<typeof bountyComments>;
 export type InsertBountyComment = InferInsertModel<typeof bountyComments>;
+
+// Membership & Subscription types
+export type MembershipTier = InferSelectModel<typeof membershipTiers>;
+export type InsertMembershipTier = InferInsertModel<typeof membershipTiers>;
+
+export type Subscription = InferSelectModel<typeof subscriptions>;
+export type InsertSubscription = InferInsertModel<typeof subscriptions>;
+
+export type PaymentHistoryRecord = InferSelectModel<typeof paymentHistory>;
+export type InsertPaymentHistoryRecord = InferInsertModel<typeof paymentHistory>;
+
+// RBAC types
+export type Role = InferSelectModel<typeof roles>;
+export type InsertRole = InferInsertModel<typeof roles>;
+
+export type Permission = InferSelectModel<typeof permissions>;
+export type InsertPermission = InferInsertModel<typeof permissions>;
+
+export type RolePermission = InferSelectModel<typeof rolePermissions>;
+export type InsertRolePermission = InferInsertModel<typeof rolePermissions>;
+
+export type MemberRole = InferSelectModel<typeof memberRoles>;
+export type InsertMemberRole = InferInsertModel<typeof memberRoles>;
+
+// Activity types
+export type MemberActivity = InferSelectModel<typeof memberActivities>;
+export type InsertMemberActivity = InferInsertModel<typeof memberActivities>;

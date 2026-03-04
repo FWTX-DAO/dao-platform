@@ -4,30 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Next.js 14+ (Pages Router) DAO platform for Fort Worth civic innovation. Features multi-provider auth (Privy), distributed SQLite (Turso), and forum/project management.
+Next.js 16 (Pages Router) DAO platform for Fort Worth civic innovation. Features multi-provider auth (Privy), distributed SQLite (Turso), Pinata for IPFS file storage, and forum/project management.
 
 ## Development Commands
 
 ```bash
-npm install          # Install deps (Node >=18, npm >=9)
-npm run dev          # Dev server
-npm run build        # Production build
-npm run lint         # Lint + type check
-npm run format       # Prettier format
+bun install          # Install deps (Node >=20.9, bun >=9)
+bun run dev          # Dev server at localhost:3000
+bun run build        # Production build
+bun run lint         # ESLint + Prettier check + TypeScript check
+bun run format       # Prettier format
 
 # Database (Drizzle + Turso)
-npm run db:generate  # Generate migrations
-npm run db:migrate   # Run migrations
-npm run db:push      # Push schema directly
-npm run db:studio    # Drizzle Studio GUI
-npm run db:seed      # Seed sample data
+bun run db:generate  # Generate migrations from schema changes
+bun run db:push      # Push schema directly to database
+bun run db:studio    # Drizzle Studio GUI
+bun run db:seed      # Seed sample data (tsx src/db/seed.ts)
 ```
 
 ## Environment Variables
 
 Required in `.env.local`:
+
 - `NEXT_PUBLIC_PRIVY_APP_ID` / `PRIVY_APP_SECRET` - Privy auth
 - `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` - Database
+- `PINATA_JWT` / `PINATA_GATEWAY` / `PINATA_GATEWAY_KEY` - IPFS file storage
 
 ## Architecture
 
@@ -68,9 +69,11 @@ import { Button } from '@components/ui/button';
 import type { User } from '@shared/types';
 ```
 
-## API Route Pattern
+## API Route Patterns
 
-All API routes use middleware composition:
+Two authentication patterns are used:
+
+**Pattern 1: Middleware composition** (preferred for new routes)
 
 ```typescript
 import type { NextApiResponse } from 'next';
@@ -89,11 +92,32 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
 export default compose(errorHandler, withAuth)(handler);
 ```
 
+**Pattern 2: Direct authentication** (common in existing routes)
+
+```typescript
+import { authenticateRequest } from '@utils/api-helpers';
+import { getOrCreateUser } from '@core/database/queries/users';
+
+const claims = await authenticateRequest(req);
+const user = await getOrCreateUser(claims.userId, claims.email);
+```
+
+**Validation middleware** (uses Zod):
+
+```typescript
+import { withValidation } from '@core/middleware';
+import { z } from 'zod';
+
+const schema = z.object({ title: z.string(), content: z.string() });
+export default compose(errorHandler, withAuth, withValidation(schema))(handler);
+```
+
 ## Key Patterns
 
 **ID Generation**: Always use `generateId()` from `@utils/id-generator` for new records (UUIDv7)
 
 **Error Classes**: Use from `@core/errors`:
+
 - `NotFoundError('Post')` → 404
 - `ValidationError('Invalid input')` → 400
 - `UnauthorizedError()` → 401
@@ -101,9 +125,23 @@ export default compose(errorHandler, withAuth)(handler);
 **Service/Repository**: Business logic in services, data access in repositories. See `src/features/forum/` as reference.
 
 **Authentication**:
+
 - Client: `usePrivy()` hook, PrivyProvider in `_app.tsx`
-- Server: `withAuth` middleware adds `req.claims.userId`
+- Server: `withAuth` middleware adds `req.claims.userId`, or use `authenticateRequest(req)` directly
 - Embedded wallets created automatically on login
+
+**React Query Hooks**: Client data fetching uses TanStack Query with optimistic updates. See `src/shared/hooks/` for patterns:
+
+- Use `queryKeys` from `@shared/constants` for consistent cache keys
+- Hooks use `getAccessToken()` from Privy for authenticated requests
+- Mutations include optimistic updates with rollback on error
+
+**File Storage**: Pinata helpers in `@utils/api-helpers` for IPFS upload/download:
+
+```typescript
+import { pinataHelpers } from '@utils/api-helpers';
+await pinataHelpers.uploadFile(file, { name: 'doc.pdf', network: 'private' });
+```
 
 ## Database
 

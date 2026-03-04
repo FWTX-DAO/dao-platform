@@ -29,24 +29,21 @@ export default async function handler(
       .limit(1);
 
     if (memberRecord.length === 0) {
-      // Create member record if doesn't exist
-      await db.insert(members).values({
+      const now = new Date();
+      // Create member record and return it in one operation
+      const created = await db.insert(members).values({
         id: generateId(),
         userId: user!.id,
         membershipType: "basic",
         contributionPoints: 0,
         votingPower: 1,
         status: "active",
-        joinedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+        joinedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      }).returning();
 
-      memberRecord = await db
-        .select()
-        .from(members)
-        .where(eq(members.userId, user!.id))
-        .limit(1);
+      memberRecord = created;
     }
 
     // Get contribution stats
@@ -83,8 +80,8 @@ export default async function handler(
         joinedAt: user!.createdAt,
         contributionPoints: member!.contributionPoints,
         votingPower: member!.votingPower,
-        badges: member!.badges ? JSON.parse(member!.badges) : [],
-        specialRoles: member!.specialRoles ? JSON.parse(member!.specialRoles) : [],
+        badges: member!.badges ?? [],
+        specialRoles: member!.specialRoles ?? [],
         status: member!.status,
       },
       stats: {

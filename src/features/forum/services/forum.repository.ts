@@ -157,7 +157,7 @@ export class ForumRepository {
 
   async create(data: CreatePostInput, authorId: string) {
     const id = generateId();
-    const now = new Date().toISOString();
+    const now = new Date();
 
     // Calculate threading fields
     let rootPostId: string | null = null;
@@ -171,17 +171,23 @@ export class ForumRepository {
         // Root is either the parent's root or the parent itself if it's a top-level post
         rootPostId = parentPost.rootPostId ?? parentPost.id;
 
-        // Update parent's lastActivityAt
-        await db.update(forumPosts)
-          .set({ lastActivityAt: now })
-          .where(eq(forumPosts.id, data.parentId));
+        // Parallelize parent and root post updates for better performance
+        const updatePromises = [
+          db.update(forumPosts)
+            .set({ lastActivityAt: now })
+            .where(eq(forumPosts.id, data.parentId))
+        ];
 
         // Also update the root post's lastActivityAt if different from parent
         if (rootPostId && rootPostId !== data.parentId) {
-          await db.update(forumPosts)
-            .set({ lastActivityAt: now })
-            .where(eq(forumPosts.id, rootPostId));
+          updatePromises.push(
+            db.update(forumPosts)
+              .set({ lastActivityAt: now })
+              .where(eq(forumPosts.id, rootPostId))
+          );
         }
+
+        await Promise.all(updatePromises);
       }
     }
 
@@ -205,7 +211,7 @@ export class ForumRepository {
 
   async update(id: string, data: Partial<CreatePostInput>) {
     await db.update(forumPosts)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(forumPosts.id, id));
     
     return this.findById(id);
@@ -293,7 +299,7 @@ export class ForumRepository {
           postId,
           userId,
           voteType,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
         })
         .onConflictDoUpdate({
           target: [forumVotes.postId, forumVotes.userId],
@@ -371,7 +377,7 @@ export class ForumRepository {
     const rootId = post.rootPostId ?? post.id;
     const rootPost = post.rootPostId ? await this.findById(rootId) : post;
 
-    return rootPost?.isLocked === 1;
+    return rootPost?.isLocked === true;
   }
 
   /**
@@ -379,7 +385,7 @@ export class ForumRepository {
    */
   async setThreadLocked(postId: string, locked: boolean) {
     await db.update(forumPosts)
-      .set({ isLocked: locked ? 1 : 0, updatedAt: new Date().toISOString() })
+      .set({ isLocked: locked, updatedAt: new Date() })
       .where(eq(forumPosts.id, postId));
   }
 
@@ -388,7 +394,7 @@ export class ForumRepository {
    */
   async setPostPinned(postId: string, pinned: boolean) {
     await db.update(forumPosts)
-      .set({ isPinned: pinned ? 1 : 0, updatedAt: new Date().toISOString() })
+      .set({ isPinned: pinned, updatedAt: new Date() })
       .where(eq(forumPosts.id, postId));
   }
 }

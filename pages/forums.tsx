@@ -1,9 +1,9 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@components/AppLayout";
-import { 
+import {
   HeartIcon,
   ChatBubbleBottomCenterTextIcon,
   PlusIcon,
@@ -22,7 +22,8 @@ import {
   type ForumPost
 } from "@hooks/useForumPosts";
 
-const categories = ["General", "Governance", "Technical", "Events", "Education"];
+// Static arrays moved outside component to prevent recreation on each render
+const CATEGORIES = ["General", "Governance", "Technical", "Events", "Education"] as const;
 
 // Helper to safely format dates
 const formatDate = (dateString: string | null | undefined): string => {
@@ -149,9 +150,29 @@ export default function ForumsPage() {
     setViewingReplies(post);
   };
 
-  const filteredPosts = selectedCategory === "All" 
-    ? posts 
-    : posts.filter(post => post.category === selectedCategory);
+  // Memoize filtered posts to prevent unnecessary recalculations
+  const filteredPosts = useMemo(() =>
+    selectedCategory === "All"
+      ? posts
+      : posts.filter(post => post.category === selectedCategory),
+    [selectedCategory, posts]
+  );
+
+  // Memoize prefetch handler to prevent recreation on each render
+  const handlePostHover = useCallback((postId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ["forum-replies", postId],
+      queryFn: async () => {
+        const { getAccessToken } = await import("@privy-io/react-auth");
+        const accessToken = await getAccessToken();
+        const response = await fetch(`/api/forums/posts/${postId}/replies`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!response.ok) throw new Error('Failed to fetch');
+        return response.json();
+      },
+    });
+  }, [queryClient]);
 
   if (!ready || !authenticated) return null;
 
@@ -184,7 +205,7 @@ export default function ForumsPage() {
           >
             All
           </button>
-          {categories.map(category => (
+          {CATEGORIES.map(category => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
@@ -238,7 +259,7 @@ export default function ForumsPage() {
                     onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                   >
-                    {categories.map(cat => (
+                    {CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
@@ -315,7 +336,7 @@ export default function ForumsPage() {
                     onChange={(e) => setEditPost({ ...editPost, category: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                   >
-                    {categories.map(cat => (
+                    {CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
@@ -455,23 +476,10 @@ export default function ForumsPage() {
         ) : (
           <div className="space-y-4">
                      {filteredPosts.map(post => (
-              <div 
-                key={post.id} 
+              <div
+                key={post.id}
                 className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow"
-                onMouseEnter={() => {
-                  queryClient.prefetchQuery({
-                    queryKey: ["forum-replies", post.id],
-                    queryFn: async () => {
-                      const { getAccessToken } = await import("@privy-io/react-auth");
-                      const accessToken = await getAccessToken();
-                      const response = await fetch(`/api/forums/posts/${post.id}/replies`, {
-                        headers: { Authorization: `Bearer ${accessToken}` },
-                      });
-                      if (!response.ok) throw new Error('Failed to fetch');
-                      return response.json();
-                    },
-                  });
-                }}
+                onMouseEnter={() => handlePostHover(post.id)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

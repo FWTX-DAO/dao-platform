@@ -55,9 +55,9 @@ export class MeetingNotesRepository {
       .from(meetingNotes)
       .leftJoin(users, eq(meetingNotes.authorId, users.id))
       .where(sql`
-        ${meetingNotes.title} LIKE ${'%' + searchTerm + '%'} OR
-        ${meetingNotes.notes} LIKE ${'%' + searchTerm + '%'} OR
-        ${meetingNotes.tags} LIKE ${'%' + searchTerm + '%'}
+        ${meetingNotes.title} ILIKE${'%' + searchTerm + '%'} OR
+        ${meetingNotes.notes} ILIKE${'%' + searchTerm + '%'} OR
+        ${meetingNotes.tags} ILIKE${'%' + searchTerm + '%'}
       `)
       .orderBy(desc(meetingNotes.date));
   }
@@ -68,8 +68,8 @@ export class MeetingNotesRepository {
       id,
       authorId,
       ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     
     return this.findById(id);
@@ -77,7 +77,7 @@ export class MeetingNotesRepository {
 
   async update(id: string, data: Partial<CreateMeetingNoteInput>) {
     await db.update(meetingNotes)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(meetingNotes.id, id));
     
     return this.findById(id);

@@ -1,8 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest, generateId } from "@utils/api-helpers";
 import { getOrCreateUser } from "@core/database/queries/users";
-import { db, innovationBounties, users } from "@core/database";
+import { db, innovationBounties, users, members } from "@core/database";
 import { eq, sql, and, or, like } from "drizzle-orm";
+
+/**
+ * Check if user has admin privileges (council member or screener role)
+ */
+async function isUserAdmin(userId: string): Promise<boolean> {
+  const memberInfo = await db
+    .select()
+    .from(members)
+    .where(eq(members.userId, userId))
+    .limit(1);
+
+  if (memberInfo.length === 0) return false;
+
+  const member = memberInfo[0]!;
+  const isCouncil = member.membershipType === "council";
+  const isScreener = Array.isArray(member.specialRoles) && member.specialRoles.includes("screener");
+
+  return isCouncil || isScreener;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,11 +45,30 @@ export default async function handler(
       const limit = Math.min(parseInt(limitParam as string) || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
       const offset = parseInt(offsetParam as string) || 0;
 
+      // Check admin status if requesting all bounties
+      const requestsAllBounties = req.query.includeAll === 'true';
+      const isAdmin = user ? await isUserAdmin(user.id) : false;
+
       // Build filter conditions
       const conditions = [];
-      
-      // Only show published bounties to non-admins (for now, everyone sees all)
-      if (!req.query.includeAll) {
+
+      // Show published/assigned/completed bounties by default
+      // Admins with includeAll can see all statuses
+      // Users can always see their own bounties
+      if (requestsAllBounties && isAdmin) {
+        // Admin requesting all - no status filter
+      } else if (user) {
+        // Regular users see: published/assigned/completed OR their own submissions
+        conditions.push(
+          or(
+            eq(innovationBounties.status, "published"),
+            eq(innovationBounties.status, "assigned"),
+            eq(innovationBounties.status, "completed"),
+            eq(innovationBounties.submitterId, user.id)
+          )
+        );
+      } else {
+        // Unauthenticated - only published (shouldn't reach here due to auth)
         conditions.push(eq(innovationBounties.status, "published"));
       }
 
@@ -167,18 +205,18 @@ export default async function handler(
         currentState,
         commonToolsUsed: Array.isArray(commonToolsUsed) ? commonToolsUsed.join(",") : commonToolsUsed,
         desiredOutcome,
-        technicalRequirements: Array.isArray(technicalRequirements) ? JSON.stringify(technicalRequirements) : technicalRequirements,
+        technicalRequirements: technicalRequirements ?? null,
         constraints,
         deliverables,
         bountyAmount: bountyAmount ? Math.round(bountyAmount * 100) : null, // Convert to cents
         bountyType: bountyType || "fixed",
-        deadline,
+        deadline: deadline ? new Date(deadline) : null,
         category,
         tags: Array.isArray(tags) ? tags.join(",") : tags,
         status,
         publishedAt,
         submitterId: user!.id,
-        isAnonymous: isAnonymous ? 1 : 0,
+        isAnonymous: !!isAnonymous,
       }).returning();
 
       return res.status(201).json({

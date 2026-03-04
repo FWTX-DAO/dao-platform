@@ -2,7 +2,7 @@ import { db, users, forumPosts, projects, meetingNotes } from './index';
 import { generateId } from '../../shared/utils/id-generator';
 
 async function seed() {
-  console.log('🌱 Starting database seed...');
+  console.log('Starting database seed...');
 
   try {
     // Create sample users
@@ -122,14 +122,14 @@ async function seed() {
 
     console.log(`✓ Created ${sampleMeetingNotes.length} meeting notes`);
 
-    console.log('\n✅ Database seeding complete!');
+    console.log('\nDatabase seeding complete!');
     console.log('You can now use these demo accounts:');
     console.log('- did:privy:demo-admin (Admin user)');
     console.log('- did:privy:demo-member (Regular member)');
     console.log('- did:privy:demo-developer (Developer)');
     
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('Error seeding database:', error);
     process.exit(1);
   }
 }

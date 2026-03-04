@@ -1,9 +1,9 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@components/AppLayout";
-import { 
+import {
   BeakerIcon,
   PlusIcon,
   LinkIcon,
@@ -11,7 +11,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjects, useCreateProject } from "@hooks/useProjects";
 
-const statusColors: Record<string, string> = {
+// Static objects moved outside component to prevent recreation on each render
+const STATUS_COLORS: Record<string, string> = {
   proposed: "bg-yellow-100 text-yellow-800",
   active: "bg-green-100 text-green-800",
   completed: "bg-gray-100 text-gray-800",
@@ -80,9 +81,29 @@ export default function InnovationLabPage() {
     }
   };
 
-  const filteredProjects = statusFilter === "all"
-    ? projects
-    : projects.filter(project => project.status === statusFilter);
+  // Memoize filtered projects to prevent unnecessary recalculations
+  const filteredProjects = useMemo(() =>
+    statusFilter === "all"
+      ? projects
+      : projects.filter(project => project.status === statusFilter),
+    [statusFilter, projects]
+  );
+
+  // Memoize prefetch handler to prevent recreation on each render
+  const handleProjectHover = useCallback((projectId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ["project-details", projectId],
+      queryFn: async () => {
+        const { getAccessToken } = await import("@privy-io/react-auth");
+        const accessToken = await getAccessToken();
+        const response = await fetch(`/api/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!response.ok) throw new Error('Failed to fetch');
+        return response.json();
+      },
+    });
+  }, [queryClient]);
 
   if (!ready || !authenticated) return null;
 
@@ -253,28 +274,15 @@ export default function InnovationLabPage() {
             {filteredProjects.map(project => {
               const tags = project.tags ? project.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
               return (
-                 <div 
-                   key={project.id} 
+                 <div
+                   key={project.id}
                    className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                    onClick={() => router.push(`/innovation-lab/${project.id}`)}
-                   onMouseEnter={() => {
-                     queryClient.prefetchQuery({
-                       queryKey: ["project-details", project.id],
-                       queryFn: async () => {
-                         const { getAccessToken } = await import("@privy-io/react-auth");
-                         const accessToken = await getAccessToken();
-                         const response = await fetch(`/api/projects/${project.id}`, {
-                           headers: { Authorization: `Bearer ${accessToken}` },
-                         });
-                         if (!response.ok) throw new Error('Failed to fetch');
-                         return response.json();
-                       },
-                     });
-                   }}
+                   onMouseEnter={() => handleProjectHover(project.id)}
                  >
                   <div className="flex items-center justify-between mb-4">
                     <BeakerIcon className="h-8 w-8 text-violet-600" />
-                    <span className={`text-xs px-2 py-1 rounded-full ${statusColors[project.status]}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[project.status]}`}>
                       {project.status}
                     </span>
                   </div>

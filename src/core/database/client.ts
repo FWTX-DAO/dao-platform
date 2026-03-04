@@ -1,10 +1,10 @@
 import { db } from './index';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { 
-  users, 
-  members, 
-  forumPosts, 
-  projects, 
+import {
+  users,
+  members,
+  forumPosts,
+  projects,
   meetingNotes,
   projectCollaborators,
   forumVotes,
@@ -19,14 +19,14 @@ import {
   type NewDocumentAuditTrail
 } from './schema';
 import { generateId } from '../../shared/utils/id-generator';
+import { activitiesService } from '../../features/activities/services/activities.service';
 
 // User operations
 export const userOperations = {
-  // Create or update user from Privy auth
   async upsertFromPrivy(privyDid: string, email?: string) {
     const userId = generateId();
-    const existingUser = await db.select().from(users).where(eq(users.privyDid, privyDid)).get();
-    
+    const existingUser = await db.select().from(users).where(eq(users.privyDid, privyDid)).limit(1).then(r => r[0]);
+
     if (existingUser) {
       return existingUser;
     }
@@ -35,12 +35,10 @@ export const userOperations = {
       id: userId,
       privyDid,
       username: email?.split('@')[0] || `user_${userId.slice(0, 8)}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
     await db.insert(users).values(newUser);
-    
+
     // Auto-create basic membership
     const newMember: NewMember = {
       id: generateId(),
@@ -50,19 +48,19 @@ export const userOperations = {
       votingPower: 1,
       status: 'active',
     };
-    
+
     await db.insert(members).values(newMember);
-    
-    return db.select().from(users).where(eq(users.id, userId)).get();
+
+    return db.select().from(users).where(eq(users.id, userId)).limit(1).then(r => r[0]);
   },
 
   async getByPrivyDid(privyDid: string) {
-    return db.select().from(users).where(eq(users.privyDid, privyDid)).get();
+    return db.select().from(users).where(eq(users.privyDid, privyDid)).limit(1).then(r => r[0]);
   },
 
   async updateProfile(userId: string, updates: Partial<NewUser>) {
     await db.update(users)
-      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
 };
@@ -70,12 +68,12 @@ export const userOperations = {
 // Member operations
 export const memberOperations = {
   async getMembershipStatus(userId: string) {
-    return db.select().from(members).where(eq(members.userId, userId)).get();
+    return db.select().from(members).where(eq(members.userId, userId)).limit(1).then(r => r[0]);
   },
 
   async updateMembership(userId: string, updates: Partial<NewMember>) {
     await db.update(members)
-      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(members.userId, userId));
   },
 
@@ -83,9 +81,9 @@ export const memberOperations = {
     const member = await this.getMembershipStatus(userId);
     if (member) {
       await db.update(members)
-        .set({ 
+        .set({
           contributionPoints: member.contributionPoints + points,
-          updatedAt: new Date().toISOString() 
+          updatedAt: new Date(),
         })
         .where(eq(members.userId, userId));
     }
@@ -98,15 +96,13 @@ export const forumOperations = {
     const newPost: NewForumPost = {
       ...post,
       id: generateId(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
-    
+
     await db.insert(forumPosts).values(newPost);
-    
-    // Award contribution points
-    await memberOperations.addContributionPoints(post.authorId, 5);
-    
+
+    // Track activity + award contribution points
+    await activitiesService.trackActivity(post.authorId, 'forum_post', 'forum_post', newPost.id);
+
     return newPost;
   },
 
@@ -116,10 +112,10 @@ export const forumOperations = {
         post: forumPosts,
         author: users,
         voteCount: sql<number>`
-          (SELECT COALESCE(SUM(vote_type), 0) 
-           FROM forum_votes 
+          (SELECT COALESCE(SUM(vote_type), 0)
+           FROM forum_votes
            WHERE forum_votes.post_id = forum_posts.id)
-        `.as('vote_count')
+        `,
       })
       .from(forumPosts)
       .leftJoin(users, eq(forumPosts.authorId, users.id))
@@ -127,7 +123,7 @@ export const forumOperations = {
       .orderBy(desc(forumPosts.createdAt))
       .limit(limit)
       .offset(offset);
-    
+
     return posts;
   },
 
@@ -140,7 +136,7 @@ export const forumOperations = {
         eq(forumVotes.postId, postId),
         eq(forumVotes.userId, userId)
       ))
-      .get();
+      .limit(1).then(r => r[0]);
 
     if (existingVote) {
       if (existingVote.voteType === voteType) {
@@ -165,7 +161,6 @@ export const forumOperations = {
         postId,
         userId,
         voteType,
-        createdAt: new Date().toISOString(),
       });
     }
   }
@@ -177,23 +172,20 @@ export const projectOperations = {
     const newProject: NewProject = {
       ...project,
       id: generateId(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
-    
+
     await db.insert(projects).values(newProject);
-    
+
     // Add creator as collaborator
     await db.insert(projectCollaborators).values({
       projectId: newProject.id,
       userId: project.creatorId,
       role: 'owner',
-      joinedAt: new Date().toISOString(),
     });
-    
-    // Award contribution points
-    await memberOperations.addContributionPoints(project.creatorId, 20);
-    
+
+    // Track activity + award contribution points
+    await activitiesService.trackActivity(project.creatorId, 'project_created', 'project', newProject.id);
+
     return newProject;
   },
 
@@ -203,17 +195,17 @@ export const projectOperations = {
         project: projects,
         creator: users,
         collaboratorCount: sql<number>`
-          (SELECT COUNT(*) 
-           FROM project_collaborators 
+          (SELECT COUNT(*)
+           FROM project_collaborators
            WHERE project_collaborators.project_id = projects.id)
-        `.as('collaborator_count')
+        `,
       })
       .from(projects)
       .leftJoin(users, eq(projects.creatorId, users.id))
       .orderBy(desc(projects.createdAt))
       .limit(limit)
       .offset(offset);
-    
+
     return projectList;
   },
 
@@ -222,11 +214,10 @@ export const projectOperations = {
       projectId,
       userId,
       role,
-      joinedAt: new Date().toISOString(),
     });
-    
-    // Award contribution points
-    await memberOperations.addContributionPoints(userId, 10);
+
+    // Track activity + award contribution points
+    await activitiesService.trackActivity(userId, 'project_joined', 'project', projectId);
   }
 };
 
@@ -236,15 +227,13 @@ export const meetingNotesOperations = {
     const newNote: NewMeetingNote = {
       ...note,
       id: generateId(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
-    
+
     await db.insert(meetingNotes).values(newNote);
-    
-    // Award contribution points
-    await memberOperations.addContributionPoints(note.authorId, 15);
-    
+
+    // Track activity + award contribution points
+    await activitiesService.trackActivity(note.authorId, 'meeting_created', 'meeting_note', newNote.id);
+
     return newNote;
   },
 
@@ -270,9 +259,9 @@ export const meetingNotesOperations = {
       .from(meetingNotes)
       .leftJoin(users, eq(meetingNotes.authorId, users.id))
       .where(sql`
-        ${meetingNotes.title} LIKE ${'%' + searchTerm + '%'} OR
-        ${meetingNotes.notes} LIKE ${'%' + searchTerm + '%'} OR
-        ${meetingNotes.tags} LIKE ${'%' + searchTerm + '%'}
+        ${meetingNotes.title} ILIKE ${'%' + searchTerm + '%'} OR
+        ${meetingNotes.notes} ILIKE ${'%' + searchTerm + '%'} OR
+        ${meetingNotes.tags} ILIKE ${'%' + searchTerm + '%'}
       `)
       .orderBy(desc(meetingNotes.date));
   }
@@ -284,22 +273,20 @@ export const documentOperations = {
     const newDocument: NewDocument = {
       ...document,
       id: generateId(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
-    
+
     await db.insert(documents).values(newDocument);
-    
+
     // Create audit trail entry for upload
     await this.createAuditEntry(newDocument.id, document.uploaderId, 'uploaded', {
       pinataId: document.pinataId,
       cid: document.cid,
       size: document.fileSize,
     });
-    
-    // Award contribution points
-    await memberOperations.addContributionPoints(document.uploaderId, 10);
-    
+
+    // Track activity + award contribution points
+    await activitiesService.trackActivity(document.uploaderId, 'document_uploaded', 'document', newDocument.id);
+
     return newDocument;
   },
 
@@ -360,24 +347,24 @@ export const documentOperations = {
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
       .where(eq(documents.id, id))
-      .get();
-    
+      .limit(1).then(r => r[0]);
+
     if (result) {
       // Update access count and timestamp
       await db.update(documents)
         .set({
           accessCount: sql`${documents.accessCount} + 1`,
-          lastAccessedAt: new Date().toISOString(),
+          lastAccessedAt: new Date(),
         })
         .where(eq(documents.id, id));
     }
-    
+
     return result;
   },
 
   async updateDocument(id: string, updates: Partial<NewDocument>, userId: string) {
     await db.update(documents)
-      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(documents.id, id));
 
     // Create audit trail entry
@@ -386,9 +373,9 @@ export const documentOperations = {
 
   async deleteDocument(id: string, userId: string) {
     await db.update(documents)
-      .set({ 
+      .set({
         status: 'deleted',
-        updatedAt: new Date().toISOString() 
+        updatedAt: new Date(),
       })
       .where(eq(documents.id, id));
 
@@ -405,9 +392,9 @@ export const documentOperations = {
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
       .where(sql`
-        (${documents.name} LIKE ${'%' + searchTerm + '%'} OR
-         ${documents.description} LIKE ${'%' + searchTerm + '%'} OR
-         ${documents.tags} LIKE ${'%' + searchTerm + '%'}) AND
+        (${documents.name} ILIKE ${'%' + searchTerm + '%'} OR
+         ${documents.description} ILIKE ${'%' + searchTerm + '%'} OR
+         ${documents.tags} ILIKE ${'%' + searchTerm + '%'}) AND
          ${documents.status} = 'active'
       `)
       .orderBy(desc(documents.updatedAt));
@@ -419,10 +406,10 @@ export const documentOperations = {
       documentId,
       userId,
       action,
-      metadata: metadata ? JSON.stringify(metadata) : null,
-      timestamp: new Date().toISOString(),
+      metadata: metadata ?? null,
+      timestamp: new Date(),
     };
-    
+
     await db.insert(documentAuditTrail).values(auditEntry);
     return auditEntry;
   },

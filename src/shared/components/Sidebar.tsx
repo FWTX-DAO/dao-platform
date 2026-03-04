@@ -1,10 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { usePrivy } from '@privy-io/react-auth';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import { AnimatedSidebar, CollapsibleSection } from './ui/sidebar';
 import { useSidebar } from '../contexts/SidebarContext';
+import { useProfile } from '@shared/hooks/useProfile';
 import {
   Home,
   MessageSquare,
@@ -17,6 +18,10 @@ import {
   Trophy,
   Users,
   Send,
+  Search,
+  Activity,
+  CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
 
 export type NavbarItem = {
@@ -89,27 +94,31 @@ function Sidebar() {
   const router = useRouter();
   const { user, logout } = usePrivy();
   const { isOpen, close } = useSidebar();
+  const { data: profile } = useProfile();
   const currentPath = router.pathname;
+  const isAdmin = profile?.roleNames?.includes('admin');
 
-  const isActive = (href: string) => currentPath === href;
+  const isActive = useCallback((href: string) => currentPath === href, [currentPath]);
 
-  const handleLogout = async () => {
+  // Memoize handlers to prevent recreation on each render
+  const handleLogout = useCallback(async () => {
     await logout();
     router.push('/');
-  };
+  }, [logout, router]);
 
-  const handleNavigation = (href: string) => {
+  const handleNavigation = useCallback((href: string) => {
     router.push(href);
     // Auto-close on mobile
     if (window.innerWidth < 768) {
       close();
     }
-  };
+  }, [router, close]);
 
-  const userInfo = {
+  // Memoize derived user info
+  const userInfo = useMemo(() => ({
     email: user?.email?.address || 'User',
     id: user?.id?.substring(0, 8) || '',
-  };
+  }), [user?.email?.address, user?.id]);
 
   // Profile Section Component
   const profileSection = (
@@ -153,6 +162,30 @@ function Sidebar() {
           <Button
             variant="ghost"
             className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            onClick={() => handleNavigation('/directory')}
+          >
+            <Search className="mr-3 h-4 w-4" />
+            Directory
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            onClick={() => handleNavigation('/activity')}
+          >
+            <Activity className="mr-3 h-4 w-4" />
+            Activity
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+            onClick={() => handleNavigation('/subscriptions')}
+          >
+            <CreditCard className="mr-3 h-4 w-4" />
+            Subscriptions
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
             onClick={() => window.open('https://t.me/fwtxdao', '_blank')}
           >
             <Send className="mr-3 h-4 w-4" />
@@ -160,6 +193,21 @@ function Sidebar() {
           </Button>
         </div>
       </CollapsibleSection>
+
+      {isAdmin && (
+        <CollapsibleSection title="Admin" defaultOpen={false}>
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
+              onClick={() => handleNavigation('/admin')}
+            >
+              <ShieldCheck className="mr-3 h-4 w-4" />
+              Admin Panel
+            </Button>
+          </div>
+        </CollapsibleSection>
+      )}
 
       <CollapsibleSection title="Resources" defaultOpen={false}>
         <div className="space-y-1">
@@ -185,6 +233,14 @@ function Sidebar() {
   // Footer Section Component
   const footerSection = (
     <div className="space-y-2">
+      <Button
+        variant="ghost"
+        className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
+        onClick={() => handleNavigation('/profile')}
+      >
+        <User className="mr-3 h-4 w-4" />
+        Profile
+      </Button>
       <Button
         variant="ghost"
         className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"

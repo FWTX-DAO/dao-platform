@@ -33,11 +33,34 @@ export const API_ROUTES = {
   MEMBERS: {
     BASE: '/api/members',
     STATS: '/api/members/stats',
+    SEARCH: '/api/members/search',
+    ONBOARD: '/api/members/onboard',
+    BY_ID: (id: string) => `/api/members/${id}`,
+    ROLES: (id: string) => `/api/members/${id}/roles`,
+    ACTIVITIES: (id: string) => `/api/members/${id}/activities`,
+    PROFILE: '/api/members/profile',
   },
   USERS: {
     PROFILE: '/api/users/profile',
   },
   DASHBOARD: {
     STATS: '/api/dashboard/stats',
+  },
+  SUBSCRIPTIONS: {
+    BASE: '/api/subscriptions',
+    TIERS: '/api/subscriptions/tiers',
+    CHECKOUT: '/api/subscriptions/checkout',
+    PORTAL: '/api/subscriptions/portal',
+    BY_ID: (id: string) => `/api/subscriptions/${id}`,
+    WEBHOOK: '/api/webhooks/stripe',
+  },
+  ACTIVITIES: {
+    BASE: '/api/activities',
+    FEED: '/api/activities/feed',
+  },
+  ADMIN: {
+    ROLES: '/api/admin/roles',
+    ROLE_BY_ID: (id: string) => `/api/admin/roles/${id}`,
+    ROLE_PERMISSIONS: (id: string) => `/api/admin/roles/${id}/permissions`,
   },
 } as const;

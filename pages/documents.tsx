@@ -37,14 +37,14 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const getFileIcon = (mimeType: string) => {
-  if (mimeType.startsWith('image/')) return '🖼️';
-  if (mimeType.startsWith('video/')) return '🎥';
-  if (mimeType.startsWith('audio/')) return '🎵';
-  if (mimeType.includes('pdf')) return '📄';
-  if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-  if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊';
-  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return '📺';
-  return '📁';
+  if (mimeType.startsWith('image/')) return 'IMG';
+  if (mimeType.startsWith('video/')) return 'VID';
+  if (mimeType.startsWith('audio/')) return 'AUD';
+  if (mimeType.includes('pdf')) return 'PDF';
+  if (mimeType.includes('word') || mimeType.includes('document')) return 'DOC';
+  if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'XLS';
+  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'PPT';
+  return 'FILE';
 };
 
 type SortField = 'name' | 'createdAt' | 'fileSize' | 'category';

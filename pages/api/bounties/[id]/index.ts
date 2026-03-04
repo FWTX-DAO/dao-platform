@@ -1,8 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticateRequest } from "@utils/api-helpers";
 import { getOrCreateUser } from "@core/database/queries/users";
-import { db, innovationBounties, users, bountyProposals, bountyComments } from "@core/database";
+import { db, innovationBounties, users, bountyProposals, bountyComments, members } from "@core/database";
 import { eq, sql, and } from "drizzle-orm";
+
+/**
+ * Check if user has admin privileges (council member or screener role)
+ */
+async function isUserAdmin(userId: string): Promise<boolean> {
+  const memberInfo = await db
+    .select()
+    .from(members)
+    .where(eq(members.userId, userId))
+    .limit(1);
+
+  if (memberInfo.length === 0) return false;
+
+  const member = memberInfo[0]!;
+  const isCouncil = member.membershipType === "council";
+  const isScreener = Array.isArray(member.specialRoles) && member.specialRoles.includes("screener");
+
+  return isCouncil || isScreener;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -69,88 +88,89 @@ export default async function handler(
       }
 
       const bounty = bountyResult[0]!;
-      
-      // Show non-published bounties only to their submitters OR when includeAll is passed (admin context)
-      const includeAll = req.query.includeAll === 'true';
+
+      // Check if user has admin privileges for elevated access
+      const isAdmin = user ? await isUserAdmin(user.id) : false;
+      const isSubmitter = bounty.submitterId === user?.id;
+
+      // Show non-published bounties only to their submitters OR verified admins
+      // Note: includeAll query param now requires verified admin status
+      const requestsAdminAccess = req.query.includeAll === 'true';
       if (bounty.status !== "published" && bounty.status !== "assigned" && bounty.status !== "completed") {
-        if (bounty.submitterId !== user?.id && !includeAll) {
+        const hasAccess = isSubmitter || (requestsAdminAccess && isAdmin);
+        if (!hasAccess) {
           return res.status(404).json({ error: "Bounty not found" });
         }
       }
 
-      // Increment view count for published bounties (not for the submitter)
-      if (bounty.status === "published" && bounty.submitterId !== user?.id) {
-        await db
-          .update(innovationBounties)
-          .set({ viewCount: sql`${innovationBounties.viewCount} + 1` })
-          .where(eq(innovationBounties.id, id));
-      }
-
-      // Get proposals count
-      const proposalsCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(bountyProposals)
-        .where(eq(bountyProposals.bountyId, id));
-
-      // Get comments (only non-internal or internal if user is submitter/admin)
+      // Build comments conditions - internal comments only visible to submitter or admin
       const commentsConditions = [eq(bountyComments.bountyId, id)];
-      
-      // For now, show all comments. In production, you'd check for admin role
-      if (bounty.submitterId !== user?.id) {
-        commentsConditions.push(eq(bountyComments.isInternal, 0));
+      if (!isSubmitter && !isAdmin) {
+        commentsConditions.push(eq(bountyComments.isInternal, false));
       }
 
-      const comments = await db
-        .select({
-          id: bountyComments.id,
-          content: bountyComments.content,
-          isInternal: bountyComments.isInternal,
-          authorId: bountyComments.authorId,
-          authorName: users.username,
-          authorAvatar: users.avatarUrl,
-          parentId: bountyComments.parentId,
-          createdAt: bountyComments.createdAt,
-        })
-        .from(bountyComments)
-        .leftJoin(users, eq(bountyComments.authorId, users.id))
-        .where(and(...commentsConditions))
-        .orderBy(bountyComments.createdAt);
-
-      // Check if user has submitted a proposal
-      let userProposal = null;
-      if (user) {
-        const userProposalResult = await db
-          .select()
+      // Parallelize independent queries for better performance
+      const [proposalsCountResult, comments, userProposalResult, _viewCountUpdate] = await Promise.all([
+        // Get proposals count
+        db.select({ count: sql<number>`count(*)` })
           .from(bountyProposals)
-          .where(
-            and(
-              eq(bountyProposals.bountyId, id),
-              eq(bountyProposals.proposerId, user.id)
-            )
-          )
-          .limit(1);
-        
-        if (userProposalResult.length > 0) {
-          userProposal = userProposalResult[0];
-        }
-      }
+          .where(eq(bountyProposals.bountyId, id)),
 
-      // Sanitize response based on anonymity
+        // Get comments
+        db.select({
+            id: bountyComments.id,
+            content: bountyComments.content,
+            isInternal: bountyComments.isInternal,
+            authorId: bountyComments.authorId,
+            authorName: users.username,
+            authorAvatar: users.avatarUrl,
+            parentId: bountyComments.parentId,
+            createdAt: bountyComments.createdAt,
+          })
+          .from(bountyComments)
+          .leftJoin(users, eq(bountyComments.authorId, users.id))
+          .where(and(...commentsConditions))
+          .orderBy(bountyComments.createdAt),
+
+        // Check if user has submitted a proposal
+        user
+          ? db.select()
+              .from(bountyProposals)
+              .where(and(
+                eq(bountyProposals.bountyId, id),
+                eq(bountyProposals.proposerId, user.id)
+              ))
+              .limit(1)
+          : Promise.resolve([]),
+
+        // Increment view count (non-blocking, runs in parallel)
+        bounty.status === "published" && bounty.submitterId !== user?.id
+          ? db.update(innovationBounties)
+              .set({ viewCount: sql`${innovationBounties.viewCount} + 1` })
+              .where(eq(innovationBounties.id, id))
+          : Promise.resolve(null),
+      ]);
+
+      const proposalsCount = proposalsCountResult;
+      const userProposal = userProposalResult.length > 0 ? userProposalResult[0] : null;
+
+      // Sanitize response based on anonymity and access level
       const sanitizedBounty = {
         ...bounty,
         submitterName: bounty.isAnonymous ? "Anonymous" : bounty.submitterName,
         submitterAvatar: bounty.isAnonymous ? null : bounty.submitterAvatar,
         submitterId: bounty.isAnonymous ? null : bounty.submitterId,
-        // Don't show contact info unless it's the submitter or the bounty is published
-        organizationContact: (bounty.submitterId === user?.id || bounty.status === "published") 
-          ? bounty.organizationContact 
+        // Show contact info to submitter, admins, or for published bounties
+        organizationContact: (isSubmitter || isAdmin || bounty.status === "published")
+          ? bounty.organizationContact
           : null,
-        // Don't show screening notes unless it's the submitter or admin
-        screeningNotes: bounty.submitterId === user?.id ? bounty.screeningNotes : null,
+        // Show screening notes only to submitter or verified admin
+        screeningNotes: (isSubmitter || isAdmin) ? bounty.screeningNotes : null,
         proposalCount: proposalsCount[0]?.count || 0,
         comments,
         userHasProposal: !!userProposal,
-        userIsSubmitter: bounty.submitterId === user?.id,
+        userIsSubmitter: isSubmitter,
+        userIsAdmin: isAdmin,
       };
 
       return res.status(200).json(sanitizedBounty);

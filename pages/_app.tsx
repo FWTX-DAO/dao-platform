@@ -3,10 +3,16 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { createQueryClient } from "@utils/query-client";
 import { SidebarProvider } from "@shared/contexts/SidebarContext";
+
+// Load ReactQueryDevtools only in development to reduce production bundle
+const ReactQueryDevtools = dynamic(
+  () => import("@tanstack/react-query-devtools").then((mod) => mod.ReactQueryDevtools),
+  { ssr: false }
+);
 
 function MyApp({ Component, pageProps }: AppProps) {
   // Create a client with optimized settings
@@ -81,7 +87,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         >
           <SidebarProvider>
             <Component {...pageProps} />
-            <ReactQueryDevtools initialIsOpen={false} />
+            {process.env.NODE_ENV === "development" && (
+              <ReactQueryDevtools initialIsOpen={false} />
+            )}
           </SidebarProvider>
         </PrivyProvider>
       </QueryClientProvider>

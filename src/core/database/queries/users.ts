@@ -101,7 +101,7 @@ export async function updateUserProfile(
     .update(users)
     .set({
       ...data,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     })
     .where(eq(users.privyDid, privyDid))
     .returning();

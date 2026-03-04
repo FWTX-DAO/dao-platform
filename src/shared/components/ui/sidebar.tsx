@@ -13,51 +13,49 @@ export const AnimatedMenuToggle = ({ toggle, isOpen }: AnimatedMenuToggleProps) 
   <button
     onClick={toggle}
     aria-label="Toggle menu"
-    className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded z-50"
+    className="flex items-center justify-center w-10 h-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 rounded z-50"
   >
-    <motion.div animate={{ y: isOpen ? 13 : 0 }} transition={{ duration: 0.3 }}>
-      <motion.svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        initial="closed"
-        animate={isOpen ? "open" : "closed"}
-        transition={{ duration: 0.3 }}
-        className="text-gray-300"
-      >
-        <motion.path
-          fill="transparent"
-          strokeWidth="3"
-          stroke="currentColor"
-          strokeLinecap="round"
-          variants={{
-            closed: { d: "M 2 2.5 L 22 2.5" },
-            open: { d: "M 3 16.5 L 17 2.5" },
-          }}
-        />
-        <motion.path
-          fill="transparent"
-          strokeWidth="3"
-          stroke="currentColor"
-          strokeLinecap="round"
-          variants={{
-            closed: { d: "M 2 12 L 22 12", opacity: 1 },
-            open: { opacity: 0 },
-          }}
-          transition={{ duration: 0.2 }}
-        />
-        <motion.path
-          fill="transparent"
-          strokeWidth="3"
-          stroke="currentColor"
-          strokeLinecap="round"
-          variants={{
-            closed: { d: "M 2 21.5 L 22 21.5" },
-            open: { d: "M 3 2.5 L 17 16.5" },
-          }}
-        />
-      </motion.svg>
-    </motion.div>
+    <motion.svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      initial="closed"
+      animate={isOpen ? "open" : "closed"}
+      transition={{ duration: 0.3 }}
+      className="text-gray-300"
+    >
+      <motion.path
+        fill="transparent"
+        strokeWidth="3"
+        stroke="currentColor"
+        strokeLinecap="round"
+        variants={{
+          closed: { d: "M 2 6 L 22 6" },
+          open: { d: "M 4 18 L 20 6" },
+        }}
+      />
+      <motion.path
+        fill="transparent"
+        strokeWidth="3"
+        stroke="currentColor"
+        strokeLinecap="round"
+        variants={{
+          closed: { d: "M 2 12 L 22 12", opacity: 1 },
+          open: { opacity: 0 },
+        }}
+        transition={{ duration: 0.2 }}
+      />
+      <motion.path
+        fill="transparent"
+        strokeWidth="3"
+        stroke="currentColor"
+        strokeLinecap="round"
+        variants={{
+          closed: { d: "M 2 18 L 22 18" },
+          open: { d: "M 4 6 L 20 18" },
+        }}
+      />
+    </motion.svg>
   </button>
 );
 
@@ -77,8 +75,9 @@ export const CollapsibleSection = ({
   return (
     <div className="mb-4">
       <button
-        className="w-full flex items-center justify-between py-2 px-4 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
+        className="w-full flex items-center justify-between py-2 px-4 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
       >
         <span className="font-semibold text-sm">{title}</span>
         {open ? <MinusIcon /> : <PlusIcon />}
