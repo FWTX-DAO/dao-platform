@@ -6,6 +6,7 @@ export * from './AppLayout';
 export * from './formatted-date';
 export * from './layout';
 export * from './logo';
+export * from './MemberCard';
 export * from './navbar';
 export * from './WalletCard';
 export * from './WalletList';

@@ -25,6 +25,36 @@ export const MEMBER_TYPES = ['basic', 'contributor', 'council'] as const;
 export const MEMBERSHIP_STATUSES = ['active', 'inactive', 'suspended'] as const;
 export const BOUNTY_STATUSES = ['draft', 'screening', 'published', 'assigned', 'completed', 'cancelled'] as const;
 
+// Bounty filter options for UI
+export const BOUNTY_CATEGORIES = [
+  "all",
+  "infrastructure",
+  "sustainability",
+  "public-safety",
+  "education",
+  "healthcare",
+  "transportation",
+  "economic-development",
+  "civic-engagement",
+  "other"
+] as const;
+
+export const BOUNTY_ORG_TYPES = [
+  "all",
+  "civic",
+  "commercial",
+  "non-profit",
+  "government",
+  "educational"
+] as const;
+
+export const BOUNTY_STATUS_FILTERS = [
+  "published",
+  "assigned",
+  "completed",
+  "all"
+] as const;
+
 // Membership tiers
 export const MEMBERSHIP_TIERS = ['free', 'pro', 'annual'] as const;
 

@@ -5,10 +5,10 @@ import { activitiesService } from '@features/activities';
 import { membersService } from '@features/members';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { claims } = req as AuthenticatedRequest;
+  const { user } = req as AuthenticatedRequest;
 
   if (req.method === 'GET') {
-    const member = await membersService.getMemberByUserId(claims.userId);
+    const member = await membersService.getMemberByUserId(user.id);
     const { type, limit, offset } = req.query;
     const activities = await activitiesService.getActivityFeed(member.id, {
       activityType: type as string | undefined,

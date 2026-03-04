@@ -5,10 +5,10 @@ import { subscriptionsService } from '@features/subscriptions';
 import { membersService } from '@features/members';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { claims } = req as AuthenticatedRequest;
+  const { user } = req as AuthenticatedRequest;
 
   if (req.method === 'GET') {
-    const member = await membersService.getOrCreateMember(claims.userId);
+    const member = await membersService.getOrCreateMember(user.id);
     const sub = await subscriptionsService.getActiveSubscription(member!.id);
     return apiResponse.success(res, sub);
   }

@@ -5,7 +5,7 @@ import { membersService } from '@features/members';
 import Stripe from 'stripe';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { claims } = req as AuthenticatedRequest;
+  const { user } = req as AuthenticatedRequest;
 
   if (req.method === 'POST') {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -16,7 +16,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       apiVersion: '2026-01-28.clover',
     });
 
-    const member = await membersService.getMemberByUserId(claims.userId);
+    const member = await membersService.getMemberByUserId(user.id);
 
     if (!member.stripeCustomerId) {
       return apiResponse.error(res, 'No Stripe customer found. Subscribe first.', 400);

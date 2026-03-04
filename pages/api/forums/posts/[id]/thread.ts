@@ -1,6 +1,11 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "@utils/api-helpers";
-import { getOrCreateUser } from "@core/database/queries/users";
+import type { NextApiResponse } from "next";
+import {
+  compose,
+  errorHandler,
+  withAuth,
+  type AuthenticatedRequest,
+} from "@core/middleware";
+import { ValidationError } from "@core/errors/AppError";
 import { forumService } from "@features/forum";
 import type { ForumPostWithReplies } from "@features/forum";
 
@@ -30,40 +35,23 @@ function transformPost(post: ForumPostWithReplies): any {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  try {
-    const claims = await authenticateRequest(req);
-    const privyDid = claims.userId;
-    const email = (claims as any).email || undefined;
+  const user = req.user;
+  const { id: postId } = req.query;
 
-    // Get or create user
-    const user = await getOrCreateUser(privyDid, email);
-
-    const { id: postId } = req.query;
-
-    if (!postId || typeof postId !== 'string') {
-      return res.status(400).json({ error: "Valid post ID is required" });
-    }
-
-    // Get full thread with nested replies
-    const thread = await forumService.getThread(postId, user!.id);
-
-    // Transform to snake_case for API compatibility
-    return res.status(200).json(transformPost(thread));
-  } catch (error: any) {
-    console.error("Forum thread API error:", error);
-
-    if (error.name === 'NotFoundError') {
-      return res.status(404).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: error.message || "Internal server error" });
+  if (!postId || typeof postId !== "string") {
+    throw new ValidationError("Valid post ID is required");
   }
+
+  // Get full thread with nested replies
+  const thread = await forumService.getThread(postId, user.id);
+
+  // Transform to snake_case for API compatibility
+  return res.status(200).json(transformPost(thread));
 }
+
+export default compose(errorHandler, withAuth)(handler);

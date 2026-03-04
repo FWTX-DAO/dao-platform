@@ -1,172 +1,129 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "@utils/api-helpers";
+import type { NextApiResponse } from "next";
+import { compose, errorHandler, withAuth, type AuthenticatedRequest } from "@core/middleware";
+import { ValidationError } from "@core/errors/AppError";
 import { sanitizeForumPostInput } from "@utils/utils";
-import { getOrCreateUser } from "@core/database/queries/users";
 import { forumService } from "@features/forum";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  try {
-    const claims = await authenticateRequest(req);
-    const privyDid = claims.userId;
-    const email = (claims as any).email || undefined;
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+  const user = req.user;
 
-    // Get or create user
-    const user = await getOrCreateUser(privyDid, email);
+  if (req.method === "GET") {
+    const { limit: limitParam, offset: offsetParam, category, projectId } = req.query;
+    const limit = parseInt(limitParam as string) || 20;
+    const offset = parseInt(offsetParam as string) || 0;
 
-    if (req.method === "GET") {
-      // Get pagination and filter parameters
-      const { limit: limitParam, offset: offsetParam, category, projectId } = req.query;
-      const limit = parseInt(limitParam as string) || 20;
-      const offset = parseInt(offsetParam as string) || 0;
+    const posts = await forumService.getPostsWithMetadata(user.id, {
+      limit,
+      offset,
+      category: category as string | undefined,
+      projectId: projectId as string | undefined,
+      rootOnly: true,
+    });
 
-      // Get all forum posts (root posts only by default)
-      const posts = await forumService.getPostsWithMetadata(user!.id, {
-        limit,
-        offset,
-        category: category as string | undefined,
-        projectId: projectId as string | undefined,
-        rootOnly: true,
-      });
+    const transformedPosts = posts.map(post => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      category: post.category,
+      author_id: post.authorId,
+      author_name: post.authorName,
+      author_privy_did: post.authorPrivyDid,
+      parent_id: post.parentId,
+      project_id: post.projectId,
+      thread_depth: post.threadDepth,
+      is_pinned: post.isPinned,
+      is_locked: post.isLocked,
+      last_activity_at: post.lastActivityAt,
+      created_at: post.createdAt,
+      updated_at: post.updatedAt,
+      upvotes: post.upvotes,
+      has_upvoted: post.hasUpvoted,
+      reply_count: post.replyCount,
+    }));
 
-      // Transform to snake_case for API compatibility
-      const transformedPosts = posts.map(post => ({
-        id: post.id,
-        title: post.title,
-        content: post.content,
-        category: post.category,
-        author_id: post.authorId,
-        author_name: post.authorName,
-        author_privy_did: post.authorPrivyDid,
-        parent_id: post.parentId,
-        project_id: post.projectId,
-        thread_depth: post.threadDepth,
-        is_pinned: post.isPinned,
-        is_locked: post.isLocked,
-        last_activity_at: post.lastActivityAt,
-        created_at: post.createdAt,
-        updated_at: post.updatedAt,
-        upvotes: post.upvotes,
-        has_upvoted: post.hasUpvoted,
-        reply_count: post.replyCount,
-      }));
-
-      return res.status(200).json(transformedPosts);
-    }
-
-    else if (req.method === "POST") {
-      // Create new forum post
-      const rawInput = req.body;
-
-      if (!rawInput.title || !rawInput.content) {
-        return res.status(400).json({ error: "Title and content are required" });
-      }
-
-      // Sanitize all input data
-      const sanitizedInput = sanitizeForumPostInput({
-        title: rawInput.title,
-        content: rawInput.content,
-        category: rawInput.category,
-        parent_id: rawInput.parent_id,
-      });
-
-      // Additional validation after sanitization
-      if (!sanitizedInput.title || !sanitizedInput.content) {
-        return res.status(400).json({
-          error: "Title and content cannot be empty after sanitization"
-        });
-      }
-
-      const newPost = await forumService.createPost({
-        title: sanitizedInput.title,
-        content: sanitizedInput.content,
-        category: sanitizedInput.category,
-        parentId: sanitizedInput.parent_id || undefined,
-        projectId: rawInput.project_id || undefined,
-      }, user!.id);
-
-      // Return the created post with author info
-      const postWithAuthor = {
-        ...newPost,
-        author_name: user!.username,
-        author_avatar: user!.avatarUrl,
-        upvotes: 0,
-        reply_count: 0,
-        has_upvoted: 0,
-      };
-
-      return res.status(201).json(postWithAuthor);
-    }
-
-    else if (req.method === "PUT") {
-      // Update existing forum post
-      const { id, title, content, category } = req.body;
-
-      if (!id || !title || !content) {
-        return res.status(400).json({ error: "ID, title and content are required" });
-      }
-
-      // Sanitize input data
-      const sanitizedInput = sanitizeForumPostInput({
-        title: title,
-        content: content,
-        category: category,
-      });
-
-      // Additional validation after sanitization
-      if (!sanitizedInput.title || !sanitizedInput.content) {
-        return res.status(400).json({
-          error: "Title and content cannot be empty after sanitization"
-        });
-      }
-
-      await forumService.updatePost(id, {
-        title: sanitizedInput.title,
-        content: sanitizedInput.content,
-        category: sanitizedInput.category,
-      }, user!.id);
-
-      // Get full post with metadata
-      const postWithMetadata = await forumService.getPostById(id, user!.id);
-
-      return res.status(200).json({
-        ...postWithMetadata,
-        author_id: postWithMetadata.authorId,
-        author_name: postWithMetadata.authorName,
-        created_at: postWithMetadata.createdAt,
-        updated_at: postWithMetadata.updatedAt,
-        has_upvoted: postWithMetadata.hasUpvoted,
-        reply_count: postWithMetadata.replyCount,
-      });
-    }
-
-    else if (req.method === "DELETE") {
-      // Delete forum post
-      const { id } = req.body;
-
-      if (!id) {
-        return res.status(400).json({ error: "Post ID is required" });
-      }
-
-      await forumService.deletePost(id, user!.id);
-
-      return res.status(200).json({ message: "Post deleted successfully" });
-    }
-
-    return res.status(405).json({ error: "Method not allowed" });
-  } catch (error: any) {
-    console.error("Forum posts API error:", error);
-
-    // Handle specific error types
-    if (error.name === 'NotFoundError') {
-      return res.status(404).json({ error: error.message });
-    }
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    return res.status(200).json(transformedPosts);
   }
+
+  if (req.method === "POST") {
+    const rawInput = req.body;
+
+    if (!rawInput.title || !rawInput.content) {
+      throw new ValidationError("Title and content are required");
+    }
+
+    const sanitizedInput = sanitizeForumPostInput({
+      title: rawInput.title,
+      content: rawInput.content,
+      category: rawInput.category,
+      parent_id: rawInput.parent_id,
+    });
+
+    if (!sanitizedInput.title || !sanitizedInput.content) {
+      throw new ValidationError("Title and content cannot be empty after sanitization");
+    }
+
+    const newPost = await forumService.createPost({
+      title: sanitizedInput.title,
+      content: sanitizedInput.content,
+      category: sanitizedInput.category,
+      parentId: sanitizedInput.parent_id || undefined,
+      projectId: rawInput.project_id || undefined,
+    }, user.id);
+
+    return res.status(201).json({
+      ...newPost,
+      author_name: user.username,
+      author_avatar: user.avatarUrl,
+      upvotes: 0,
+      reply_count: 0,
+      has_upvoted: 0,
+    });
+  }
+
+  if (req.method === "PUT") {
+    const { id, title, content, category } = req.body;
+
+    if (!id || !title || !content) {
+      throw new ValidationError("ID, title and content are required");
+    }
+
+    const sanitizedInput = sanitizeForumPostInput({ title, content, category });
+
+    if (!sanitizedInput.title || !sanitizedInput.content) {
+      throw new ValidationError("Title and content cannot be empty after sanitization");
+    }
+
+    await forumService.updatePost(id, {
+      title: sanitizedInput.title,
+      content: sanitizedInput.content,
+      category: sanitizedInput.category,
+    }, user.id);
+
+    const postWithMetadata = await forumService.getPostById(id, user.id);
+
+    return res.status(200).json({
+      ...postWithMetadata,
+      author_id: postWithMetadata.authorId,
+      author_name: postWithMetadata.authorName,
+      created_at: postWithMetadata.createdAt,
+      updated_at: postWithMetadata.updatedAt,
+      has_upvoted: postWithMetadata.hasUpvoted,
+      reply_count: postWithMetadata.replyCount,
+    });
+  }
+
+  if (req.method === "DELETE") {
+    const { id } = req.body;
+
+    if (!id) {
+      throw new ValidationError("Post ID is required");
+    }
+
+    await forumService.deletePost(id, user.id);
+    return res.status(200).json({ message: "Post deleted successfully" });
+  }
+
+  return res.status(405).json({ error: "Method not allowed" });
 }
+
+export default compose(errorHandler, withAuth)(handler);

@@ -6,7 +6,7 @@ import { subscriptionsService } from '@features/subscriptions';
 import Stripe from 'stripe';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { claims } = req as AuthenticatedRequest;
+  const { user } = req as AuthenticatedRequest;
 
   if (req.method === 'POST') {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -22,7 +22,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return apiResponse.error(res, 'tierId is required', 400);
     }
 
-    const member = await membersService.getMemberByUserId(claims.userId);
+    const member = await membersService.getMemberByUserId(user.id);
     const tiers = await subscriptionsService.getActiveTiers();
     const tier = tiers.find((t) => t.id === tierId);
 

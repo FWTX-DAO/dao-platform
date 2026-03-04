@@ -14,6 +14,8 @@ import {
   LinkIcon,
 } from '@heroicons/react/24/outline';
 import { SparklesIcon } from '@heroicons/react/24/solid';
+import IndustrySelect from '@components/IndustrySelect';
+import { getNaicsLabel } from '@shared/constants/naics';
 import type { UpdateProfileInput } from '@shared/hooks/useProfile';
 
 export default function ProfilePage() {
@@ -203,7 +205,13 @@ export default function ProfilePage() {
               <>
                 <Field label="Employer" value={editData.employer || ''} onChange={(v) => setEditData({ ...editData, employer: v })} />
                 <Field label="Job Title" value={editData.jobTitle || ''} onChange={(v) => setEditData({ ...editData, jobTitle: v })} />
-                <Field label="Industry" value={editData.industry || ''} onChange={(v) => setEditData({ ...editData, industry: v })} />
+                <div>
+                  <label className="block text-xs text-gray-500 uppercase tracking-wide mb-1">Industry</label>
+                  <IndustrySelect
+                    value={editData.industry || ''}
+                    onChange={(code) => setEditData({ ...editData, industry: code })}
+                  />
+                </div>
                 <Field label="Availability" value={editData.availability || ''} onChange={(v) => setEditData({ ...editData, availability: v })} />
                 <div className="md:col-span-2">
                   <Field label="Skills" value={editData.skills || ''} onChange={(v) => setEditData({ ...editData, skills: v })} />
@@ -216,7 +224,7 @@ export default function ProfilePage() {
               <>
                 <InfoItem label="Employer" value={profile.employer} />
                 <InfoItem label="Job Title" value={profile.jobTitle} />
-                <InfoItem label="Industry" value={profile.industry} />
+                <InfoItem label="Industry" value={profile.industry ? getNaicsLabel(profile.industry) : null} />
                 <InfoItem label="Availability" value={profile.availability} />
                 <div className="md:col-span-2">
                   <InfoItem label="Skills" value={profile.skills} />

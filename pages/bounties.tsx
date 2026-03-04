@@ -24,35 +24,11 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
-// Static arrays moved outside component to prevent recreation on each render
-const CATEGORIES = [
-  "all",
-  "infrastructure",
-  "sustainability",
-  "public-safety",
-  "education",
-  "healthcare",
-  "transportation",
-  "economic-development",
-  "civic-engagement",
-  "other"
-] as const;
-
-const ORG_TYPES = [
-  "all",
-  "civic",
-  "commercial",
-  "non-profit",
-  "government",
-  "educational"
-] as const;
-
-const STATUSES = [
-  "published",
-  "assigned",
-  "completed",
-  "all"
-] as const;
+import {
+  BOUNTY_CATEGORIES,
+  BOUNTY_ORG_TYPES,
+  BOUNTY_STATUS_FILTERS,
+} from "@shared/constants/validation";
 
 export default function BountiesPage() {
   const router = useRouter();
@@ -168,7 +144,7 @@ export default function BountiesPage() {
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap gap-2">
               {/* Status Filter Pills */}
-              {STATUSES.map((status) => (
+              {BOUNTY_STATUS_FILTERS.map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
@@ -204,7 +180,7 @@ export default function BountiesPage() {
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                   >
-                    {CATEGORIES.map((cat) => (
+                    {BOUNTY_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat === "all" ? "All Categories" : cat.split("-").map(word => 
                           word.charAt(0).toUpperCase() + word.slice(1)
@@ -222,7 +198,7 @@ export default function BountiesPage() {
                     onChange={(e) => setOrgTypeFilter(e.target.value)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                   >
-                    {ORG_TYPES.map((type) => (
+                    {BOUNTY_ORG_TYPES.map((type) => (
                       <option key={type} value={type}>
                         {type === "all" ? "All Types" : getOrgTypeLabel(type)}
                       </option>

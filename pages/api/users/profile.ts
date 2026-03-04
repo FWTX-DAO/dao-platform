@@ -1,42 +1,32 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { authenticateRequest } from "@utils/api-helpers";
-import { getOrCreateUser, updateUserProfile } from "@core/database/queries/users";
+import type { NextApiResponse } from "next";
+import {
+  compose,
+  errorHandler,
+  withAuth,
+  type AuthenticatedRequest,
+} from "@core/middleware";
+import { updateUserProfile } from "@core/database/queries/users";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  try {
-    const claims = await authenticateRequest(req);
-    const privyDid = claims.userId;
-    const email = (claims as any).email || undefined;
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+  const user = req.user;
 
-    if (req.method === "GET") {
-      // Get or create user profile
-      const user = await getOrCreateUser(privyDid, email);
-      return res.status(200).json(user);
-    } 
-    
-    else if (req.method === "PUT") {
-      // Update user profile
-      const { username, bio, avatar_url } = req.body;
-
-      // Ensure user exists first
-      await getOrCreateUser(privyDid, email);
-
-      // Update profile
-      const updated = await updateUserProfile(privyDid, {
-        username,
-        bio,
-        avatarUrl: avatar_url,
-      });
-
-      return res.status(200).json(updated);
-    }
-
-    return res.status(405).json({ error: "Method not allowed" });
-  } catch (error: any) {
-    console.error("Profile API error:", error);
-    return res.status(401).json({ error: error.message || "Authentication failed" });
+  if (req.method === "GET") {
+    return res.status(200).json(user);
   }
+
+  if (req.method === "PUT") {
+    const { username, bio, avatar_url } = req.body;
+
+    const updated = await updateUserProfile(user.privyDid, {
+      username,
+      bio,
+      avatarUrl: avatar_url,
+    });
+
+    return res.status(200).json(updated);
+  }
+
+  return res.status(405).json({ error: "Method not allowed" });
 }
+
+export default compose(errorHandler, withAuth)(handler);

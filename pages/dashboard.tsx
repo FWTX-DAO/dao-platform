@@ -8,6 +8,7 @@ import ActivityFeed from "@components/ActivityFeed";
 import { needsOnboarding } from "@utils/onboarding";
 import { useDashboardData, type MembershipData } from "@hooks/useDashboard";
 import { prefetchUtils } from "@utils/query-client";
+import { formatDate } from "@utils/format";
 import {
   UsersIcon,
   DocumentTextIcon,
@@ -91,19 +92,6 @@ export default function DashboardPage() {
     membershipData ? getActivityLevel(membershipData.stats) : null,
     [membershipData, getActivityLevel]
   );
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-us", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
-  };
 
   if (!ready || !authenticated) return null;
 

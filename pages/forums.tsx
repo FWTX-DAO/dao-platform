@@ -12,6 +12,7 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import { ForumPostModal } from "@components/modals/ForumPostModal";
 import {
   useForumPosts,
   useForumReplies,
@@ -22,15 +23,10 @@ import {
   type ForumPost
 } from "@hooks/useForumPosts";
 
+import { formatDate } from "@utils/format";
+
 // Static arrays moved outside component to prevent recreation on each render
 const CATEGORIES = ["General", "Governance", "Technical", "Events", "Education"] as const;
-
-// Helper to safely format dates
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return "Unknown date";
-  const date = new Date(dateString);
-  return isNaN(date.getTime()) ? "Unknown date" : date.toLocaleDateString();
-};
 
 export default function ForumsPage() {
   const router = useRouter();
@@ -221,158 +217,32 @@ export default function ForumsPage() {
         </div>
 
         {/* Create Post Modal */}
-        {showCreatePost && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Create New Post</h2>
-                <button
-                  onClick={() => setShowCreatePost(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-              {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  {error}
-                </div>
-              )}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Title <span className="text-xs text-gray-500">({newPost.title.length}/200)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={newPost.title}
-                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value.slice(0, 200) })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    placeholder="Enter post title..."
-                    maxLength={200}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
-                  <select
-                    value={newPost.category}
-                    onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Content <span className="text-xs text-gray-500">({newPost.content.length}/10000)</span>
-                  </label>
-                  <textarea
-                    value={newPost.content}
-                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value.slice(0, 10000) })}
-                    rows={6}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    placeholder="Write your post content here..."
-                    maxLength={10000}
-                  />
-                </div>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowCreatePost(false)}
-                    disabled={createPostMutation.isPending}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreatePost}
-                    disabled={createPostMutation.isPending || !newPost.title.trim() || !newPost.content.trim()}
-                    className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50"
-                  >
-                    {createPostMutation.isPending ? "Creating..." : "Create Post"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <ForumPostModal
+          title="Create New Post"
+          isOpen={showCreatePost}
+          onClose={() => setShowCreatePost(false)}
+          onSubmit={handleCreatePost}
+          isPending={createPostMutation.isPending}
+          error={error}
+          postData={newPost}
+          onChangePostData={setNewPost}
+          submitLabel="Create Post"
+          pendingLabel="Creating..."
+        />
 
         {/* Edit Post Modal */}
-        {editingPost && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Edit Post</h2>
-                <button
-                  onClick={() => setEditingPost(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-              {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  {error}
-                </div>
-              )}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Title <span className="text-xs text-gray-500">({editPost.title.length}/200)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={editPost.title}
-                    onChange={(e) => setEditPost({ ...editPost, title: e.target.value.slice(0, 200) })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    maxLength={200}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
-                  <select
-                    value={editPost.category}
-                    onChange={(e) => setEditPost({ ...editPost, category: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Content <span className="text-xs text-gray-500">({editPost.content.length}/10000)</span>
-                  </label>
-                  <textarea
-                    value={editPost.content}
-                    onChange={(e) => setEditPost({ ...editPost, content: e.target.value.slice(0, 10000) })}
-                    rows={6}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                    maxLength={10000}
-                  />
-                </div>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setEditingPost(null)}
-                    disabled={updatePostMutation.isPending}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEditPost}
-                    disabled={updatePostMutation.isPending || !editPost.title.trim() || !editPost.content.trim()}
-                    className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50"
-                  >
-                    {updatePostMutation.isPending ? "Updating..." : "Update Post"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <ForumPostModal
+          title="Edit Post"
+          isOpen={!!editingPost}
+          onClose={() => setEditingPost(null)}
+          onSubmit={handleEditPost}
+          isPending={updatePostMutation.isPending}
+          error={error}
+          postData={editPost}
+          onChangePostData={setEditPost}
+          submitLabel="Update Post"
+          pendingLabel="Updating..."
+        />
 
         {/* Replies Modal */}
         {viewingReplies && (

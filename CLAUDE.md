@@ -4,22 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Next.js 16 (Pages Router) DAO platform for Fort Worth civic innovation. Features multi-provider auth (Privy), distributed SQLite (Turso), Pinata for IPFS file storage, and forum/project management.
+Next.js 16 (Pages Router) DAO platform for Fort Worth civic innovation. Features multi-provider auth (Privy), PostgreSQL (PlanetScale via pg), Pinata for IPFS file storage, and forum/project management.
 
 ## Development Commands
 
+**Always use `bun` (not npm/node).** `bun dev` works as shorthand for `bun run dev`.
+
 ```bash
-bun install          # Install deps (Node >=20.9, bun >=9)
-bun run dev          # Dev server at localhost:3000
+bun install          # Install deps
+bun dev              # Dev server at localhost:3000
 bun run build        # Production build
 bun run lint         # ESLint + Prettier check + TypeScript check
 bun run format       # Prettier format
 
-# Database (Drizzle + Turso)
+# Database (Drizzle + PostgreSQL)
 bun run db:generate  # Generate migrations from schema changes
 bun run db:push      # Push schema directly to database
 bun run db:studio    # Drizzle Studio GUI
 bun run db:seed      # Seed sample data (tsx src/db/seed.ts)
+bun run db:seed-rbac # Seed RBAC tiers, roles, permissions
 ```
 
 ## Environment Variables
@@ -27,7 +30,7 @@ bun run db:seed      # Seed sample data (tsx src/db/seed.ts)
 Required in `.env.local`:
 
 - `NEXT_PUBLIC_PRIVY_APP_ID` / `PRIVY_APP_SECRET` - Privy auth
-- `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` - Database
+- `DATABASE_URL` - PostgreSQL connection string (PlanetScale)
 - `PINATA_JWT` / `PINATA_GATEWAY` / `PINATA_GATEWAY_KEY` - IPFS file storage
 
 ## Architecture
@@ -53,7 +56,10 @@ src/
     ├── projects/
     ├── bounties/
     ├── meeting-notes/
-    └── members/
+    ├── members/
+    ├── activities/
+    ├── rbac/
+    └── subscriptions/
 ```
 
 ## Path Aliases
@@ -145,7 +151,7 @@ await pinataHelpers.uploadFile(file, { name: 'doc.pdf', network: 'private' });
 
 ## Database
 
-Schema in `src/core/database/schema.ts`. Key tables: `users`, `members`, `forum_posts`, `projects`, `meeting_notes`, `forum_votes`, `documents`, `innovation_bounties`
+PostgreSQL via `pg` + `drizzle-orm/node-postgres`. Schema in `src/core/database/schema.ts` (pgTable). Key tables: `users`, `members`, `forum_posts`, `projects`, `meeting_notes`, `forum_votes`, `documents`, `innovation_bounties`, `roles`, `permissions`, `member_roles`, `member_activities`
 
 ## Legacy Compatibility
 
