@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import Image from 'next/image';
 import type { PassportData } from './types';
 import { PassportInside } from './passport-inside';
@@ -13,9 +13,15 @@ interface PassportCreationRevealProps {
 
 export function PassportCreationReveal({ data, onComplete }: PassportCreationRevealProps) {
   const [phase, setPhase] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
   // 0 = typing text, 1 = cover materializes, 2 = cover opens + data, 3 = seal, 4 = welcome
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      // Skip directly to final phase
+      setPhase(4);
+      return;
+    }
     const timers = [
       setTimeout(() => setPhase(1), 1200),
       setTimeout(() => setPhase(2), 2500),
@@ -23,7 +29,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
       setTimeout(() => setPhase(4), 4500),
     ];
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [shouldReduceMotion]);
 
   return (
     <motion.div
@@ -31,7 +37,10 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
-      style={{ background: '#0f1b33' }}
+      style={{ background: '#0f1b33', overscrollBehavior: 'contain' }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Passport creation"
     >
       {/* Subtle background pattern */}
       <div
@@ -50,10 +59,12 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.4 }}
               className="text-center"
             >
-              <TypingText text="Issuing your Fort Worth DAO Passport..." />
+              <div aria-live="polite">
+                <TypingText text={`Issuing your Fort Worth DAO Passport\u2026`} shouldReduceMotion={!!shouldReduceMotion} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -66,7 +77,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               animate={{ scale: 1, opacity: 1 }}
               exit={{ rotateY: -180, opacity: 0 }}
               transition={{
-                duration: 0.8,
+                duration: shouldReduceMotion ? 0 : 0.8,
                 ease: [0.4, 0, 0.2, 1],
               }}
               className="relative"
@@ -93,7 +104,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
                 <motion.div
                   initial={{ x: '-100%' }}
                   animate={{ x: '200%' }}
-                  transition={{ duration: 1.2, delay: 0.3, ease: 'easeInOut' }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 1.2, delay: shouldReduceMotion ? 0 : 0.3, ease: 'easeInOut' }}
                   className="absolute inset-0 pointer-events-none"
                   style={{
                     background:
@@ -111,7 +122,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: [0.4, 0, 0.2, 1] }}
               className="relative"
             >
               <PassportInside data={data} className="w-72 sm:w-80" />
@@ -120,8 +131,8 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               {phase >= 3 && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: [0, 1.1, 1], opacity: 1 }}
-                  transition={{
+                  animate={{ scale: shouldReduceMotion ? 1 : [0, 1.1, 1], opacity: 1 }}
+                  transition={shouldReduceMotion ? { duration: 0 } : {
                     type: 'spring',
                     stiffness: 260,
                     damping: 15,
@@ -130,7 +141,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
                   className="absolute -bottom-3 -right-3 w-16 h-16 flex items-center justify-center"
                 >
                   <div className="w-14 h-14 rounded-full bg-dao-gold/90 flex items-center justify-center shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-7 h-7 text-dao-charcoal" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="w-7 h-7 text-dao-charcoal" fill="none" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -146,7 +157,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.5, delay: shouldReduceMotion ? 0 : 0.2 }}
               className="mt-8 text-center"
             >
               <h2 className="font-display text-2xl sm:text-3xl text-dao-warm mb-2">
@@ -157,7 +168,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               </p>
               <button
                 onClick={onComplete}
-                className="px-8 py-3 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal font-semibold rounded transition-all active:scale-[0.98]"
+                className="px-8 py-3 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal font-semibold rounded transition-colors active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
               >
                 Enter Platform
               </button>
@@ -169,10 +180,14 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
   );
 }
 
-function TypingText({ text }: { text: string }) {
-  const [displayed, setDisplayed] = useState('');
+function TypingText({ text, shouldReduceMotion }: { text: string; shouldReduceMotion: boolean }) {
+  const [displayed, setDisplayed] = useState(shouldReduceMotion ? text : '');
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      setDisplayed(text);
+      return;
+    }
     let i = 0;
     const interval = setInterval(() => {
       if (i < text.length) {
@@ -183,16 +198,24 @@ function TypingText({ text }: { text: string }) {
       }
     }, 28);
     return () => clearInterval(interval);
-  }, [text]);
+  }, [text, shouldReduceMotion]);
 
   return (
     <span className="font-display text-xl sm:text-2xl text-dao-warm">
       {displayed}
-      <motion.span
-        animate={{ opacity: [1, 0] }}
-        transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
-        className="inline-block w-0.5 h-5 bg-dao-gold ml-0.5 align-middle"
-      />
+      {shouldReduceMotion ? (
+        <span
+          className="inline-block w-0.5 h-5 bg-dao-gold ml-0.5 align-middle"
+          aria-hidden="true"
+        />
+      ) : (
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+          className="inline-block w-0.5 h-5 bg-dao-gold ml-0.5 align-middle"
+          aria-hidden="true"
+        />
+      )}
     </span>
   );
 }

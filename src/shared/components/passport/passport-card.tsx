@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Image from 'next/image';
 import type { PassportData } from './types';
 
 function truncateWallet(addr: string | null): string {
   if (!addr) return '';
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
 }
 
 interface PassportCardProps {
@@ -15,6 +15,8 @@ interface PassportCardProps {
 }
 
 export function PassportCard({ data }: PassportCardProps) {
+  const shouldReduceMotion = useReducedMotion();
+
   const displayName =
     data.firstName && data.lastName
       ? `${data.firstName} ${data.lastName}`
@@ -23,8 +25,8 @@ export function PassportCard({ data }: PassportCardProps) {
   return (
     <Link href="/passport">
       <motion.div
-        whileHover={{ rotateX: -3, rotateY: 5, scale: 1.02 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        whileHover={shouldReduceMotion ? undefined : { rotateX: -3, rotateY: 5, scale: 1.02 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 20 }}
         className="relative w-40 h-52 rounded-md overflow-hidden cursor-pointer border border-dao-gold/20"
         style={{
           perspective: '600px',

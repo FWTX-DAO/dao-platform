@@ -32,29 +32,34 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Username</label>
+            <label htmlFor="settings-username" className="block text-sm font-medium text-gray-700">Username</label>
             <input
+              id="settings-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              name="username"
+              autoComplete="username"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Bio</label>
+            <label htmlFor="settings-bio" className="block text-sm font-medium text-gray-700">Bio</label>
             <textarea
+              id="settings-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              name="bio"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
             />
           </div>
           <button
             onClick={handleSave}
             disabled={updateProfile.isPending}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm"
+            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
           >
-            {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
+            {updateProfile.isPending ? 'Saving\u2026' : 'Save Changes'}
           </button>
         </div>
       </div>

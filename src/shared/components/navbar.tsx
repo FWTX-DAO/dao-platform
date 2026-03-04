@@ -1,17 +1,11 @@
-import React, { useCallback, memo } from "react";
+import React, { memo } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { AnimatedMenuToggle } from "./ui/sidebar";
 import { useSidebar } from "../contexts/SidebarContext";
 
 function Navbar() {
-  const router = useRouter();
   const { toggle, isOpen } = useSidebar();
-
-  // router.push is stable, no dependency needed
-  const handleNavigation = useCallback((href: string) => {
-    router.push(href);
-  }, []);
 
   return (
     <nav className="bg-dao-dark border-b border-dao-border sticky top-0 z-50 shadow-lg">
@@ -21,9 +15,9 @@ function Navbar() {
           <div className="flex items-center gap-4">
             <AnimatedMenuToggle toggle={toggle} isOpen={isOpen} />
 
-            <button
-              className="flex items-center gap-3 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dao-dark rounded"
-              onClick={() => handleNavigation("/dashboard")}
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark rounded"
               aria-label="Go to dashboard"
             >
               <Image
@@ -37,7 +31,7 @@ function Navbar() {
               <span className="text-white font-semibold text-lg tracking-tight hidden sm:block">
                 Fort Worth DAO
               </span>
-            </button>
+            </Link>
           </div>
 
           {/* Right side: Empty for now, all navigation in sidebar */}

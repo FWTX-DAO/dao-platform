@@ -60,12 +60,12 @@ const AVAILABILITY_OPTIONS = [
 ];
 
 const inputBase =
-  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded text-dao-warm placeholder-dao-cool/40 focus:outline-none focus:border-dao-gold/50 focus:ring-1 focus:ring-dao-gold/30 transition text-sm';
+  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded text-dao-warm placeholder-dao-cool/40 focus-visible:outline-none focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm';
 const inputError =
-  'w-full px-4 py-2.5 bg-dao-surface border border-red-500/50 rounded text-dao-warm placeholder-dao-cool/40 focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/30 transition text-sm';
+  'w-full px-4 py-2.5 bg-dao-surface border border-red-500/50 rounded text-dao-warm placeholder-dao-cool/40 focus-visible:outline-none focus-visible:border-red-400 focus-visible:ring-1 focus-visible:ring-red-400/30 transition text-sm';
 const labelBase = 'block text-sm text-dao-cool mb-1.5';
 const selectBase =
-  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded text-dao-warm focus:outline-none focus:border-dao-gold/50 focus:ring-1 focus:ring-dao-gold/30 transition text-sm';
+  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded text-dao-warm focus-visible:outline-none focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm';
 
 function validateUsernameFormat(username: string) {
   if (!username || username.trim().length < 3) return { valid: false, error: 'Username must be at least 3 characters' };
@@ -258,7 +258,7 @@ export function OnboardingForm() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <header className="flex items-center gap-3 px-6 md:px-12 pt-6 md:pt-8">
-          <img src="/logo.svg" alt="Fort Worth DAO" className="h-7 w-7 opacity-60" />
+          <img src="/logo.svg" alt="Fort Worth DAO" width={28} height={28} className="h-7 w-7 opacity-60" />
           <span className="text-dao-warm/40 text-[11px] tracking-[0.25em] uppercase font-semibold">
             Fort Worth DAO
           </span>
@@ -266,7 +266,7 @@ export function OnboardingForm() {
 
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 md:py-12">
           <div
-            className="w-full max-w-2xl transition-all duration-700 ease-out"
+            className="w-full max-w-2xl transition-opacity duration-700 ease-out"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? 'translateY(0)' : 'translateY(12px)',
@@ -323,11 +323,14 @@ export function OnboardingForm() {
               {step === 0 && (
                 <div className="space-y-5">
                   <div>
-                    <label className={labelBase}>
+                    <label htmlFor="username" className={labelBase}>
                       Username <span className="text-dao-gold/70">*</span>
                     </label>
                     <input
                       type="text"
+                      id="username"
+                      name="username"
+                      autoComplete="username"
                       value={formData.username}
                       onChange={(e) => updateField('username', e.target.value)}
                       placeholder="e.g., civicbuilder"
@@ -340,11 +343,14 @@ export function OnboardingForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className={labelBase}>
+                      <label htmlFor="firstName" className={labelBase}>
                         First Name <span className="text-dao-gold/70">*</span>
                       </label>
                       <input
                         type="text"
+                        id="firstName"
+                        name="firstName"
+                        autoComplete="given-name"
                         value={formData.firstName}
                         onChange={(e) => updateField('firstName', e.target.value)}
                         className={errors.firstName ? inputError : inputBase}
@@ -352,11 +358,14 @@ export function OnboardingForm() {
                       {errors.firstName && <p className="mt-1 text-xs text-red-400">{errors.firstName}</p>}
                     </div>
                     <div>
-                      <label className={labelBase}>
+                      <label htmlFor="lastName" className={labelBase}>
                         Last Name <span className="text-dao-gold/70">*</span>
                       </label>
                       <input
                         type="text"
+                        id="lastName"
+                        name="lastName"
+                        autoComplete="family-name"
                         value={formData.lastName}
                         onChange={(e) => updateField('lastName', e.target.value)}
                         className={errors.lastName ? inputError : inputBase}
@@ -366,7 +375,7 @@ export function OnboardingForm() {
                   </div>
 
                   <div>
-                    <label className={labelBase}>
+                    <label htmlFor="email" className={labelBase}>
                       Email <span className="text-dao-gold/70">*</span>
                       {isEmailFromPrivy && (
                         <span className="ml-2 text-[10px] tracking-wider uppercase text-dao-gold/60 bg-dao-gold/10 px-2 py-0.5 rounded">
@@ -376,6 +385,9 @@ export function OnboardingForm() {
                     </label>
                     <input
                       type="email"
+                      id="email"
+                      name="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={(e) => updateField('email', e.target.value)}
                       className={errors.email ? inputError : inputBase}
@@ -414,26 +426,26 @@ export function OnboardingForm() {
                   <p className="text-sm text-dao-cool/50 mb-1">All fields are optional. You can update these later in your profile.</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className={labelBase}>Employer</label>
-                      <input type="text" value={formData.employer} onChange={(e) => updateField('employer', e.target.value)} className={inputBase} />
+                      <label htmlFor="employer" className={labelBase}>Employer</label>
+                      <input type="text" id="employer" name="employer" autoComplete="organization" value={formData.employer} onChange={(e) => updateField('employer', e.target.value)} className={inputBase} />
                     </div>
                     <div>
-                      <label className={labelBase}>Job Title</label>
-                      <input type="text" value={formData.jobTitle} onChange={(e) => updateField('jobTitle', e.target.value)} className={inputBase} />
+                      <label htmlFor="jobTitle" className={labelBase}>Job Title</label>
+                      <input type="text" id="jobTitle" name="jobTitle" autoComplete="organization-title" value={formData.jobTitle} onChange={(e) => updateField('jobTitle', e.target.value)} className={inputBase} />
                     </div>
                   </div>
                   <div>
-                    <label className={labelBase}>Industry (NAICS)</label>
+                    <label htmlFor="industry" className={labelBase}>Industry (NAICS)</label>
                     <IndustrySelect value={formData.industry} onChange={(code) => updateField('industry', code)} variant="dark" />
                     <p className="mt-1 text-[11px] text-dao-cool/40">Type to search or browse by name, sector, or code</p>
                   </div>
                   <div>
-                    <label className={labelBase}>Phone</label>
-                    <input type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputBase} />
+                    <label htmlFor="phone" className={labelBase}>Phone</label>
+                    <input type="tel" id="phone" name="phone" autoComplete="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputBase} />
                   </div>
                   <div>
-                    <label className={labelBase}>Availability</label>
-                    <select value={formData.availability} onChange={(e) => updateField('availability', e.target.value)} className={selectBase}>
+                    <label htmlFor="availability" className={labelBase}>Availability</label>
+                    <select id="availability" name="availability" value={formData.availability} onChange={(e) => updateField('availability', e.target.value)} className={selectBase}>
                       {AVAILABILITY_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
@@ -447,8 +459,10 @@ export function OnboardingForm() {
                 <div className="space-y-5">
                   <p className="text-sm text-dao-cool/50 mb-1">Help us connect you with the right initiatives.</p>
                   <div>
-                    <label className={labelBase}>Civic Interests</label>
+                    <label htmlFor="civicInterests" className={labelBase}>Civic Interests</label>
                     <textarea
+                      id="civicInterests"
+                      name="civicInterests"
                       value={formData.civicInterests}
                       onChange={(e) => updateField('civicInterests', e.target.value)}
                       placeholder="e.g., urban planning, education, public safety"
@@ -458,8 +472,10 @@ export function OnboardingForm() {
                     <p className="text-[11px] text-dao-cool/40 mt-1">Comma-separated list of interests</p>
                   </div>
                   <div>
-                    <label className={labelBase}>Skills</label>
+                    <label htmlFor="skills" className={labelBase}>Skills</label>
                     <textarea
+                      id="skills"
+                      name="skills"
                       value={formData.skills}
                       onChange={(e) => updateField('skills', e.target.value)}
                       placeholder="e.g., web development, project management, data analysis"
@@ -470,16 +486,16 @@ export function OnboardingForm() {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className={labelBase}>City</label>
-                      <input type="text" value={formData.city} onChange={(e) => updateField('city', e.target.value)} className={inputBase} />
+                      <label htmlFor="city" className={labelBase}>City</label>
+                      <input type="text" id="city" name="city" autoComplete="address-level2" value={formData.city} onChange={(e) => updateField('city', e.target.value)} className={inputBase} />
                     </div>
                     <div>
-                      <label className={labelBase}>State</label>
-                      <input type="text" value={formData.state} onChange={(e) => updateField('state', e.target.value)} maxLength={2} className={inputBase} />
+                      <label htmlFor="state" className={labelBase}>State</label>
+                      <input type="text" id="state" name="state" autoComplete="address-level1" value={formData.state} onChange={(e) => updateField('state', e.target.value)} maxLength={2} className={inputBase} />
                     </div>
                     <div>
-                      <label className={labelBase}>ZIP</label>
-                      <input type="text" value={formData.zip} onChange={(e) => updateField('zip', e.target.value)} maxLength={10} className={inputBase} />
+                      <label htmlFor="zip" className={labelBase}>ZIP</label>
+                      <input type="text" id="zip" name="zip" autoComplete="postal-code" value={formData.zip} onChange={(e) => updateField('zip', e.target.value)} maxLength={10} className={inputBase} />
                     </div>
                   </div>
                 </div>
@@ -491,7 +507,7 @@ export function OnboardingForm() {
               )}
 
               {globalError && (
-                <div className="mt-5 p-3 bg-red-500/10 border border-red-500/20 rounded">
+                <div role="alert" className="mt-5 p-3 bg-red-500/10 border border-red-500/20 rounded">
                   <p className="text-sm text-red-400">{globalError}</p>
                 </div>
               )}
@@ -500,7 +516,7 @@ export function OnboardingForm() {
                 <button
                   onClick={handleBack}
                   disabled={step === 0}
-                  className="px-6 py-2.5 text-sm text-dao-cool/60 hover:text-dao-warm border border-dao-border hover:border-dao-warm/20 rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-dao-cool/60 disabled:hover:border-dao-border"
+                  className="px-6 py-2.5 text-sm text-dao-cool/60 hover:text-dao-warm border border-dao-border hover:border-dao-warm/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-dao-cool/60 disabled:hover:border-dao-border"
                 >
                   Back
                 </button>
@@ -508,7 +524,7 @@ export function OnboardingForm() {
                 {step < STEPS.length - 1 ? (
                   <button
                     onClick={handleNext}
-                    className="group px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded transition-all active:scale-[0.98]"
+                    className="group px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded transition-colors active:scale-[0.98]"
                   >
                     <span>Continue</span>
                     <span className="inline-block ml-1.5 transition-transform group-hover:translate-x-0.5">&rarr;</span>

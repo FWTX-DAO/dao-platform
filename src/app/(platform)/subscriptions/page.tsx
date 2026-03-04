@@ -24,12 +24,22 @@ export default function SubscriptionsPage() {
   const success = searchParams.get('success') === 'true';
   const canceled = searchParams.get('canceled') === 'true';
 
-  // Invalidate subscription cache when returning from Stripe checkout
+  // Invalidate + poll caches when returning from Stripe checkout.
+  // The webhook is async so the subscription may not be recorded yet on first fetch.
   useEffect(() => {
-    if (success) {
+    if (!success) return;
+
+    const invalidateAll = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.active() });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-    }
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
+    };
+
+    // Immediate invalidation
+    invalidateAll();
+
+    // Poll a few times to catch webhook delay (2s, 5s, 10s)
+    const timers = [2000, 5000, 10000].map((ms) => setTimeout(invalidateAll, ms));
+    return () => timers.forEach(clearTimeout);
   }, [success, queryClient]);
 
   const isLoading = tiersLoading || subLoading;

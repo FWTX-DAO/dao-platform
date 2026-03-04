@@ -63,6 +63,9 @@ function useMatrixRain(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) return; // skip animation entirely
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -136,14 +139,14 @@ export function HeroSection() {
         {/* Header */}
         <header className="flex items-center justify-between px-6 md:px-12 lg:px-16 pt-6 md:pt-8">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Fort Worth DAO" className="h-7 w-7 md:h-8 md:w-8 opacity-70" />
+            <img src="/logo.svg" alt="Fort Worth DAO" width={32} height={32} className="h-7 w-7 md:h-8 md:w-8 opacity-70" />
             <span className="text-dao-warm/50 text-[11px] md:text-xs tracking-[0.25em] uppercase font-semibold">
               Fort Worth DAO
             </span>
           </div>
           <button
             onClick={login}
-            className="text-xs md:text-sm text-dao-gold/80 hover:text-dao-gold transition-colors tracking-wide uppercase"
+            className="text-xs md:text-sm text-dao-gold/80 hover:text-dao-gold transition-colors tracking-wide uppercase focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
           >
             Sign In
           </button>
@@ -153,7 +156,7 @@ export function HeroSection() {
         <div className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-16 py-12">
           <div className="max-w-5xl">
             <div
-              className="transition-all duration-1000 ease-out"
+              className="transition-[opacity,transform] duration-1000 ease-out"
               style={{
                 opacity: mounted ? 1 : 0,
                 transform: mounted ? 'translateY(0)' : 'translateY(16px)',
@@ -167,7 +170,7 @@ export function HeroSection() {
             </div>
 
             <div
-              className="mt-8 md:mt-10 mb-7 md:mb-9 h-px bg-gradient-to-r from-dao-gold/50 to-transparent transition-all duration-1000 delay-200 ease-out"
+              className="mt-8 md:mt-10 mb-7 md:mb-9 h-px bg-gradient-to-r from-dao-gold/50 to-transparent transition-[width,opacity] duration-1000 delay-200 ease-out"
               style={{
                 width: mounted ? '5rem' : '0',
                 opacity: mounted ? 1 : 0,
@@ -175,7 +178,7 @@ export function HeroSection() {
             />
 
             <div
-              className="transition-all duration-1000 delay-300 ease-out"
+              className="transition-[opacity,transform] duration-1000 delay-300 ease-out"
               style={{
                 opacity: mounted ? 1 : 0,
                 transform: mounted ? 'translateY(0)' : 'translateY(12px)',
@@ -189,7 +192,7 @@ export function HeroSection() {
             </div>
 
             <div
-              className="flex flex-wrap gap-4 mt-10 md:mt-12 transition-all duration-1000 delay-500 ease-out"
+              className="flex flex-wrap gap-4 mt-10 md:mt-12 transition-[opacity,transform] duration-1000 delay-500 ease-out"
               style={{
                 opacity: mounted ? 1 : 0,
                 transform: mounted ? 'translateY(0)' : 'translateY(12px)',
@@ -197,7 +200,7 @@ export function HeroSection() {
             >
               <button
                 onClick={login}
-                className="group relative px-7 md:px-9 py-3 md:py-3.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm md:text-base font-semibold tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-dao-gold/15 active:scale-[0.98] touch-manipulation"
+                className="group relative px-7 md:px-9 py-3 md:py-3.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm md:text-base font-semibold tracking-wide transition-colors duration-300 hover:shadow-lg hover:shadow-dao-gold/15 active:scale-[0.98] touch-manipulation focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
               >
                 <span>Enter Platform</span>
                 <span className="inline-block ml-2 transition-transform duration-300 group-hover:translate-x-1">
@@ -209,14 +212,14 @@ export function HeroSection() {
                 href="https://constitution.fwtx.city"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-7 md:px-9 py-3 md:py-3.5 border border-dao-warm/15 hover:border-dao-warm/30 text-dao-warm/60 hover:text-dao-warm/90 text-sm md:text-base tracking-wide transition-all duration-300 active:scale-[0.98] touch-manipulation"
+                className="px-7 md:px-9 py-3 md:py-3.5 border border-dao-warm/15 hover:border-dao-warm/30 text-dao-warm/60 hover:text-dao-warm/90 text-sm md:text-base tracking-wide transition-colors duration-300 active:scale-[0.98] touch-manipulation focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
               >
                 Whitepaper &amp; Constitution
               </a>
             </div>
 
             <div
-              className="flex flex-wrap gap-x-6 md:gap-x-8 gap-y-2 mt-14 md:mt-20 transition-all duration-1000 delay-700 ease-out"
+              className="flex flex-wrap gap-x-6 md:gap-x-8 gap-y-2 mt-14 md:mt-20 transition-opacity duration-1000 delay-700 ease-out"
               style={{ opacity: mounted ? 1 : 0 }}
             >
               {['Digital Sovereignty', 'Convergent Technology', 'Civic Innovation', 'Blockchain Governance'].map(

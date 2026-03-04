@@ -11,7 +11,7 @@ export default function MeetingNotesPage() {
       <h1 className="text-3xl font-bold text-gray-900">Meeting Notes</h1>
       <p className="text-gray-600">Archive of DAO meeting notes and action items</p>
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading meeting notes...</div>
+        <div className="py-8 text-center text-gray-500">Loading meeting notes\u2026</div>
       ) : notes.length === 0 ? (
         <div className="py-8 text-center text-gray-500">No meeting notes yet.</div>
       ) : (

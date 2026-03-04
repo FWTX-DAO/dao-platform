@@ -9,7 +9,7 @@ import { PassportStamps } from './passport-stamps';
 
 function truncateWallet(addr: string | null): string {
   if (!addr) return '---';
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
 }
 
 function formatDate(iso: string): string {
@@ -72,7 +72,7 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
                 />
               ) : (
                 <div className="flex items-center justify-center w-full h-full bg-dao-surface/5">
-                  <User className="w-10 h-10 text-dao-cool/30" />
+                  <User aria-hidden="true" className="w-10 h-10 text-dao-cool/30" />
                 </div>
               )}
             </div>
@@ -85,7 +85,7 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
             <FieldRow label="GIVEN NAMES" value={(data.firstName || '---').toUpperCase()} />
             <FieldRow label="PASSPORT NO." value={data.memberId.slice(0, 9).toUpperCase()} />
             <FieldRow label="MEMBERSHIP" value={(data.tierDisplayName || data.membershipType || 'Member').toUpperCase()} />
-            <FieldRow label="DATE OF ISSUE" value={formatDate(data.joinedAt)} />
+            <FieldRow label="DATE OF ISSUE" value={formatDate(data.joinedAt)} suppressHydrationWarning />
             <FieldRow label="AUTHORITY" value="FORT WORTH DAO" />
             <FieldRow label="ON-CHAIN" value={truncateWallet(data.walletAddress)} mono />
           </div>
@@ -117,7 +117,7 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
 
         {/* MRZ Zone */}
         <div className="mt-auto bg-dao-charcoal/5 border-t border-dao-border/15 -mx-5 -mb-5 px-4 py-3">
-          <div className="font-mono text-[10px] leading-relaxed tracking-[0.15em] text-dao-charcoal/50 select-all">
+          <div className="font-mono text-[10px] leading-relaxed tracking-[0.15em] text-dao-charcoal/50 select-all tabular-nums">
             <div>{mrz1}</div>
             <div>{mrz2}</div>
           </div>
@@ -131,10 +131,12 @@ function FieldRow({
   label,
   value,
   mono = false,
+  suppressHydrationWarning = false,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  suppressHydrationWarning?: boolean;
 }) {
   return (
     <div>
@@ -142,6 +144,7 @@ function FieldRow({
         {label}
       </div>
       <div
+        suppressHydrationWarning={suppressHydrationWarning}
         className={`text-[11px] text-dao-charcoal/80 leading-tight font-semibold ${
           mono ? 'font-mono text-[10px]' : ''
         }`}

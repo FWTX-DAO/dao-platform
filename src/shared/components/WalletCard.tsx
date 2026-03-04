@@ -131,7 +131,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
     <div className="flex flex-col gap-4 p-4 border border-gray-200 rounded-lg">
       <div className="text-sm text-violet-700">
         {wallet.walletClientType === "privy" ? "Embedded " : ""}Wallet:{" "}
-        {wallet.address.slice(0, 6)}...
+        {wallet.address.slice(0, 6)}{'\u2026'}
         {wallet.address.slice(-4)}
       </div>
 
@@ -139,7 +139,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={() => addSessionSigner(wallet.address)}
           disabled={isLoading || hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 ${
             isLoading || hasSessionSigners
               ? "bg-violet-400 cursor-not-allowed"
               : "bg-violet-600 hover:bg-violet-700"
@@ -151,7 +151,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={() => removeSessionSigner(wallet.address)}
           disabled={isLoading || !hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 ${
             isLoading || !hasSessionSigners
               ? "bg-red-400 cursor-not-allowed"
               : "bg-red-600 hover:bg-red-700"
@@ -171,7 +171,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={handleRemoteSign}
           disabled={isRemoteSigning || !hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
             isRemoteSigning || !hasSessionSigners
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
@@ -183,7 +183,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={handleClientSign}
           disabled={isClientSigning}
-          className={`text-sm py-2 px-4 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
             isClientSigning
               ? "bg-green-400 cursor-not-allowed"
               : "bg-green-600 hover:bg-green-700"

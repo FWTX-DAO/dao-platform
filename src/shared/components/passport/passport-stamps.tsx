@@ -66,10 +66,10 @@ export function PassportStamps({ stamps }: PassportStampsProps) {
               {style.label}
             </span>
             <span className={`text-[6px] ${style.color}/70 text-center leading-tight px-1 mt-0.5 line-clamp-2`}>
-              {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '...' : stamp.eventName}
+              {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '\u2026' : stamp.eventName}
             </span>
             {stamp.eventDate && (
-              <span className={`text-[6px] ${style.color}/50 mt-0.5`}>
+              <span suppressHydrationWarning className={`text-[6px] ${style.color}/50 mt-0.5`}>
                 {formatStampDate(stamp.eventDate)}
               </span>
             )}

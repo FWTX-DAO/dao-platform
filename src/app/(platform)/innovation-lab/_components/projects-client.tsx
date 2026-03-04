@@ -8,7 +8,7 @@ export function ProjectsClient() {
   const { data: projects = [], isLoading } = useProjects();
 
   if (isLoading) {
-    return <div className="py-8 text-center text-gray-500">Loading projects...</div>;
+    return <div className="py-8 text-center text-gray-500">Loading projects\u2026</div>;
   }
 
   return (
@@ -32,7 +32,7 @@ export function ProjectsClient() {
             <Link
               key={project.id}
               href={`/innovation-lab/${project.id}`}
-              className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
+              className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${

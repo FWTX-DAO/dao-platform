@@ -6,7 +6,7 @@ import ActivityFeed from '@components/ActivityFeed';
 export default function ProfilePage() {
   const { data: profile, isLoading } = useProfile();
 
-  if (isLoading) return <div className="py-8 text-center text-gray-500">Loading profile...</div>;
+  if (isLoading) return <div className="py-8 text-center text-gray-500">Loading profile\u2026</div>;
   if (!profile) return <div className="py-8 text-center text-gray-500">Profile not found</div>;
 
   return (

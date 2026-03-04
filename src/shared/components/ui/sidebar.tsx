@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 
 interface AnimatedMenuToggleProps {
@@ -13,7 +13,7 @@ export const AnimatedMenuToggle = ({ toggle, isOpen }: AnimatedMenuToggleProps) 
   <button
     onClick={toggle}
     aria-label="Toggle menu"
-    className="flex items-center justify-center w-10 h-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dao-dark rounded z-50"
+    className="flex items-center justify-center w-10 h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark rounded z-50"
   >
     <motion.svg
       width="24"
@@ -71,6 +71,7 @@ export const CollapsibleSection = ({
   defaultOpen = false,
 }: CollapsibleSectionProps) => {
   const [open, setOpen] = useState(defaultOpen);
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <div className="mb-4">
@@ -88,7 +89,7 @@ export const CollapsibleSection = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
             className="overflow-hidden"
           >
             <div className="p-2">{children}</div>
@@ -141,6 +142,7 @@ export const AnimatedSidebar = ({
   profileSection,
   footerSection,
 }: AnimatedSidebarProps) => {
+  const shouldReduceMotion = useReducedMotion();
   const mobileSidebarVariants = {
     hidden: { x: "-100%" },
     visible: { x: 0 },
@@ -157,7 +159,7 @@ export const AnimatedSidebar = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
               className="md:hidden fixed inset-0 z-30 bg-black/50"
               onClick={onClose}
               aria-hidden="true"
@@ -168,8 +170,9 @@ export const AnimatedSidebar = ({
               animate="visible"
               exit="hidden"
               variants={mobileSidebarVariants}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeInOut" }}
               className="md:hidden fixed top-0 left-0 h-screen w-64 z-40 bg-dao-dark text-white shadow-xl"
+              style={{ overscrollBehavior: 'contain' }}
             >
               <div className="flex flex-col h-full">
                 {/* Top section with logo/branding space */}
@@ -212,7 +215,7 @@ export const AnimatedSidebar = ({
       <motion.div
         initial={false}
         animate={{ x: isOpen ? 0 : -280 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeInOut" }}
         className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-64 bg-dao-dark text-white shadow-xl border-r border-dao-border z-40"
       >
         {/* Top spacer to account for navbar */}

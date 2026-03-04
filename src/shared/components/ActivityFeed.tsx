@@ -65,7 +65,8 @@ function PlatformFeedContent({ limit }: { limit?: number }) {
   if (isLoading) {
     return (
       <div className="py-8 flex justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+        <div className="motion-reduce:animate-none animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" aria-hidden="true" />
+        <span className="sr-only">Loading{'\u2026'}</span>
       </div>
     );
   }
@@ -96,7 +97,7 @@ function PlatformFeedContent({ limit }: { limit?: number }) {
                   <span className="font-medium">{item.username || 'Anonymous'}</span>{' '}
                   <span className="text-gray-600">{meta.label.toLowerCase()}</span>
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5" suppressHydrationWarning>
                   {timeAgo(item.createdAt)}
                   {item.pointsAwarded > 0 && (
                     <span className="ml-2 text-violet-600">+{item.pointsAwarded} pts</span>
@@ -117,7 +118,8 @@ function PersonalFeedContent({ limit }: { limit?: number }) {
   if (isLoading) {
     return (
       <div className="py-8 flex justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+        <div className="motion-reduce:animate-none animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" aria-hidden="true" />
+        <span className="sr-only">Loading{'\u2026'}</span>
       </div>
     );
   }
@@ -146,7 +148,7 @@ function PersonalFeedContent({ limit }: { limit?: number }) {
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
                 <p className="text-sm text-gray-900">{meta.label}</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5" suppressHydrationWarning>
                   {timeAgo(item.createdAt)}
                   {item.pointsAwarded > 0 && (
                     <span className="ml-2 text-violet-600">+{item.pointsAwarded} pts</span>

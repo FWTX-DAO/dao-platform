@@ -29,14 +29,12 @@ export const metadata: Metadata = {
     apple: '/favicons/apple-touch-icon.png',
   },
   manifest: '/favicons/manifest.json',
-  other: {
-    'theme-color': '#7c3aed',
-  },
+  themeColor: '#0a0a0a',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ colorScheme: 'dark' }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

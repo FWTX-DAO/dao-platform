@@ -10,7 +10,7 @@ export default function DocumentsPage() {
       <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
       <p className="text-gray-600">DAO documents and files stored on IPFS</p>
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading documents...</div>
+        <div className="py-8 text-center text-gray-500">Loading documents\u2026</div>
       ) : docs.length === 0 ? (
         <div className="py-8 text-center text-gray-500">No documents yet.</div>
       ) : (

@@ -42,7 +42,7 @@ export function UpgradeCTA({ allowed, children, feature, mode = 'inline' }: Upgr
   return (
     <Link
       href="/subscriptions"
-      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-pointer hover:border-violet-300 hover:text-violet-600 transition-all group"
+      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-pointer hover:border-violet-300 hover:text-violet-600 transition-colors group"
       title={`Upgrade to ${feature}`}
     >
       <Lock className="h-4 w-4 group-hover:text-violet-500 transition-colors" />

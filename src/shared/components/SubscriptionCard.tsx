@@ -76,9 +76,9 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
         <button
           onClick={() => onSelect(tier.id)}
           disabled={isLoading}
-          className="mt-auto w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition text-sm"
+          className="mt-auto w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
         >
-          {isLoading ? 'Processing...' : `Upgrade to ${tier.displayName}`}
+          {isLoading ? 'Processing\u2026' : `Upgrade to ${tier.displayName}`}
         </button>
       )}
 

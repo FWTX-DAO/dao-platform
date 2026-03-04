@@ -13,7 +13,7 @@ export default function AdminPage() {
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Roles</h2>
         {isLoading ? (
-          <div className="py-4 text-center text-gray-500">Loading roles...</div>
+          <div className="py-4 text-center text-gray-500">Loading roles\u2026</div>
         ) : (
           <div className="space-y-2">
             {roles.map((role: any) => (

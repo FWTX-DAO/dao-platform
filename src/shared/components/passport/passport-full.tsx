@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { PassportCover } from './passport-cover';
 import { PassportInside } from './passport-inside';
 import type { PassportData } from './types';
@@ -13,6 +13,19 @@ interface PassportFullProps {
 
 export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const shouldReduceMotion = useReducedMotion();
+
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    },
+    [toggle]
+  );
 
   return (
     <>
@@ -21,13 +34,17 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
         <div
           className="relative cursor-pointer"
           style={{ perspective: '1200px' }}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={toggle}
+          onKeyDown={handleKeyDown}
+          role="button"
+          tabIndex={0}
+          aria-label="Toggle passport view"
         >
           <div className="relative" style={{ transformStyle: 'preserve-3d' }}>
             {/* Cover (front) */}
             <motion.div
               animate={{ rotateY: isOpen ? -180 : 0 }}
-              transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: [0.4, 0, 0.2, 1] }}
               style={{
                 transformStyle: 'preserve-3d',
                 backfaceVisibility: 'hidden',
@@ -41,7 +58,7 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
             {/* Inside (back) — positioned behind cover */}
             <motion.div
               animate={{ opacity: isOpen ? 1 : 0 }}
-              transition={{ duration: 0.3, delay: isOpen ? 0.4 : 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.3, delay: isOpen ? (shouldReduceMotion ? 0 : 0.4) : 0 }}
               className="absolute top-0 left-0"
             >
               <PassportInside data={data} className="w-72 h-96" />

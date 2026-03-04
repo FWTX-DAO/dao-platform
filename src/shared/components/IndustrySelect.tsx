@@ -32,8 +32,8 @@ export default function IndustrySelect({ value, onChange, className, variant = '
   const isDark = variant === 'dark';
 
   const inputClass = isDark
-    ? 'w-full px-4 py-2.5 bg-[#1a1f29] border border-[#252b37] rounded text-[#f4efe8] placeholder-[#8b9bb0]/40 focus:outline-none focus:border-[#c4963a]/50 focus:ring-1 focus:ring-[#c4963a]/30 transition pr-10 text-sm'
-    : 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition pr-10 text-sm';
+    ? 'w-full px-4 py-2.5 bg-[#1a1f29] border border-[#252b37] rounded text-[#f4efe8] placeholder-[#8b9bb0]/40 focus-visible:outline-none focus-visible:border-[#c4963a]/50 focus-visible:ring-1 focus-visible:ring-[#c4963a]/30 transition pr-10 text-sm'
+    : 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition pr-10 text-sm';
 
   const dropdownClass = isDark
     ? 'absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded bg-[#12161d] border border-[#252b37] shadow-lg py-1 text-sm'
@@ -62,7 +62,7 @@ export default function IndustrySelect({ value, onChange, className, variant = '
           placeholder="Search by name, sector, or code..."
           className={inputClass}
         />
-        <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-3">
+        <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-3" aria-label="Toggle industry list">
           <ChevronUpDownIcon className={`h-5 w-5 ${isDark ? 'text-[#8b9bb0]/40' : 'text-gray-400'}`} />
         </ComboboxButton>
 

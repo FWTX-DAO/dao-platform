@@ -22,29 +22,41 @@ export default function DirectoryPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <input
           type="text"
-          placeholder="Search members..."
+          placeholder="Search members\u2026"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2"
+          name="search"
+          aria-label="Search members"
+          autoComplete="off"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
         />
         <input
           type="text"
           placeholder="City"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2"
+          name="city"
+          aria-label="Filter by city"
+          autoComplete="off"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
         />
         <input
           type="text"
           placeholder="Industry"
           value={industry}
           onChange={(e) => setIndustry(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2"
+          name="industry"
+          aria-label="Filter by industry"
+          autoComplete="off"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
         />
         <select
           value={availability}
           onChange={(e) => setAvailability(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2"
+          name="sort"
+          aria-label="Sort by"
+          autoComplete="off"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
         >
           <option value="">All Availability</option>
           <option value="full-time">Full-time</option>
@@ -54,7 +66,7 @@ export default function DirectoryPage() {
         </select>
       </div>
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading...</div>
+        <div className="py-8 text-center text-gray-500">Loading\u2026</div>
       ) : members.length === 0 ? (
         <div className="py-8 text-center text-gray-500">No members found matching your criteria.</div>
       ) : (

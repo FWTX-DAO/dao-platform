@@ -56,7 +56,7 @@ export const MemberCard = memo(function MemberCard({ member }: MemberCardProps) 
               {member.membershipType}
             </span>
 
-            <span className="inline-flex items-center text-xs text-gray-500">
+            <span className="inline-flex items-center text-xs text-gray-500" suppressHydrationWarning>
               <Calendar className="w-3 h-3 mr-1" />
               Joined {new Date(member.joinedAt).toLocaleDateString('en-US', {
                 year: 'numeric',

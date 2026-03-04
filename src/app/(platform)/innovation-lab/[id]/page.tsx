@@ -9,7 +9,7 @@ export default function ProjectDetailPage() {
   const { data: project, isLoading } = useProjectDetails(id);
 
   if (isLoading) {
-    return <div className="py-8 text-center text-gray-500">Loading project...</div>;
+    return <div className="py-8 text-center text-gray-500">Loading project\u2026</div>;
   }
 
   if (!project) {

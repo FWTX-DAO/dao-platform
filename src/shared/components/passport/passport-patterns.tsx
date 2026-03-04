@@ -3,6 +3,7 @@
 export function GuillochePattern({ className = '' }: { className?: string }) {
   return (
     <svg
+      aria-hidden="true"
       className={`absolute inset-0 w-full h-full pointer-events-none ${className}`}
       style={{ mixBlendMode: 'overlay', opacity: 0.12 }}
       preserveAspectRatio="none"
@@ -64,7 +65,7 @@ export function SecurityBorder({ className = '' }: { className?: string }) {
             key={i}
             className={`absolute ${pos} w-4 h-4`}
           >
-            <svg viewBox="0 0 16 16" className="w-full h-full text-dao-gold/30">
+            <svg aria-hidden="true" viewBox="0 0 16 16" className="w-full h-full text-dao-gold/30">
               <path
                 d={
                   i === 0

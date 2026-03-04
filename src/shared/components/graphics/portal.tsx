@@ -6,6 +6,7 @@ export default function Portal(props: React.SVGProps<SVGSVGElement>) {
       viewBox="0 0 506 505"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
       {...props}
     >
       <g clipPath="url(#clip0_1922_14667)">
