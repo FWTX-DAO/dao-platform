@@ -13,7 +13,7 @@ export default function MyBountiesPage() {
 
   const myBounties = bounties.filter((b: any) => b.submitterId === user?.id);
 
-  if (isLoading) return <div className="py-8 text-center text-gray-500">Loading...</div>;
+  if (isLoading) return <div className="py-8 text-center text-gray-500">Loading{'\u2026'}</div>;
 
   return (
     <div className="space-y-6">
@@ -26,7 +26,7 @@ export default function MyBountiesPage() {
         </UpgradeCTA>
       </div>
       {myBounties.length === 0 ? (
-        <div className="py-8 text-center text-gray-500">You haven&apos;t submitted any bounties yet.</div>
+        <div className="py-8 text-center text-gray-500">You haven{'\u2019'}t submitted any bounties yet.</div>
       ) : (
         <div className="space-y-4">
           {myBounties.map((bounty: any) => (

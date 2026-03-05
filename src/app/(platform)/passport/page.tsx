@@ -15,7 +15,7 @@ export default function PassportPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-dao-gold/30 border-t-dao-gold rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-dao-gold/30 border-t-dao-gold rounded-full animate-spin motion-reduce:animate-none" />
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function PassportPage() {
                   <div className="font-medium text-gray-900 truncate">{stamp.eventName}</div>
                   <div className="text-xs text-gray-500">
                     {stamp.eventType.charAt(0).toUpperCase() + stamp.eventType.slice(1)}
-                    {stamp.eventDate && ` \u00B7 ${new Date(stamp.eventDate).toLocaleDateString()}`}
+                    {stamp.eventDate && <span suppressHydrationWarning>{` \u00B7 ${new Date(stamp.eventDate).toLocaleDateString()}`}</span>}
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-dao-gold">
@@ -115,7 +115,7 @@ export default function PassportPage() {
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-      <div className="text-2xl font-semibold text-gray-900">{value}</div>
+      <div className="text-2xl font-semibold text-gray-900 tabular-nums">{value}</div>
       <div className="text-xs text-gray-500 mt-1">{label}</div>
     </div>
   );

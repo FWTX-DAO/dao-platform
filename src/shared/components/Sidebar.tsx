@@ -2,6 +2,7 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from './ui/button';
 import { AnimatedSidebar, CollapsibleSection } from './ui/sidebar';
 import { useSidebar } from '../contexts/SidebarContext';
@@ -52,19 +53,19 @@ interface SidebarItemProps {
 const SidebarItem = memo(({ item, isActive, onClick }: SidebarItemProps) => {
   const Icon = item.icon;
   return (
-    <Button
-      variant="ghost"
-      className={`w-full justify-start transition-all duration-200 ${
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={`flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200 ${
         isActive
           ? 'bg-dao-surface text-white hover:bg-dao-surface/80'
           : 'text-dao-cool hover:text-white hover:bg-dao-surface/50'
       }`}
-      onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
     >
       <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
       <span className="truncate">{item.name}</span>
-    </Button>
+    </Link>
   );
 });
 
@@ -131,7 +132,7 @@ function Sidebar() {
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-white truncate">{userInfo.email}</p>
         {userInfo.id && (
-          <p className="text-sm text-dao-cool/70 truncate">{userInfo.id}...</p>
+          <p className="text-sm text-dao-cool/70 truncate">{userInfo.id}{'\u2026'}</p>
         )}
       </div>
     </div>
@@ -155,88 +156,85 @@ function Sidebar() {
       {/* Collapsible Sections */}
       <CollapsibleSection title="Community" defaultOpen={false}>
         <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-            onClick={() => handleNavigation('/members')}
+          <Link
+            href="/members"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <Users className="mr-3 h-4 w-4" />
             Members
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-            onClick={() => handleNavigation('/directory')}
+          </Link>
+          <Link
+            href="/directory"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <Search className="mr-3 h-4 w-4" />
             Directory
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-            onClick={() => handleNavigation('/activity')}
+          </Link>
+          <Link
+            href="/activity"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <Activity className="mr-3 h-4 w-4" />
             Activity
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-            onClick={() => handleNavigation('/subscriptions')}
+          </Link>
+          <Link
+            href="/subscriptions"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <CreditCard className="mr-3 h-4 w-4" />
             Subscriptions
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-            onClick={() => window.open('https://t.me/fwtxdao', '_blank')}
+          </Link>
+          <a
+            href="https://t.me/fwtxdao"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <Send className="mr-3 h-4 w-4" />
             Telegram
-          </Button>
+          </a>
         </div>
       </CollapsibleSection>
 
       {isAdmin && (
         <CollapsibleSection title="Admin" defaultOpen={false}>
           <div className="space-y-1">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-              onClick={() => handleNavigation('/admin')}
+            <Link
+              href="/admin"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
             >
               <ShieldCheck className="mr-3 h-4 w-4" />
               Admin Panel
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50"
-              onClick={() => handleNavigation('/admin/stamps')}
+            </Link>
+            <Link
+              href="/admin/stamps"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
             >
               <Stamp className="mr-3 h-4 w-4" />
               Stamps
-            </Button>
+            </Link>
           </div>
         </CollapsibleSection>
       )}
 
       <CollapsibleSection title="Resources" defaultOpen={false}>
         <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50 text-sm"
-            onClick={() => window.open('https://constitution.fwtx.city', '_blank')}
+          <a
+            href="https://constitution.fwtx.city"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             About DAO
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface/50 text-sm"
-            onClick={() => window.open('https://github.com/fwtx-dao', '_blank')}
+          </a>
+          <a
+            href="https://github.com/fwtx-dao"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             GitHub
-          </Button>
+          </a>
         </div>
       </CollapsibleSection>
     </>
@@ -245,22 +243,20 @@ function Sidebar() {
   // Footer Section Component
   const footerSection = (
     <div className="space-y-2">
-      <Button
-        variant="ghost"
-        className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface"
-        onClick={() => handleNavigation('/profile')}
+      <Link
+        href="/profile"
+        className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
       >
         <User className="mr-3 h-4 w-4" />
         Profile
-      </Button>
-      <Button
-        variant="ghost"
-        className="w-full justify-start text-dao-cool hover:text-white hover:bg-dao-surface"
-        onClick={() => handleNavigation('/settings')}
+      </Link>
+      <Link
+        href="/settings"
+        className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
       >
         <Settings className="mr-3 h-4 w-4" />
         Settings
-      </Button>
+      </Link>
       <Button
         variant="ghost"
         className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"

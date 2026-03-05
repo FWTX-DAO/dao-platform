@@ -72,13 +72,14 @@ export default function AdminStampsPage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Event Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
+          <label htmlFor="stamp-event-name" className="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
           <input
+            id="stamp-event-name"
             type="text"
             value={eventName}
             onChange={(e) => setEventName(e.target.value)}
             placeholder="DAO Town Hall #4"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
             required
           />
         </div>
@@ -86,20 +87,22 @@ export default function AdminStampsPage() {
         {/* Event Date + Type row */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
+            <label htmlFor="stamp-event-date" className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
             <input
+              id="stamp-event-date"
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
+            <label htmlFor="stamp-event-type" className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
             <select
+              id="stamp-event-type"
               value={eventType}
               onChange={(e) => setEventType(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none bg-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold bg-white"
             >
               {EVENT_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -112,45 +115,49 @@ export default function AdminStampsPage() {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="stamp-description" className="block text-sm font-medium text-gray-700 mb-1">
             Description <span className="text-gray-400">(optional)</span>
           </label>
           <input
+            id="stamp-description"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Monthly community gathering at Panther Island Pavilion"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
           />
         </div>
 
         {/* Points */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Points Awarded</label>
+          <label htmlFor="stamp-points" className="block text-sm font-medium text-gray-700 mb-1">Points Awarded</label>
           <input
+            id="stamp-points"
             type="number"
             value={points}
             onChange={(e) => setPoints(Number(e.target.value))}
             min={0}
             max={100}
-            className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none"
+            className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
           />
         </div>
 
         {/* Emails */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="stamp-emails" className="block text-sm font-medium text-gray-700 mb-1">
             Attendee Emails
           </label>
           <p className="text-xs text-gray-400 mb-2">
             One per line or comma-separated. Only members with matching emails will receive stamps.
           </p>
           <textarea
+            id="stamp-emails"
             value={emailsText}
             onChange={(e) => setEmailsText(e.target.value)}
             rows={6}
             placeholder={"alice@example.com\nbob@example.com\ncharlie@example.com"}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none resize-y"
+            spellCheck={false}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold resize-y"
             required
           />
         </div>
@@ -182,7 +189,7 @@ export default function AdminStampsPage() {
         )}
 
         <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? 'Issuing Stamps...' : 'Issue Stamps'}
+          {isPending ? 'Issuing Stamps\u2026' : 'Issue Stamps'}
         </Button>
       </form>
     </div>

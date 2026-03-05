@@ -29,9 +29,9 @@ function useMatrixRain(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
     const drops = columnsRef.current;
 
     for (let i = 0; i < drops.length; i++) {
-      const char = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+      const char = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)]!;
       const x = i * fontSize;
-      const y = drops[i] * fontSize;
+      const y = (drops[i] ?? 0) * fontSize;
 
       // Head character — bright cyan-white
       if (y > 0 && y < h) {
@@ -47,16 +47,16 @@ function useMatrixRain(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
             const green = 120 + Math.floor(Math.random() * 40);
             const blue = 200 + Math.floor(Math.random() * 55);
             ctx.fillStyle = `rgba(30, ${green}, ${blue}, ${opacity})`;
-            const trailChar = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+            const trailChar = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)]!;
             ctx.fillText(trailChar, x, trailY);
           }
         }
       }
 
-      drops[i] += 0.5 + Math.random() * 0.3;
+      drops[i] = (drops[i] ?? 0) + 0.5 + Math.random() * 0.3;
 
       // Reset with randomness for organic feel
-      if (drops[i] * fontSize > h && Math.random() > 0.975) {
+      if ((drops[i] ?? 0) * fontSize > h && Math.random() > 0.975) {
         drops[i] = Math.random() * -20;
       }
     }

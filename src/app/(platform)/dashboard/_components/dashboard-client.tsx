@@ -64,7 +64,7 @@ export function DashboardClient() {
           <UpgradeCTA allowed={can.createProject} feature="create projects">
             <Link
               href="/innovation-lab"
-              className="inline-flex items-center px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition"
+              className="inline-flex items-center px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               New Project
@@ -72,7 +72,7 @@ export function DashboardClient() {
           </UpgradeCTA>
           <Link
             href="/forums"
-            className="inline-flex items-center px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition"
+            className="inline-flex items-center px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Start Discussion
@@ -81,42 +81,42 @@ export function DashboardClient() {
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-gray-500">Loading dashboard...</div>
+        <div className="py-12 text-center text-gray-500">Loading dashboard{'\u2026'}</div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link href="/members" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200">
+            <Link href="/members" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
                   <UsersIcon className="h-6 w-6 text-violet-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Members</p>
-                  <p className="text-2xl font-bold text-gray-900">{dashboardStats?.totalUsers || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalUsers || 0}</p>
                 </div>
               </div>
             </Link>
 
-            <Link href="/innovation-lab" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200">
+            <Link href="/innovation-lab" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
                   <RocketLaunchIcon className="h-6 w-6 text-violet-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Innovation Lab Projects</p>
-                  <p className="text-2xl font-bold text-gray-900">{dashboardStats?.totalProjects || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalProjects || 0}</p>
                 </div>
               </div>
             </Link>
 
-            <Link href="/documents" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200">
+            <Link href="/documents" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
                   <DocumentTextIcon className="h-6 w-6 text-violet-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Documents</p>
-                  <p className="text-2xl font-bold text-gray-900">{dashboardStats?.totalDocuments || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalDocuments || 0}</p>
                 </div>
               </div>
             </Link>
@@ -142,7 +142,7 @@ export function DashboardClient() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Member Since</p>
-                  <p className="text-lg font-bold text-gray-900 mt-1">{formatDate(membershipData.user.createdAt)}</p>
+                  <p className="text-lg font-bold text-gray-900 mt-1" suppressHydrationWarning>{formatDate(membershipData.user.createdAt)}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{calculateTenure(membershipData.user.createdAt)}</p>
                 </div>
                 <div>
@@ -151,11 +151,11 @@ export function DashboardClient() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Voting Power</p>
-                  <p className="text-lg font-bold text-gray-900 mt-1">{membershipData.membership.votingPower}</p>
+                  <p className="text-lg font-bold text-gray-900 mt-1 tabular-nums">{membershipData.membership.votingPower}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Contribution Points</p>
-                  <p className="text-lg font-bold text-violet-600 mt-1 flex items-center">
+                  <p className="text-lg font-bold text-violet-600 mt-1 flex items-center tabular-nums">
                     {membershipData.membership.contributionPoints}
                     <SparklesIcon className="h-4 w-4 ml-1" />
                   </p>
@@ -170,19 +170,19 @@ export function DashboardClient() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-600 mb-1">Forum Posts</p>
-                    <p className="text-2xl font-bold text-gray-900">{membershipData.stats.forumPosts}</p>
+                    <p className="text-2xl font-bold text-gray-900 tabular-nums">{membershipData.stats.forumPosts}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-600 mb-1">Projects</p>
-                    <p className="text-2xl font-bold text-gray-900">{membershipData.stats.projects}</p>
+                    <p className="text-2xl font-bold text-gray-900 tabular-nums">{membershipData.stats.projects}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-600 mb-1">Meeting Notes</p>
-                    <p className="text-2xl font-bold text-gray-900">{membershipData.stats.meetingNotes}</p>
+                    <p className="text-2xl font-bold text-gray-900 tabular-nums">{membershipData.stats.meetingNotes}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-600 mb-1">Votes Received</p>
-                    <p className="text-2xl font-bold text-gray-900">{membershipData.stats.votesReceived}</p>
+                    <p className="text-2xl font-bold text-gray-900 tabular-nums">{membershipData.stats.votesReceived}</p>
                   </div>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export function DashboardClient() {
               </div>
               <div className="space-y-3">
                 {dashboardStats.userActiveProjects.map((project: any) => (
-                  <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-all">
+                  <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function DashboardClient() {
                   <p className="text-gray-600 font-medium">No active projects yet</p>
                   <p className="text-gray-500 text-sm mt-1">Be the first to propose a civic innovation project!</p>
                   <UpgradeCTA allowed={can.createProject} feature="create projects">
-                    <Link href="/innovation-lab" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition">
+                    <Link href="/innovation-lab" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors">
                       <PlusIcon className="h-4 w-4 mr-2" />
                       Submit Project
                     </Link>
@@ -249,7 +249,7 @@ export function DashboardClient() {
               ) : (
                 <div className="space-y-3">
                   {dashboardStats?.activeProjects.slice(0, 5).map((project: any) => (
-                    <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-all">
+                    <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{project.title}</h3>
@@ -280,7 +280,7 @@ export function DashboardClient() {
                   <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">No discussions yet</p>
                   <p className="text-gray-500 text-sm mt-1">Start a conversation with the community!</p>
-                  <Link href="/forums" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition">
+                  <Link href="/forums" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors">
                     <PlusIcon className="h-4 w-4 mr-2" />
                     Start Discussion
                   </Link>
@@ -288,7 +288,7 @@ export function DashboardClient() {
               ) : (
                 <div className="space-y-3">
                   {dashboardStats?.latestForumPosts.map((post: any) => (
-                    <Link key={post.id} href={`/forums?post=${post.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-all">
+                    <Link key={post.id} href={`/forums?post=${post.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{post.title}</h3>
@@ -320,14 +320,14 @@ export function DashboardClient() {
                   <CurrencyDollarIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">No bounties available</p>
                   <p className="text-gray-500 text-sm mt-1">Check back soon for funded opportunities to contribute!</p>
-                  <Link href="/bounties" className="inline-flex items-center mt-4 px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition">
+                  <Link href="/bounties" className="inline-flex items-center mt-4 px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors">
                     Explore Bounties
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {dashboardStats?.innovationAssetsRanking.map((bounty: any) => (
-                    <Link key={bounty.id} href={`/bounties/${bounty.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-all">
+                    <Link key={bounty.id} href={`/bounties/${bounty.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{bounty.title}</h3>
@@ -337,7 +337,7 @@ export function DashboardClient() {
                         </div>
                         {bounty.bountyAmount && (
                           <div className="text-right ml-2">
-                            <p className="font-bold text-green-600 text-lg">${(bounty.bountyAmount / 100).toLocaleString()}</p>
+                            <p className="font-bold text-green-600 text-lg tabular-nums">${(bounty.bountyAmount / 100).toLocaleString()}</p>
                           </div>
                         )}
                       </div>
@@ -362,12 +362,12 @@ export function DashboardClient() {
                   <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">No meeting notes yet</p>
                   <p className="text-gray-500 text-sm mt-1">Stay tuned for upcoming DAO meetings and summaries</p>
-                  <Link href="/meeting-notes" className="inline-flex items-center mt-4 px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition">
+                  <Link href="/meeting-notes" className="inline-flex items-center mt-4 px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors">
                     View Archive
                   </Link>
                 </div>
               ) : (
-                <Link href="/meeting-notes" className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-all">
+                <Link href="/meeting-notes" className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
                   <h3 className="font-medium text-gray-900 mb-2">{dashboardStats.latestMeetingNote.title}</h3>
                   <p className="text-sm text-gray-600 mb-2">{formatDate(dashboardStats.latestMeetingNote.date)}</p>
                   <p className="text-sm text-gray-500 line-clamp-3">{dashboardStats.latestMeetingNote.notes}</p>

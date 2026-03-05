@@ -533,11 +533,11 @@ export function OnboardingForm() {
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light disabled:bg-dao-border disabled:text-dao-cool/40 disabled:cursor-not-allowed text-dao-charcoal text-sm font-semibold rounded transition-all active:scale-[0.98]"
+                    className="px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light disabled:bg-dao-border disabled:text-dao-cool/40 disabled:cursor-not-allowed text-dao-charcoal text-sm font-semibold rounded transition-colors active:scale-[0.98]"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin motion-reduce:animate-none -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path
                             className="opacity-75"
@@ -545,7 +545,7 @@ export function OnboardingForm() {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           />
                         </svg>
-                        Completing...
+                        Completing{'\u2026'}
                       </span>
                     ) : selectedTierId ? (
                       'Join DAO & Subscribe'

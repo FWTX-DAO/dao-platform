@@ -1,12 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useBounties } from '@hooks/useBounties';
 
 export function BountiesClient() {
   const { data: bounties = [], isLoading } = useBounties();
 
   if (isLoading) {
-    return <div className="py-8 text-center text-gray-500">Loading bounties...</div>;
+    return <div className="py-8 text-center text-gray-500">Loading bounties{'\u2026'}</div>;
   }
 
   return (
@@ -18,10 +19,10 @@ export function BountiesClient() {
       ) : (
         <div className="space-y-4">
           {bounties.map((bounty: any) => (
-            <a
+            <Link
               key={bounty.id}
               href={`/bounties/${bounty.id}`}
-              className="block bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
+              className="block bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -39,11 +40,11 @@ export function BountiesClient() {
                 </div>
                 {bounty.bountyAmount && (
                   <div className="text-right ml-4">
-                    <p className="font-bold text-green-600 text-xl">${(bounty.bountyAmount / 100).toLocaleString()}</p>
+                    <p className="font-bold text-green-600 text-xl tabular-nums">${(bounty.bountyAmount / 100).toLocaleString()}</p>
                   </div>
                 )}
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}

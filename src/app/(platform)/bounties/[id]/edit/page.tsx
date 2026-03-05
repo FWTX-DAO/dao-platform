@@ -25,7 +25,7 @@ export default function EditBountyPage() {
     }
   }, [bounty]);
 
-  if (isLoading) return <div className="py-8 text-center text-gray-500">Loading...</div>;
+  if (isLoading) return <div className="py-8 text-center text-gray-500">Loading{'\u2026'}</div>;
   if (!bounty) return <div className="py-8 text-center text-gray-500">Bounty not found</div>;
 
   const handleSave = () => {
@@ -35,7 +35,7 @@ export default function EditBountyPage() {
   };
 
   const handleDelete = () => {
-    if (!confirm('Are you sure?')) return;
+    if (!confirm('Are you sure you want to delete this bounty? This action cannot be undone.')) return;
     deleteMutation.mutate(id, {
       onSuccess: () => router.push('/bounties'),
     });
@@ -46,21 +46,21 @@ export default function EditBountyPage() {
       <h1 className="text-3xl font-bold text-gray-900">Edit Bounty</h1>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input type="text" value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2" />
+          <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">Title</label>
+          <input id="edit-title" type="text" name="title" autoComplete="off" value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Problem Statement</label>
-          <textarea value={formData.problemStatement} onChange={(e) => setFormData((p) => ({ ...p, problemStatement: e.target.value }))} rows={6} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2" />
+          <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">Problem Statement</label>
+          <textarea id="edit-description" name="description" autoComplete="off" value={formData.problemStatement} onChange={(e) => setFormData((p) => ({ ...p, problemStatement: e.target.value }))} rows={6} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none" />
         </div>
         <div className="flex gap-3">
-          <button onClick={handleSave} disabled={updateMutation.isPending} className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700">
+          <button onClick={handleSave} disabled={updateMutation.isPending} className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
             {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
           </button>
-          <button onClick={handleDelete} disabled={deleteMutation.isPending} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+          <button onClick={handleDelete} disabled={deleteMutation.isPending} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
             Delete
           </button>
-          <button onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+          <button onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">Cancel</button>
         </div>
       </div>
     </div>

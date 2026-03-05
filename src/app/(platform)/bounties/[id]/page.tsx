@@ -9,7 +9,7 @@ export default function BountyDetailPage() {
   const { data: bounty, isLoading } = useBountyDetails(id);
 
   if (isLoading) {
-    return <div className="py-8 text-center text-gray-500">Loading bounty...</div>;
+    return <div className="py-8 text-center text-gray-500">Loading bounty{'\u2026'}</div>;
   }
 
   if (!bounty) {
@@ -29,7 +29,7 @@ export default function BountyDetailPage() {
         </div>
         <h1 className="text-3xl font-bold text-gray-900">{b.title}</h1>
         {b.bountyAmount && (
-          <p className="text-2xl font-bold text-green-600 mt-2">${(b.bountyAmount / 100).toLocaleString()}</p>
+          <p className="text-2xl font-bold text-green-600 mt-2 tabular-nums">${(b.bountyAmount / 100).toLocaleString()}</p>
         )}
       </div>
 
