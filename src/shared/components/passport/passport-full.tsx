@@ -61,7 +61,7 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
               transition={{ duration: shouldReduceMotion ? 0 : 0.3, delay: isOpen ? (shouldReduceMotion ? 0 : 0.4) : 0 }}
               className="absolute top-0 left-0"
             >
-              <PassportInside data={data} className="w-72 h-96" />
+              <PassportInside data={data} className="w-[480px]" />
             </motion.div>
           </div>
 
@@ -74,7 +74,7 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
       {/* Mobile: stacked view */}
       <div className="sm:hidden flex flex-col items-center gap-6">
         <PassportCover size="md" />
-        <PassportInside data={data} />
+        <PassportInside data={data} className="w-full max-w-[360px]" />
       </div>
     </>
   );

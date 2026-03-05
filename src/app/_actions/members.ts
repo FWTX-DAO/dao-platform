@@ -2,6 +2,7 @@
 
 import Stripe from 'stripe';
 import { requireAuth } from '@/app/_lib/auth';
+import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
 import { membersService } from '@services/members';
 import { rbacService } from '@services/rbac';
 import { getOrCreateUser } from '@core/database/queries/users';
@@ -44,7 +45,7 @@ export async function getMemberProfile() {
 export async function updateMemberProfile(data: Record<string, unknown>) {
   const { user } = await requireAuth();
   const result = await membersService.updateMemberProfile(user.id, data as any);
-  revalidatePath('/profile');
+  revalidatePath('/passport');
   return result;
 }
 
@@ -98,43 +99,47 @@ export async function completeOnboarding(data: {
   city?: string;
   state?: string;
   zip?: string;
-}) {
-  const { claims, user } = await requireAuth();
+}): Promise<ActionResult<any>> {
+  try {
+    const { claims, user } = await requireAuth();
 
-  const email = (claims as any).email || undefined;
-  await getOrCreateUser(claims.userId, email);
-  const member = await membersService.getOrCreateMember(user.id);
+    const email = (claims as any).email || undefined;
+    await getOrCreateUser(claims.userId, email);
+    const member = await membersService.getOrCreateMember(user.id);
 
-  if (member) {
-    // Assign guest RBAC role for new free members (idempotent)
-    const existingRoles = await rbacService.getMemberRoles(member.id);
-    if (existingRoles.length === 0) {
-      await rbacService.assignRole(member.id, 'guest');
-    }
+    if (member) {
+      // Assign guest RBAC role for new free members (idempotent)
+      const existingRoles = await rbacService.getMemberRoles(member.id);
+      if (existingRoles.length === 0) {
+        await rbacService.assignRole(member.id, 'guest');
+      }
 
-    // Create Stripe customer for all users (pre-registers for future upgrades)
-    if (!member.stripeCustomerId) {
-      try {
-        const stripe = getStripe();
-        const customer = await stripe.customers.create({
-          email: data.email,
-          name: `${data.firstName} ${data.lastName}`,
-          metadata: { userId: user.id, memberId: member.id },
-        });
-        await db
-          .update(members)
-          .set({ stripeCustomerId: customer.id, updatedAt: new Date() })
-          .where(eq(members.id, member.id));
-      } catch (err) {
-        // Non-blocking — don't fail onboarding if Stripe is down
-        console.error('Failed to create Stripe customer during onboarding:', err);
+      // Create Stripe customer for all users (pre-registers for future upgrades)
+      if (!member.stripeCustomerId) {
+        try {
+          const stripe = getStripe();
+          const customer = await stripe.customers.create({
+            email: data.email,
+            name: `${data.firstName} ${data.lastName}`,
+            metadata: { userId: user.id, memberId: member.id },
+          });
+          await db
+            .update(members)
+            .set({ stripeCustomerId: customer.id, updatedAt: new Date() })
+            .where(eq(members.id, member.id));
+        } catch (err) {
+          // Non-blocking — don't fail onboarding if Stripe is down
+          console.error('Failed to create Stripe customer during onboarding:', err);
+        }
       }
     }
-  }
 
-  const result = await membersService.completeOnboarding(user.id, data);
-  revalidatePath('/dashboard');
-  return result;
+    const result = await membersService.completeOnboarding(user.id, data);
+    revalidatePath('/dashboard');
+    return actionSuccess(result);
+  } catch (err) {
+    return actionError(err);
+  }
 }
 
 export async function searchMembers(filters: {

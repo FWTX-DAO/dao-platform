@@ -1,7 +1,13 @@
-'use server';
+"use server";
 
-import { requireAuth } from '@/app/_lib/auth';
-import { forumService } from '@services/forum';
+import { requireAuth, isUserAdmin } from "@/app/_lib/auth";
+import {
+  type ActionResult,
+  actionSuccess,
+  actionError,
+} from "@/app/_lib/action-utils";
+import { forumService } from "@services/forum";
+import { activitiesService } from "@services/activities";
 import {
   db,
   projects,
@@ -9,10 +15,14 @@ import {
   projectCollaborators,
   projectUpdates,
   members,
-} from '@core/database';
-import { eq, desc, sql } from 'drizzle-orm';
-import { generateId } from '@utils/id-generator';
-import { revalidatePath } from 'next/cache';
+} from "@core/database";
+import { eq, desc, sql, and } from "drizzle-orm";
+import { generateId } from "@utils/id-generator";
+import { revalidatePath } from "next/cache";
+
+// ============================================================================
+// QUERIES (return data directly — auth failure triggers redirect)
+// ============================================================================
 
 export async function getProjects() {
   await requireAuth();
@@ -25,6 +35,7 @@ export async function getProjects() {
       status: projects.status,
       githubRepo: projects.githubRepo,
       intent: projects.intent,
+      tags: projects.tags,
       creator_name: users.username,
       creator_id: projects.creatorId,
       created_at: projects.createdAt,
@@ -89,104 +100,6 @@ export async function getProjectById(id: string) {
   };
 }
 
-export async function createProject(data: {
-  title: string;
-  description: string;
-  status?: string;
-  githubRepo?: string;
-  intent?: string;
-  benefit?: string;
-  tags?: string;
-}) {
-  const { user } = await requireAuth();
-
-  const id = generateId();
-  const now = new Date();
-
-  await db.insert(projects).values({
-    id,
-    creatorId: user.id,
-    title: data.title,
-    description: data.description,
-    status: data.status || 'active',
-    githubRepo: data.githubRepo || '',
-    intent: data.intent || '',
-    benefitToFortWorth: data.benefit || '',
-    tags: data.tags || null,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  revalidatePath('/innovation-lab');
-  return { id };
-}
-
-export async function updateProject(id: string, data: Record<string, any>) {
-  const { user } = await requireAuth();
-
-  const project = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
-  if (!project[0]) throw new Error('Project not found');
-  if (project[0].creatorId !== user.id) throw new Error('Not authorized');
-
-  await db
-    .update(projects)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(projects.id, id));
-
-  revalidatePath('/innovation-lab');
-  revalidatePath(`/innovation-lab/${id}`);
-  return { success: true };
-}
-
-export async function deleteProject(id: string) {
-  const { user } = await requireAuth();
-
-  const project = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
-  if (!project[0]) throw new Error('Project not found');
-  if (project[0].creatorId !== user.id) throw new Error('Not authorized');
-
-  await db.delete(projects).where(eq(projects.id, id));
-  revalidatePath('/innovation-lab');
-  return { success: true };
-}
-
-export async function joinProject(id: string) {
-  const { user } = await requireAuth();
-
-  // Check if already a collaborator
-  const existing = await db
-    .select()
-    .from(projectCollaborators)
-    .where(eq(projectCollaborators.projectId, id))
-    .then((rows) => rows.filter((r) => r.userId === user.id));
-
-  if (existing.length > 0) {
-    return { success: false, error: 'Already a collaborator' };
-  }
-
-  const now = new Date();
-  await db.insert(projectCollaborators).values({
-    projectId: id,
-    userId: user.id,
-    role: 'contributor',
-  });
-
-  // Award contribution points
-  const member = await db.select().from(members).where(eq(members.userId, user.id)).limit(1);
-  if (member[0]) {
-    await db
-      .update(members)
-      .set({
-        contributionPoints: sql`${members.contributionPoints} + 10`,
-        updatedAt: now,
-      })
-      .where(eq(members.userId, user.id));
-  }
-
-  revalidatePath(`/innovation-lab/${id}`);
-  return { success: true };
-}
-
 export async function getProjectUpdates(projectId: string) {
   await requireAuth();
   return db
@@ -194,7 +107,9 @@ export async function getProjectUpdates(projectId: string) {
       id: projectUpdates.id,
       title: projectUpdates.title,
       content: projectUpdates.content,
+      updateType: projectUpdates.updateType,
       author_name: users.username,
+      authorId: projectUpdates.authorId,
       created_at: projectUpdates.createdAt,
     })
     .from(projectUpdates)
@@ -203,33 +118,289 @@ export async function getProjectUpdates(projectId: string) {
     .orderBy(desc(projectUpdates.createdAt));
 }
 
-export async function createProjectUpdate(projectId: string, data: { title: string; content: string }) {
-  const { user } = await requireAuth();
-
-  const id = generateId();
-  const now = new Date();
-
-  await db.insert(projectUpdates).values({
-    id,
-    projectId,
-    authorId: user.id,
-    title: data.title,
-    content: data.content,
-    createdAt: now,
-  });
-
-  revalidatePath(`/innovation-lab/${projectId}`);
-  return { id };
-}
-
 export async function getProjectForum(projectId: string) {
   const { user } = await requireAuth();
   return forumService.getPostsWithMetadata(user.id, { projectId });
 }
 
-export async function createProjectForumPost(projectId: string, data: { title: string; content: string; category?: string }) {
-  const { user } = await requireAuth();
-  const result = await forumService.createPost({ ...data, category: data.category || 'General', projectId }, user.id);
-  revalidatePath(`/innovation-lab/${projectId}`);
-  return result;
+// ============================================================================
+// MUTATIONS (return ActionResult<T> — never throw raw errors)
+// ============================================================================
+
+export async function createProject(data: {
+  title: string;
+  description: string;
+  status?: string;
+  githubRepo?: string;
+  intent?: string;
+  benefit?: string;
+  tags?: string;
+}): Promise<ActionResult<{ id: string }>> {
+  try {
+    const { user } = await requireAuth();
+
+    const id = generateId();
+    const now = new Date();
+
+    await db.insert(projects).values({
+      id,
+      creatorId: user.id,
+      title: data.title,
+      description: data.description,
+      status: data.status || "active",
+      githubRepo: data.githubRepo || "",
+      intent: data.intent || "",
+      benefitToFortWorth: data.benefit || "",
+      tags: data.tags || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Auto-add creator as collaborator with 'creator' role
+    await db.insert(projectCollaborators).values({
+      projectId: id,
+      userId: user.id,
+      role: "creator",
+    });
+
+    // Track activity (non-blocking)
+    activitiesService
+      .trackActivity(user.id, "project_created", "project", id)
+      .catch(() => {});
+
+    revalidatePath("/innovation-lab");
+    return actionSuccess({ id });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function updateProject(
+  id: string,
+  data: Record<string, any>,
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const { user } = await requireAuth();
+
+    const project = await db
+      .select({ creatorId: projects.creatorId })
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (!project[0]) return actionError(new Error("Project not found"));
+
+    const admin = await isUserAdmin(user.id);
+    if (project[0].creatorId !== user.id && !admin) {
+      return actionError(new Error("Not authorized"));
+    }
+
+    // Field allowlist for projects
+    const allowedFields = [
+      "title",
+      "description",
+      "githubRepo",
+      "intent",
+      "benefitToFortWorth",
+      "tags",
+      "status",
+    ];
+    const safeData = Object.fromEntries(
+      Object.entries(data).filter(([k]) => allowedFields.includes(k)),
+    );
+
+    await db
+      .update(projects)
+      .set({ ...safeData, updatedAt: new Date() })
+      .where(eq(projects.id, id));
+
+    revalidatePath("/innovation-lab");
+    revalidatePath(`/innovation-lab/${id}`);
+    return actionSuccess({ success: true });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function deleteProject(
+  id: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const { user } = await requireAuth();
+
+    const project = await db
+      .select({ creatorId: projects.creatorId })
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (!project[0]) return actionError(new Error("Project not found"));
+
+    const admin = await isUserAdmin(user.id);
+    if (project[0].creatorId !== user.id && !admin) {
+      return actionError(new Error("Not authorized"));
+    }
+
+    await db.delete(projects).where(eq(projects.id, id));
+    revalidatePath("/innovation-lab");
+    return actionSuccess({ success: true });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function joinProject(
+  id: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const { user } = await requireAuth();
+
+    // Check if already a collaborator
+    const existing = await db
+      .select({ userId: projectCollaborators.userId })
+      .from(projectCollaborators)
+      .where(
+        and(
+          eq(projectCollaborators.projectId, id),
+          eq(projectCollaborators.userId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (existing[0]) return actionError(new Error("Already a collaborator"));
+
+    await db.insert(projectCollaborators).values({
+      projectId: id,
+      userId: user.id,
+      role: "contributor",
+    });
+
+    // Award contribution points
+    const member = await db
+      .select({ id: members.id })
+      .from(members)
+      .where(eq(members.userId, user.id))
+      .limit(1);
+    if (member[0]) {
+      await db
+        .update(members)
+        .set({
+          contributionPoints: sql`${members.contributionPoints} + 10`,
+          updatedAt: new Date(),
+        })
+        .where(eq(members.userId, user.id));
+    }
+
+    // Track activity (non-blocking)
+    activitiesService
+      .trackActivity(user.id, "project_joined", "project", id)
+      .catch(() => {});
+
+    revalidatePath(`/innovation-lab/${id}`);
+    revalidatePath("/innovation-lab");
+    return actionSuccess({ success: true });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function leaveProject(
+  id: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const { user } = await requireAuth();
+
+    // Don't allow creator to leave
+    const project = await db
+      .select({ creatorId: projects.creatorId })
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (!project[0]) return actionError(new Error("Project not found"));
+    if (project[0].creatorId === user.id)
+      return actionError(new Error("Creator cannot leave the project"));
+
+    await db
+      .delete(projectCollaborators)
+      .where(
+        and(
+          eq(projectCollaborators.projectId, id),
+          eq(projectCollaborators.userId, user.id),
+        ),
+      );
+
+    revalidatePath(`/innovation-lab/${id}`);
+    revalidatePath("/innovation-lab");
+    return actionSuccess({ success: true });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function createProjectUpdate(
+  projectId: string,
+  data: { title: string; content: string },
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const { user } = await requireAuth();
+
+    // Verify user is a collaborator or creator
+    const [project, collab] = await Promise.all([
+      db
+        .select({ creatorId: projects.creatorId })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .limit(1),
+      db
+        .select({ userId: projectCollaborators.userId })
+        .from(projectCollaborators)
+        .where(
+          and(
+            eq(projectCollaborators.projectId, projectId),
+            eq(projectCollaborators.userId, user.id),
+          ),
+        )
+        .limit(1),
+    ]);
+
+    if (!project[0]) return actionError(new Error("Project not found"));
+    if (project[0].creatorId !== user.id && !collab[0]) {
+      return actionError(new Error("Only collaborators can post updates"));
+    }
+
+    const id = generateId();
+    const now = new Date();
+
+    await db.insert(projectUpdates).values({
+      id,
+      projectId,
+      authorId: user.id,
+      title: data.title,
+      content: data.content,
+      createdAt: now,
+    });
+
+    revalidatePath(`/innovation-lab/${projectId}`);
+    return actionSuccess({ id });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function createProjectForumPost(
+  projectId: string,
+  data: { title: string; content: string; category?: string },
+): Promise<ActionResult<any>> {
+  try {
+    const { user } = await requireAuth();
+    const result = await forumService.createPost(
+      { ...data, category: data.category || "General", projectId },
+      user.id,
+    );
+    revalidatePath(`/innovation-lab/${projectId}`);
+    return actionSuccess(result);
+  } catch (err) {
+    return actionError(err);
+  }
 }

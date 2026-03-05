@@ -29,7 +29,7 @@ export function UpgradeCTA({ allowed, children, feature, mode = 'inline' }: Upgr
           </div>
         </div>
         <Link
-          href="/subscriptions"
+          href="/billing"
           className="shrink-0 px-4 py-2 text-xs font-semibold bg-dao-gold text-dao-charcoal rounded hover:bg-dao-gold-light transition-colors"
         >
           Upgrade
@@ -41,7 +41,7 @@ export function UpgradeCTA({ allowed, children, feature, mode = 'inline' }: Upgr
   // mode === 'inline': renders a link styled as a locked button
   return (
     <Link
-      href="/subscriptions"
+      href="/billing"
       className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-pointer hover:border-violet-300 hover:text-violet-600 transition-colors group"
       title={`Upgrade to ${feature}`}
     >

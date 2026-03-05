@@ -7,21 +7,21 @@ export function GuillochePattern({ className = '' }: { className?: string }) {
       className={`absolute inset-0 w-full h-full pointer-events-none ${className}`}
       style={{ mixBlendMode: 'overlay', opacity: 0.12 }}
       preserveAspectRatio="none"
-      viewBox="0 0 400 500"
+      viewBox="0 0 600 400"
     >
-      {Array.from({ length: 20 }, (_, i) => (
+      {Array.from({ length: 16 }, (_, i) => (
         <path
           key={i}
-          d={`M0,${25 * i} Q100,${25 * i + 15 * Math.sin(i)} 200,${25 * i} T400,${25 * i}`}
+          d={`M0,${25 * i} Q150,${25 * i + 15 * Math.sin(i)} 300,${25 * i} T600,${25 * i}`}
           fill="none"
           stroke="#c4963a"
           strokeWidth="0.5"
         />
       ))}
-      {Array.from({ length: 16 }, (_, i) => (
+      {Array.from({ length: 24 }, (_, i) => (
         <path
           key={`v-${i}`}
-          d={`M${25 * i},0 Q${25 * i + 10 * Math.cos(i)},250 ${25 * i},500`}
+          d={`M${25 * i},0 Q${25 * i + 10 * Math.cos(i)},200 ${25 * i},400`}
           fill="none"
           stroke="#c4963a"
           strokeWidth="0.3"

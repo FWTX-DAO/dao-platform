@@ -12,8 +12,8 @@ const PLATFORM_PATHS = [
   '/members',
   '/directory',
   '/activity',
-  '/subscriptions',
-  '/profile',
+  '/billing',
+  '/passport',
   '/settings',
   '/admin',
 ];

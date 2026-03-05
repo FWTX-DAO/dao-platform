@@ -1,30 +1,11 @@
 'use server';
 
-import { requireAuth } from '@/app/_lib/auth';
+import { requireAuth, isUserAdmin } from '@/app/_lib/auth';
 import { type ActionResult, actionError } from '@/app/_lib/action-utils';
 import { stampsService } from '@services/stamps';
 import { membersService } from '@services/members';
 import { IssueStampsSchema, type IssueStampsInput, type IssueStampsResult } from '@services/stamps';
-import { db } from '@core/database';
-import { members, memberRoles, roles } from '@core/database/schema';
-import { eq, and, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-
-async function isUserAdmin(userId: string) {
-  const adminRoles = await db
-    .select()
-    .from(memberRoles)
-    .innerJoin(members, eq(memberRoles.memberId, members.id))
-    .innerJoin(roles, eq(memberRoles.roleId, roles.id))
-    .where(
-      and(
-        eq(members.userId, userId),
-        or(eq(roles.name, 'council_member'), eq(roles.name, 'screener'), eq(roles.name, 'admin'))
-      )
-    )
-    .limit(1);
-  return adminRoles.length > 0;
-}
 
 export async function getMyStamps() {
   const { user } = await requireAuth();

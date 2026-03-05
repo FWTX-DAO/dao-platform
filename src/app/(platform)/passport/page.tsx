@@ -6,6 +6,7 @@ import { PassportFull } from '@components/passport';
 import type { PassportData, PassportStamp } from '@components/passport';
 import { useMyStamps } from '@shared/hooks/usePassportStamps';
 import { Calendar } from 'lucide-react';
+import ActivityFeed from '@components/ActivityFeed';
 
 export default function PassportPage() {
   const { data: profile, isLoading } = useProfile();
@@ -62,7 +63,7 @@ export default function PassportPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-4">
+    <div className="max-w-4xl mx-auto py-4">
       <h1 className="font-display text-3xl text-gray-900 mb-2">Your Passport</h1>
       <p className="text-gray-500 text-sm mb-8">
         Your Fort Worth DAO identity document
@@ -108,6 +109,11 @@ export default function PassportPage() {
           </div>
         </div>
       )}
+
+      {/* Activity */}
+      <div className="mt-10">
+        <ActivityFeed variant="personal" limit={10} showHeader />
+      </div>
     </div>
   );
 }

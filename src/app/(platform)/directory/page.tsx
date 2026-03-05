@@ -22,7 +22,7 @@ export default function DirectoryPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <input
           type="text"
-          placeholder="Search members\u2026"
+          placeholder="Search members…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           name="search"
@@ -66,7 +66,7 @@ export default function DirectoryPage() {
         </select>
       </div>
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading\u2026</div>
+        <div className="py-8 text-center text-gray-500">Loading…</div>
       ) : members.length === 0 ? (
         <div className="py-8 text-center text-gray-500">No members found matching your criteria.</div>
       ) : (

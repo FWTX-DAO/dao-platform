@@ -31,9 +31,10 @@ function formatStampDate(iso: string | null): string {
 
 interface PassportStampsProps {
   stamps: PassportStamp[];
+  compact?: boolean;
 }
 
-export function PassportStamps({ stamps }: PassportStampsProps) {
+export function PassportStamps({ stamps, compact = false }: PassportStampsProps) {
   if (stamps.length === 0) {
     return (
       <div className="flex items-center justify-center py-4">
@@ -44,9 +45,15 @@ export function PassportStamps({ stamps }: PassportStampsProps) {
     );
   }
 
+  const size = compact ? 'w-[48px] h-[48px]' : 'w-[72px] h-[72px]';
+  const maxStamps = compact ? 4 : 8;
+  const labelSize = compact ? 'text-[5px]' : 'text-[7px]';
+  const nameSize = compact ? 'text-[5px]' : 'text-[6px]';
+  const dateSize = compact ? 'text-[4px]' : 'text-[6px]';
+
   return (
-    <div className="flex flex-wrap gap-2 justify-center py-2">
-      {stamps.slice(0, 8).map((stamp) => {
+    <div className={`flex flex-wrap gap-1.5 ${compact ? '' : 'gap-2 justify-center py-2'}`}>
+      {stamps.slice(0, maxStamps).map((stamp) => {
         const style = EVENT_TYPE_STYLES[stamp.eventType] ?? EVENT_TYPE_STYLES['meetup']!;
         const rotation = seededRandom(stamp.id);
 
@@ -55,21 +62,23 @@ export function PassportStamps({ stamps }: PassportStampsProps) {
             key={stamp.id}
             className={`
               relative flex flex-col items-center justify-center
-              w-[72px] h-[72px] rounded-full
+              ${size} rounded-full
               border-2 border-dashed ${style.border} ${style.bg}
               opacity-80 hover:opacity-100 transition-opacity
             `}
             style={{ transform: `rotate(${rotation}deg)` }}
             title={`${stamp.eventName} - ${formatStampDate(stamp.eventDate)}`}
           >
-            <span className={`text-[7px] font-bold uppercase tracking-wide ${style.color} text-center leading-tight px-1`}>
+            <span className={`${labelSize} font-bold uppercase tracking-wide ${style.color} text-center leading-tight px-0.5`}>
               {style.label}
             </span>
-            <span className={`text-[6px] ${style.color}/70 text-center leading-tight px-1 mt-0.5 line-clamp-2`}>
-              {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '\u2026' : stamp.eventName}
-            </span>
+            {!compact && (
+              <span className={`${nameSize} ${style.color}/70 text-center leading-tight px-1 mt-0.5 line-clamp-2`}>
+                {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '\u2026' : stamp.eventName}
+              </span>
+            )}
             {stamp.eventDate && (
-              <span suppressHydrationWarning className={`text-[6px] ${style.color}/50 mt-0.5`}>
+              <span suppressHydrationWarning className={`${dateSize} ${style.color}/50 mt-0.5`}>
                 {formatStampDate(stamp.eventDate)}
               </span>
             )}

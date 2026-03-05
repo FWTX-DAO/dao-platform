@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { PrivyClient } from '@privy-io/server-auth';
 import { getOrCreateUser } from '@core/database/queries/users';
 import { db } from '@core/database';
 import { members, memberRoles, roles } from '@core/database/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 
 const privy = new PrivyClient(
   process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
@@ -24,8 +25,31 @@ export async function getAuthUser() {
 
 export async function requireAuth() {
   const auth = await getAuthUser();
-  if (!auth) throw new Error('Unauthorized');
+  if (!auth) redirect('/');
   return auth;
+}
+
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  const adminRoles = await db
+    .select()
+    .from(memberRoles)
+    .innerJoin(members, eq(memberRoles.memberId, members.id))
+    .innerJoin(roles, eq(memberRoles.roleId, roles.id))
+    .where(
+      and(
+        eq(members.userId, userId),
+        eq(memberRoles.isActive, true),
+        or(eq(roles.name, 'admin'), eq(roles.name, 'council_member'), eq(roles.name, 'screener'))
+      )
+    )
+    .limit(1);
+  return adminRoles.length > 0;
+}
+
+export async function requireAdmin() {
+  const auth = await requireAuth();
+  const admin = await isUserAdmin(auth.user.id);
+  return { ...auth, isAdmin: admin };
 }
 
 /**

@@ -1,12 +1,12 @@
-import React, { memo, useCallback, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from './ui/button';
-import { AnimatedSidebar, CollapsibleSection } from './ui/sidebar';
-import { useSidebar } from '../contexts/SidebarContext';
-import { useProfile } from '@shared/hooks/useProfile';
+import React, { memo, useCallback, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "./ui/button";
+import { AnimatedSidebar, CollapsibleSection } from "./ui/sidebar";
+import { useSidebar } from "../contexts/SidebarContext";
+import { useProfile } from "@shared/hooks/useProfile";
 import {
   Home,
   MessageSquare,
@@ -25,7 +25,7 @@ import {
   ShieldCheck,
   BookOpen,
   Stamp,
-} from 'lucide-react';
+} from "lucide-react";
 
 export type NavbarItem = {
   id: string;
@@ -35,13 +35,22 @@ export type NavbarItem = {
 };
 
 const navigationItems: NavbarItem[] = [
-  { id: 'passport', name: 'Passport', href: '/passport', icon: BookOpen },
-  { id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: Home },
-  { id: 'forums', name: 'Forums', href: '/forums', icon: MessageSquare },
-  { id: 'bounties', name: 'Bounties', href: '/bounties', icon: Trophy },
-  { id: 'innovation-lab', name: 'Innovation Lab', href: '/innovation-lab', icon: Lightbulb },
-  { id: 'meeting-notes', name: 'Meeting Notes', href: '/meeting-notes', icon: FileText },
-  { id: 'documents', name: 'Documents', href: '/documents', icon: FolderOpen },
+  { id: "dashboard", name: "Dashboard", href: "/dashboard", icon: Home },
+  { id: "forums", name: "Forums", href: "/forums", icon: MessageSquare },
+  { id: "bounties", name: "Bounties", href: "/bounties", icon: Trophy },
+  {
+    id: "innovation-lab",
+    name: "Innovation Lab",
+    href: "/innovation-lab",
+    icon: Lightbulb,
+  },
+  {
+    id: "meeting-notes",
+    name: "Meeting Notes",
+    href: "/meeting-notes",
+    icon: FileText,
+  },
+  { id: "documents", name: "Documents", href: "/documents", icon: FolderOpen },
 ];
 
 interface SidebarItemProps {
@@ -58,10 +67,10 @@ const SidebarItem = memo(({ item, isActive, onClick }: SidebarItemProps) => {
       onClick={onClick}
       className={`flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200 ${
         isActive
-          ? 'bg-dao-surface text-white hover:bg-dao-surface/80'
-          : 'text-dao-cool hover:text-white hover:bg-dao-surface/50'
+          ? "bg-dao-surface text-white hover:bg-dao-surface/80"
+          : "text-dao-cool hover:text-white hover:bg-dao-surface/50"
       }`}
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={isActive ? "page" : undefined}
     >
       <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
       <span className="truncate">{item.name}</span>
@@ -69,30 +78,32 @@ const SidebarItem = memo(({ item, isActive, onClick }: SidebarItemProps) => {
   );
 });
 
-SidebarItem.displayName = 'SidebarItem';
+SidebarItem.displayName = "SidebarItem";
 
-const UserAvatar = memo(({ src, size = 40 }: { src: string; size?: number }) => (
-  <div
-    className="relative rounded-full overflow-hidden bg-dao-surface flex items-center justify-center"
-    style={{ width: size, height: size }}
-  >
-    <Image
-      src={src}
-      alt="User avatar"
-      width={size}
-      height={size}
-      className="rounded-full object-cover"
-      loading="lazy"
-      onError={(e) => {
-        e.currentTarget.style.display = 'none';
-        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-      }}
-    />
-    <User className="h-6 w-6 text-dao-cool hidden" />
-  </div>
-));
+const UserAvatar = memo(
+  ({ src, size = 40 }: { src: string; size?: number }) => (
+    <div
+      className="relative rounded-full overflow-hidden bg-dao-surface flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <Image
+        src={src}
+        alt="User avatar"
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+        loading="lazy"
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+          e.currentTarget.nextElementSibling?.classList.remove("hidden");
+        }}
+      />
+      <User className="h-6 w-6 text-dao-cool hidden" />
+    </div>
+  ),
+);
 
-UserAvatar.displayName = 'UserAvatar';
+UserAvatar.displayName = "UserAvatar";
 
 function Sidebar() {
   const router = useRouter();
@@ -101,38 +112,50 @@ function Sidebar() {
   const { isOpen, close } = useSidebar();
   const { data: profile } = useProfile();
   const currentPath = pathname;
-  const isAdmin = profile?.roleNames?.includes('admin');
+  const isAdmin = profile?.roleNames?.includes("admin");
 
-  const isActive = useCallback((href: string) => currentPath === href, [currentPath]);
+  const isActive = useCallback(
+    (href: string) => currentPath === href,
+    [currentPath],
+  );
 
   // Memoize handlers to prevent recreation on each render
   const handleLogout = useCallback(async () => {
     await logout();
-    router.push('/');
+    router.push("/");
   }, [logout, router]);
 
-  const handleNavigation = useCallback((href: string) => {
-    router.push(href);
-    // Auto-close on mobile
-    if (window.innerWidth < 768) {
-      close();
-    }
-  }, [router, close]);
+  const handleNavigation = useCallback(
+    (href: string) => {
+      router.push(href);
+      // Auto-close on mobile
+      if (window.innerWidth < 768) {
+        close();
+      }
+    },
+    [router, close],
+  );
 
   // Memoize derived user info
-  const userInfo = useMemo(() => ({
-    email: user?.email?.address || 'User',
-    id: user?.id?.substring(0, 8) || '',
-  }), [user?.email?.address, user?.id]);
+  const userInfo = useMemo(
+    () => ({
+      email: user?.email?.address || "User",
+      id: user?.id?.substring(0, 8) || "",
+    }),
+    [user?.email?.address, user?.id],
+  );
 
   // Profile Section Component
   const profileSection = (
     <div className="flex items-center space-x-3">
-      <UserAvatar src="/images/avatar.png" size={48} />
+      <UserAvatar src="/images/avatar.webp" size={48} />
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-white truncate">{userInfo.email}</p>
         {userInfo.id && (
-          <p className="text-sm text-dao-cool/70 truncate">{userInfo.id}{'\u2026'}</p>
+          <p className="text-sm text-dao-cool/70 truncate">
+            {userInfo.id}
+            {"\u2026"}
+          </p>
         )}
       </div>
     </div>
@@ -177,13 +200,6 @@ function Sidebar() {
             <Activity className="mr-3 h-4 w-4" />
             Activity
           </Link>
-          <Link
-            href="/subscriptions"
-            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
-          >
-            <CreditCard className="mr-3 h-4 w-4" />
-            Subscriptions
-          </Link>
           <a
             href="https://t.me/fwtxdao"
             target="_blank"
@@ -205,6 +221,13 @@ function Sidebar() {
             >
               <ShieldCheck className="mr-3 h-4 w-4" />
               Admin Panel
+            </Link>
+            <Link
+              href="/admin/bounties"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+            >
+              <Trophy className="mr-3 h-4 w-4" />
+              Bounty Screening
             </Link>
             <Link
               href="/admin/stamps"
@@ -244,11 +267,18 @@ function Sidebar() {
   const footerSection = (
     <div className="space-y-2">
       <Link
-        href="/profile"
+        href="/passport"
         className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
       >
-        <User className="mr-3 h-4 w-4" />
-        Profile
+        <BookOpen className="mr-3 h-4 w-4" />
+        Passport
+      </Link>
+      <Link
+        href="/billing"
+        className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
+      >
+        <CreditCard className="mr-3 h-4 w-4" />
+        Billing
       </Link>
       <Link
         href="/settings"

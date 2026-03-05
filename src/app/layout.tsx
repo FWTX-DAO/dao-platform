@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Fort Worth DAO - Digital Sovereignty is Mission Critical',
     description:
       "Fort Worth's Civic Innovation Lab advancing digital sovereignty through Web3, blockchain, and emerging technologies. We empower communities with cryptographic governance tools, Bitcoin education, and AI literacy.",
-    images: [{ url: '/ogimage.png', width: 1200, height: 630 }],
+    images: [{ url: '/ogimage.webp', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Fort Worth DAO - Digital Sovereignty is Mission Critical',
     description:
       "Fort Worth's Civic Innovation Lab advancing digital sovereignty through Web3, blockchain, and emerging technologies. We empower communities with cryptographic governance tools, Bitcoin education, and AI literacy.",
-    images: ['/ogimage.png'],
+    images: ['/ogimage.webp'],
   },
   icons: {
     icon: { url: '/logo.svg', type: 'image/svg+xml' },

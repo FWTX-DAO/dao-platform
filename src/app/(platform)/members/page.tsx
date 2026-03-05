@@ -11,7 +11,7 @@ export default function MembersPage() {
       <h1 className="text-3xl font-bold text-gray-900">Members</h1>
       <p className="text-gray-600">Community members of Fort Worth DAO</p>
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading members\u2026</div>
+        <div className="py-8 text-center text-gray-500">Loading members…</div>
       ) : members.length === 0 ? (
         <div className="py-8 text-center text-gray-500">No members yet.</div>
       ) : (

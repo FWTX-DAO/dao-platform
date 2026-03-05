@@ -178,7 +178,7 @@ export function OnboardingForm() {
       }
 
       // Step 2: Complete onboarding profile
-      await completeOnboarding({
+      const onboardingResult = await completeOnboarding({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
@@ -195,6 +195,12 @@ export function OnboardingForm() {
         zip: formData.zip.trim() || undefined,
       });
 
+      if (!onboardingResult.success) {
+        setGlobalError(onboardingResult.error || 'Failed to complete onboarding');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Build passport data and show reveal
       const walletAccount = user?.linkedAccounts?.find(
         (a: any) => a.type === 'wallet'
@@ -205,7 +211,7 @@ export function OnboardingForm() {
         username: formData.username,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        memberId: userResult.memberId || 'PENDING',
+        memberId: userResult.data.memberId || 'PENDING',
         membershipType: selectedTierId ? 'member' : 'observer',
         joinedAt: new Date().toISOString(),
         contributionPoints: 0,
