@@ -102,7 +102,7 @@ export default function EditMeetingNotePage() {
             type="text"
             value={formData.title}
             onChange={set("title")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -117,7 +117,7 @@ export default function EditMeetingNotePage() {
             type="date"
             value={formData.date}
             onChange={set("date")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -132,7 +132,7 @@ export default function EditMeetingNotePage() {
             type="text"
             value={formData.attendees}
             onChange={set("attendees")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -147,7 +147,7 @@ export default function EditMeetingNotePage() {
             value={formData.agenda}
             onChange={set("agenda")}
             rows={3}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -162,7 +162,7 @@ export default function EditMeetingNotePage() {
             value={formData.notes}
             onChange={set("notes")}
             rows={6}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -177,7 +177,7 @@ export default function EditMeetingNotePage() {
             type="text"
             value={formData.actionItems}
             onChange={set("actionItems")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -192,21 +192,21 @@ export default function EditMeetingNotePage() {
             type="text"
             value={formData.tags}
             onChange={set("tags")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </button>
           <button
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             Delete
           </button>

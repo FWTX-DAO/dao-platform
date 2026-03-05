@@ -36,7 +36,7 @@ export default function AdminBountiesPage() {
           {bounties.map((bounty: any) => (
             <div
               key={bounty.id}
-              className="bg-white shadow rounded-lg p-6 border border-gray-100"
+              className="bg-white shadow-sm rounded-lg p-6 border border-gray-100"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -85,7 +85,7 @@ export default function AdminBountiesPage() {
                     }
                     rows={2}
                     placeholder="Optional notes for the submitter..."
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
                   />
                 </div>
                 <div className="flex gap-2">

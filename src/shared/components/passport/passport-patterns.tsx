@@ -55,9 +55,9 @@ export function SecurityBorder({ className = '' }: { className?: string }) {
   return (
     <div className={`absolute inset-0 pointer-events-none ${className}`}>
       {/* Outer border */}
-      <div className="absolute inset-1 border border-dao-gold/20 rounded" />
+      <div className="absolute inset-1 border border-dao-gold/20 rounded-sm" />
       {/* Inner border */}
-      <div className="absolute inset-2.5 border border-dao-gold/10 rounded-sm" />
+      <div className="absolute inset-2.5 border border-dao-gold/10 rounded-xs" />
       {/* Corner ornaments */}
       {(['top-1 left-1', 'top-1 right-1', 'bottom-1 left-1', 'bottom-1 right-1'] as const).map(
         (pos, i) => (

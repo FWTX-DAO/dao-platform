@@ -30,7 +30,7 @@ export function UpgradeCTA({ allowed, children, feature, mode = 'inline' }: Upgr
         </div>
         <Link
           href="/billing"
-          className="shrink-0 px-4 py-2 text-xs font-semibold bg-dao-gold text-dao-charcoal rounded hover:bg-dao-gold-light transition-colors"
+          className="shrink-0 px-4 py-2 text-xs font-semibold bg-dao-gold text-dao-charcoal rounded-sm hover:bg-dao-gold-light transition-colors"
         >
           Upgrade
         </Link>

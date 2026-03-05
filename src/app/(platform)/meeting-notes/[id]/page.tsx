@@ -64,7 +64,7 @@ export default function MeetingNoteDetailPage() {
       </div>
 
       {n.attendees && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">
             Attendees
           </h2>
@@ -82,19 +82,19 @@ export default function MeetingNoteDetailPage() {
       )}
 
       {n.agenda && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Agenda</h2>
           <p className="text-gray-700 whitespace-pre-line">{n.agenda}</p>
         </div>
       )}
 
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Notes</h2>
         <p className="text-gray-700 whitespace-pre-line">{n.notes}</p>
       </div>
 
       {n.actionItems && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">
             Action Items
           </h2>

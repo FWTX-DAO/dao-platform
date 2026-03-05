@@ -35,7 +35,7 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
       className={`bg-white rounded-lg p-6 flex flex-col ${
         isCurrentTier
           ? 'border-2 border-violet-500 shadow-md'
-          : 'border border-gray-200 shadow-sm hover:shadow-md transition-shadow'
+          : 'border border-gray-200 shadow-xs hover:shadow-md transition-shadow'
       }`}
     >
       {isCurrentTier && (
@@ -76,7 +76,7 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
         <button
           onClick={() => onSelect(tier.id)}
           disabled={isLoading}
-          className="mt-auto w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="mt-auto w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         >
           {isLoading ? 'Processing\u2026' : `Upgrade to ${tier.displayName}`}
         </button>

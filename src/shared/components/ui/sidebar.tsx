@@ -13,7 +13,7 @@ export const AnimatedMenuToggle = ({ toggle, isOpen }: AnimatedMenuToggleProps) 
   <button
     onClick={toggle}
     aria-label="Toggle menu"
-    className="flex items-center justify-center w-10 h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark rounded z-50"
+    className="flex items-center justify-center w-10 h-10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark rounded-sm z-50"
   >
     <motion.svg
       width="24"
@@ -76,7 +76,7 @@ export const CollapsibleSection = ({
   return (
     <div className="mb-4">
       <button
-        className="w-full flex items-center justify-between py-2 px-4 rounded-xl hover:bg-dao-surface/50 text-dao-cool hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark"
+        className="w-full flex items-center justify-between py-2 px-4 rounded-xl hover:bg-dao-surface/50 text-dao-cool hover:text-white transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
@@ -180,7 +180,7 @@ export const AnimatedSidebar = ({
                   <span className="text-white font-semibold">Navigation</span>
                   <button
                     onClick={onClose}
-                    className="text-dao-cool hover:text-white hover:bg-dao-surface rounded p-2 transition-colors"
+                    className="text-dao-cool hover:text-white hover:bg-dao-surface rounded-sm p-2 transition-colors"
                     aria-label="Close menu"
                   >
                     <X className="h-5 w-5" />

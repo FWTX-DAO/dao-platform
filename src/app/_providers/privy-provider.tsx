@@ -21,7 +21,8 @@ export function Providers({ children }: { children: ReactNode }) {
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
         config={{
           embeddedWallets: {
-            createOnLogin: 'all-users',
+            ethereum: { createOnLogin: 'all-users' },
+            solana: { createOnLogin: 'all-users' },
           },
         }}
       >

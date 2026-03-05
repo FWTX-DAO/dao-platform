@@ -64,9 +64,9 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
         {/* Main content: photo left, fields right */}
         <div className="flex gap-3 sm:gap-5 flex-1 min-h-0">
           {/* Photo column */}
-          <div className="w-[28%] sm:w-[25%] flex-shrink-0 flex flex-col">
+          <div className="w-[28%] sm:w-[25%] shrink-0 flex flex-col">
             <div
-              className="w-full bg-dao-surface/10 border border-dao-border/30 rounded overflow-hidden flex items-center justify-center"
+              className="w-full bg-dao-surface/10 border border-dao-border/30 rounded-sm overflow-hidden flex items-center justify-center"
               style={{ aspectRatio: '3/4' }}
             >
               {data.avatarUrl ? (
@@ -89,7 +89,7 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
                 {badges.slice(0, 4).map((badge) => (
                   <span
                     key={badge}
-                    className="px-1 py-px text-[6px] sm:text-[7px] uppercase tracking-wide bg-dao-surface/8 border border-dao-border/20 rounded text-dao-cool/60 leading-tight"
+                    className="px-1 py-px text-[6px] sm:text-[7px] uppercase tracking-wide bg-dao-surface/8 border border-dao-border/20 rounded-sm text-dao-cool/60 leading-tight"
                   >
                     {badge}
                   </span>
@@ -138,12 +138,12 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
 
               {/* JOINED stamp */}
               <div
-                className="flex-shrink-0 ml-auto"
+                className="shrink-0 ml-auto"
                 suppressHydrationWarning
                 style={{ transform: 'rotate(-8deg)' }}
               >
                 <div
-                  className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] rounded-full border-[2px] border-dashed flex flex-col items-center justify-center"
+                  className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] rounded-full border-2 border-dashed flex flex-col items-center justify-center"
                   style={{ borderColor: 'rgba(196, 150, 58, 0.5)' }}
                 >
                   <div

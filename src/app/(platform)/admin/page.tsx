@@ -17,7 +17,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           href="/admin/bounties"
-          className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
+          className="bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
         >
           <h3 className="font-semibold text-gray-900">Bounty Screening</h3>
           <p className="text-3xl font-bold text-violet-600 mt-2">
@@ -27,12 +27,12 @@ export default function AdminPage() {
         </Link>
         <Link
           href="/admin/stamps"
-          className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
+          className="bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
         >
           <h3 className="font-semibold text-gray-900">Passport Stamps</h3>
           <p className="text-sm text-gray-500 mt-2">Issue stamps to members</p>
         </Link>
-        <div className="bg-white shadow rounded-lg p-6 border border-gray-100">
+        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-100">
           <h3 className="font-semibold text-gray-900">Roles</h3>
           <p className="text-3xl font-bold text-violet-600 mt-2">
             {roles.length}
@@ -42,7 +42,7 @@ export default function AdminPage() {
       </div>
 
       {/* Roles */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Roles</h2>
         {isLoading ? (
           <div className="py-4 text-center text-gray-500">
@@ -53,7 +53,7 @@ export default function AdminPage() {
             {roles.map((role: any) => (
               <div
                 key={role.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded"
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-sm"
               >
                 <div>
                   <p className="font-medium text-gray-900">{role.name}</p>

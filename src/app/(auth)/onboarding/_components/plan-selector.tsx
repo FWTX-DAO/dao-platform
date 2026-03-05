@@ -47,7 +47,7 @@ export function PlanSelector({ selectedTierId, onSelect }: PlanSelectorProps) {
               setInterval('month');
               if (isPaidSelected && monthlyTier) onSelect(monthlyTier.id);
             }}
-            className={`px-5 py-2 text-sm font-medium rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none ${
+            className={`px-5 py-2 text-sm font-medium rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden ${
               interval === 'month'
                 ? 'bg-dao-gold text-dao-charcoal'
                 : 'text-dao-cool/60 hover:text-dao-warm'
@@ -61,7 +61,7 @@ export function PlanSelector({ selectedTierId, onSelect }: PlanSelectorProps) {
               setInterval('year');
               if (isPaidSelected && annualTier) onSelect(annualTier.id);
             }}
-            className={`px-5 py-2 text-sm font-medium rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none ${
+            className={`px-5 py-2 text-sm font-medium rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden ${
               interval === 'year'
                 ? 'bg-dao-gold text-dao-charcoal'
                 : 'text-dao-cool/60 hover:text-dao-warm'
@@ -80,7 +80,7 @@ export function PlanSelector({ selectedTierId, onSelect }: PlanSelectorProps) {
         <button
           type="button"
           onClick={() => onSelect(activeTier.id)}
-          className={`w-full text-left p-6 rounded-lg border transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none ${
+          className={`w-full text-left p-6 rounded-lg border transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden ${
             isPaidSelected
               ? 'border-dao-gold bg-dao-gold/10 ring-1 ring-dao-gold/40'
               : 'border-dao-border bg-dao-surface/50 hover:border-dao-gold/30'
@@ -102,7 +102,7 @@ export function PlanSelector({ selectedTierId, onSelect }: PlanSelectorProps) {
               /{interval === 'month' ? 'mo' : 'yr'}
             </span>
             {interval === 'year' && (
-              <span className="ml-2 text-[11px] text-dao-gold/70 bg-dao-gold/10 px-2 py-0.5 rounded">
+              <span className="ml-2 text-[11px] text-dao-gold/70 bg-dao-gold/10 px-2 py-0.5 rounded-sm">
                 2 months free
               </span>
             )}
@@ -124,7 +124,7 @@ export function PlanSelector({ selectedTierId, onSelect }: PlanSelectorProps) {
       <button
         type="button"
         onClick={() => onSelect(null)}
-        className={`w-full text-center py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none ${
+        className={`w-full text-center py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden ${
           selectedTierId === null
             ? 'text-dao-gold font-medium'
             : 'text-dao-cool/40 hover:text-dao-cool/70'

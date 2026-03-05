@@ -32,21 +32,21 @@ export default function IndustrySelect({ value, onChange, className, variant = '
   const isDark = variant === 'dark';
 
   const inputClass = isDark
-    ? 'w-full px-4 py-2.5 bg-[#1a1f29] border border-[#252b37] rounded text-[#f4efe8] placeholder-[#8b9bb0]/40 focus-visible:outline-none focus-visible:border-[#c4963a]/50 focus-visible:ring-1 focus-visible:ring-[#c4963a]/30 transition pr-10 text-sm'
+    ? 'w-full px-4 py-2.5 bg-[#1a1f29] border border-[#252b37] rounded-sm text-dao-warm placeholder-dao-cool/40 focus-visible:outline-hidden focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition pr-10 text-sm'
     : 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition pr-10 text-sm';
 
   const dropdownClass = isDark
-    ? 'absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded bg-[#12161d] border border-[#252b37] shadow-lg py-1 text-sm'
+    ? 'absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-sm bg-[#12161d] border border-[#252b37] shadow-lg py-1 text-sm'
     : 'absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white border border-gray-200 shadow-lg py-1 text-sm';
 
-  const emptyClass = isDark ? 'px-4 py-2 text-[#8b9bb0]/60' : 'px-4 py-2 text-gray-500';
+  const emptyClass = isDark ? 'px-4 py-2 text-dao-cool/60' : 'px-4 py-2 text-gray-500';
 
   const sectionHeaderTexas = isDark
-    ? 'px-4 py-1.5 text-xs font-semibold text-[#c4963a] bg-[#c4963a]/10 sticky top-0'
+    ? 'px-4 py-1.5 text-xs font-semibold text-dao-gold bg-dao-gold/10 sticky top-0'
     : 'px-4 py-1.5 text-xs font-semibold text-violet-600 bg-violet-50 sticky top-0';
 
   const sectionHeaderAll = isDark
-    ? 'px-4 py-1.5 text-xs font-semibold text-[#8b9bb0]/60 bg-[#1a1f29] sticky top-0'
+    ? 'px-4 py-1.5 text-xs font-semibold text-dao-cool/60 bg-[#1a1f29] sticky top-0'
     : 'px-4 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0';
 
   return (
@@ -63,7 +63,7 @@ export default function IndustrySelect({ value, onChange, className, variant = '
           className={inputClass}
         />
         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-3" aria-label="Toggle industry list">
-          <ChevronUpDownIcon className={`h-5 w-5 ${isDark ? 'text-[#8b9bb0]/40' : 'text-gray-400'}`} />
+          <ChevronUpDownIcon className={`h-5 w-5 ${isDark ? 'text-dao-cool/40' : 'text-gray-400'}`} />
         </ComboboxButton>
 
         <ComboboxOptions className={dropdownClass}>
@@ -102,19 +102,19 @@ export default function IndustrySelect({ value, onChange, className, variant = '
 function IndustryOption({ item, variant = 'light' }: { item: NaicsCode; variant?: 'light' | 'dark' }) {
   const isDark = variant === 'dark';
   const optionClass = isDark
-    ? 'cursor-pointer select-none px-4 py-2 data-[focus]:bg-[#c4963a]/10 data-[selected]:bg-[#c4963a]/15 flex items-center justify-between text-[#f4efe8]'
-    : 'cursor-pointer select-none px-4 py-2 data-[focus]:bg-violet-50 data-[selected]:bg-violet-100 flex items-center justify-between';
+    ? 'cursor-pointer select-none px-4 py-2 data-focus:bg-dao-gold/10 data-selected:bg-dao-gold/15 flex items-center justify-between text-dao-warm'
+    : 'cursor-pointer select-none px-4 py-2 data-focus:bg-violet-50 data-selected:bg-violet-100 flex items-center justify-between';
 
   return (
     <ComboboxOption value={item} className={optionClass}>
       {({ selected }) => (
         <>
           <span>
-            <span className={`font-mono text-xs mr-2 ${isDark ? 'text-[#8b9bb0]/50' : 'text-gray-400'}`}>{item.code}</span>
+            <span className={`font-mono text-xs mr-2 ${isDark ? 'text-dao-cool/50' : 'text-gray-400'}`}>{item.code}</span>
             {item.label}
-            <span className={`ml-2 text-xs ${isDark ? 'text-[#8b9bb0]/40' : 'text-gray-400'}`}>({item.sector})</span>
+            <span className={`ml-2 text-xs ${isDark ? 'text-dao-cool/40' : 'text-gray-400'}`}>({item.sector})</span>
           </span>
-          {selected && <CheckIcon className={`h-4 w-4 shrink-0 ${isDark ? 'text-[#c4963a]' : 'text-violet-600'}`} />}
+          {selected && <CheckIcon className={`h-4 w-4 shrink-0 ${isDark ? 'text-dao-gold' : 'text-violet-600'}`} />}
         </>
       )}
     </ComboboxOption>

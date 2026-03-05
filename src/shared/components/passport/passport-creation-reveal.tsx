@@ -36,7 +36,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] overflow-y-auto"
+      className="fixed inset-0 z-100 overflow-y-auto"
       style={{ background: '#0f1b33', overscrollBehavior: 'contain' }}
       role="dialog"
       aria-modal="true"
@@ -165,7 +165,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
                 </p>
                 <button
                   onClick={onComplete}
-                  className="px-8 py-3 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal font-semibold rounded transition-colors active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                  className="px-8 py-3 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal font-semibold rounded-sm transition-colors active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
                 >
                   Enter Platform
                 </button>

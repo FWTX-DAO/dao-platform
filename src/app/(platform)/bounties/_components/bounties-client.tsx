@@ -61,7 +61,7 @@ export function BountiesClient() {
           placeholder="Search bounties..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none w-64"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden w-64"
         />
         <div className="flex gap-1">
           {BOUNTY_STATUS_FILTERS.map((s) => (
@@ -81,7 +81,7 @@ export function BountiesClient() {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-1.5 text-xs border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="px-3 py-1.5 text-xs border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         >
           {BOUNTY_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>
@@ -109,7 +109,7 @@ export function BountiesClient() {
             <Link
               key={bounty.id}
               href={`/bounties/${bounty.id}`}
-              className="block bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="block bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

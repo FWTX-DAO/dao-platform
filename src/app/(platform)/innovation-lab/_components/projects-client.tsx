@@ -84,7 +84,7 @@ export function ProjectsClient() {
             <Link
               key={project.id}
               href={`/innovation-lab/${project.id}`}
-              className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             >
               <div className="flex items-center gap-2 mb-2">
                 <span
@@ -113,7 +113,7 @@ export function ProjectsClient() {
                     .map((tag: string) => (
                       <span
                         key={tag}
-                        className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
+                        className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-sm"
                       >
                         {tag.trim()}
                       </span>

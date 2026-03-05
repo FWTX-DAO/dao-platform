@@ -92,7 +92,7 @@ export default function DocumentDetailPage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-sm">
               {d.category || "General"}
             </span>
             <span className="text-xs text-gray-400">{d.mimeType}</span>
@@ -142,7 +142,7 @@ export default function DocumentDetailPage() {
 
       {/* Edit Form */}
       {editing && (
-        <div className="bg-white shadow rounded-lg p-6 space-y-4">
+        <div className="bg-white shadow-sm rounded-lg p-6 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Edit Document</h3>
           <div>
             <label
@@ -158,7 +158,7 @@ export default function DocumentDetailPage() {
               onChange={(e) =>
                 setEditForm((p) => ({ ...p, name: e.target.value }))
               }
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -175,7 +175,7 @@ export default function DocumentDetailPage() {
                 setEditForm((p) => ({ ...p, description: e.target.value }))
               }
               rows={2}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div className="flex gap-3">
@@ -223,7 +223,7 @@ export default function DocumentDetailPage() {
       {activeTab === "details" && (
         <div className="space-y-4">
           {d.description && (
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-white shadow-sm rounded-lg p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 Description
               </h2>
@@ -255,7 +255,7 @@ export default function DocumentDetailPage() {
             auditTrail.map((entry: any) => (
               <div
                 key={entry.id}
-                className="bg-white shadow rounded-lg p-4 flex items-center justify-between"
+                className="bg-white shadow-sm rounded-lg p-4 flex items-center justify-between"
               >
                 <div>
                   <span className="font-medium text-sm text-gray-900">
@@ -291,7 +291,7 @@ export default function DocumentDetailPage() {
                   value={shareUserId}
                   onChange={(e) => setShareUserId(e.target.value)}
                   placeholder="User ID"
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
                 />
               </div>
               <button
@@ -309,7 +309,7 @@ export default function DocumentDetailPage() {
             shares.map((share: any) => (
               <div
                 key={share.id}
-                className="bg-white shadow rounded-lg p-4 flex items-center justify-between"
+                className="bg-white shadow-sm rounded-lg p-4 flex items-center justify-between"
               >
                 <div>
                   <span className="text-sm text-gray-900">

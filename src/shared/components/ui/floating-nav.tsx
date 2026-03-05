@@ -85,7 +85,7 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
             key={item.id}
             href={item.href}
             ref={(el) => { btnRefs.current[index] = el; }}
-            className={`relative flex flex-col items-center justify-center flex-1 px-1.5 py-2 text-sm font-medium transition-colors duration-200 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${
+            className={`relative flex flex-col items-center justify-center flex-1 px-1.5 py-2 text-sm font-medium transition-colors duration-200 rounded-xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${
               active === index ? 'text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
             aria-label={item.label}
@@ -107,7 +107,7 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
         <motion.div
           animate={indicatorStyle}
           transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 450, damping: 35 }}
-          className="absolute top-2.5 bottom-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 shadow-lg shadow-violet-500/50"
+          className="absolute top-2.5 bottom-2.5 rounded-xl bg-linear-to-br from-violet-600 to-violet-700 shadow-lg shadow-violet-500/50"
         />
       </nav>
     </div>

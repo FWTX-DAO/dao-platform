@@ -28,7 +28,7 @@ export default function DirectoryPage() {
           name="search"
           aria-label="Search members"
           autoComplete="off"
-          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         />
         <input
           type="text"
@@ -38,7 +38,7 @@ export default function DirectoryPage() {
           name="city"
           aria-label="Filter by city"
           autoComplete="off"
-          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         />
         <input
           type="text"
@@ -48,7 +48,7 @@ export default function DirectoryPage() {
           name="industry"
           aria-label="Filter by industry"
           autoComplete="off"
-          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         />
         <select
           value={availability}
@@ -56,7 +56,7 @@ export default function DirectoryPage() {
           name="sort"
           aria-label="Sort by"
           autoComplete="off"
-          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         >
           <option value="">All Availability</option>
           <option value="full-time">Full-time</option>
@@ -72,7 +72,7 @@ export default function DirectoryPage() {
       ) : (
         <div className="space-y-4">
           {members.map((member: any) => (
-            <div key={member.id} className="bg-white shadow rounded-lg p-6">
+            <div key={member.id} className="bg-white shadow-sm rounded-lg p-6">
               <h3 className="font-semibold text-gray-900">{member.username || member.firstName}</h3>
               {member.jobTitle && <p className="text-sm text-gray-600">{member.jobTitle}{member.employer ? ` at ${member.employer}` : ''}</p>}
               {member.city && <p className="text-xs text-gray-500 mt-1">{member.city}, {member.state}</p>}

@@ -13,7 +13,7 @@ export default function GlobalError({
       <p className="text-dao-cool text-base mb-8">{error.message || 'An unexpected error occurred'}</p>
       <button
         onClick={reset}
-        className="px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+        className="px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       >
         Try Again
       </button>

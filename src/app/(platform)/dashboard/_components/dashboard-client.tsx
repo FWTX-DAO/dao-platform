@@ -85,7 +85,7 @@ export function DashboardClient() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link href="/members" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
+            <Link href="/members" className="bg-white shadow-xs hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
                   <UsersIcon className="h-6 w-6 text-violet-600" />
@@ -97,7 +97,7 @@ export function DashboardClient() {
               </div>
             </Link>
 
-            <Link href="/innovation-lab" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
+            <Link href="/innovation-lab" className="bg-white shadow-xs hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
                   <RocketLaunchIcon className="h-6 w-6 text-violet-600" />
@@ -109,7 +109,7 @@ export function DashboardClient() {
               </div>
             </Link>
 
-            <Link href="/documents" className="bg-white shadow-sm hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none">
+            <Link href="/documents" className="bg-white shadow-xs hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
                   <DocumentTextIcon className="h-6 w-6 text-violet-600" />
@@ -123,7 +123,7 @@ export function DashboardClient() {
           </div>
 
           {membershipData && (
-            <div className="bg-white border-2 border-violet-100 shadow-sm rounded-lg p-8">
+            <div className="bg-white border-2 border-violet-100 shadow-xs rounded-lg p-8">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 flex items-center">
@@ -190,7 +190,7 @@ export function DashboardClient() {
           )}
 
           {dashboardStats?.userActiveProjects && dashboardStats.userActiveProjects.length > 0 && (
-            <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6">
+            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center text-gray-900">
                   <RocketLaunchIcon className="h-5 w-5 mr-2 text-violet-600" />
@@ -202,7 +202,7 @@ export function DashboardClient() {
               </div>
               <div className="space-y-3">
                 {dashboardStats.userActiveProjects.map((project: any) => (
-                  <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
+                  <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export function DashboardClient() {
                           by {project.creator_name || 'Anonymous'} · {project.collaborators} collaborator{project.collaborators > 1 ? 's' : ''}
                         </p>
                       </div>
-                      <ArrowTrendingUpIcon className="h-4 w-4 text-green-600 flex-shrink-0 ml-2" />
+                      <ArrowTrendingUpIcon className="h-4 w-4 text-green-600 shrink-0 ml-2" />
                     </div>
                   </Link>
                 ))}
@@ -224,7 +224,7 @@ export function DashboardClient() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6">
+            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center text-gray-900">
                   <RocketLaunchIcon className="h-5 w-5 mr-2 text-violet-600" />
@@ -249,7 +249,7 @@ export function DashboardClient() {
               ) : (
                 <div className="space-y-3">
                   {dashboardStats?.activeProjects.slice(0, 5).map((project: any) => (
-                    <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
+                    <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{project.title}</h3>
@@ -257,7 +257,7 @@ export function DashboardClient() {
                             by {project.creator_name || 'Anonymous'} · {project.collaborators} collaborator{project.collaborators > 1 ? 's' : ''}
                           </p>
                         </div>
-                        <ArrowTrendingUpIcon className="h-4 w-4 text-green-600 flex-shrink-0 ml-2" />
+                        <ArrowTrendingUpIcon className="h-4 w-4 text-green-600 shrink-0 ml-2" />
                       </div>
                     </Link>
                   ))}
@@ -265,7 +265,7 @@ export function DashboardClient() {
               )}
             </div>
 
-            <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6">
+            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center text-gray-900">
                   <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2 text-violet-600" />
@@ -288,7 +288,7 @@ export function DashboardClient() {
               ) : (
                 <div className="space-y-3">
                   {dashboardStats?.latestForumPosts.map((post: any) => (
-                    <Link key={post.id} href={`/forums?post=${post.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
+                    <Link key={post.id} href={`/forums?post=${post.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{post.title}</h3>
@@ -305,7 +305,7 @@ export function DashboardClient() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6">
+            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center text-gray-900">
                   <CurrencyDollarIcon className="h-5 w-5 mr-2 text-violet-600" />
@@ -327,7 +327,7 @@ export function DashboardClient() {
               ) : (
                 <div className="space-y-3">
                   {dashboardStats?.innovationAssetsRanking.map((bounty: any) => (
-                    <Link key={bounty.id} href={`/bounties/${bounty.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
+                    <Link key={bounty.id} href={`/bounties/${bounty.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{bounty.title}</h3>
@@ -347,7 +347,7 @@ export function DashboardClient() {
               )}
             </div>
 
-            <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6">
+            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center text-gray-900">
                   <CalendarIcon className="h-5 w-5 mr-2 text-violet-600" />
@@ -367,7 +367,7 @@ export function DashboardClient() {
                   </Link>
                 </div>
               ) : (
-                <Link href="/meeting-notes" className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-sm transition-colors">
+                <Link href="/meeting-notes" className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
                   <h3 className="font-medium text-gray-900 mb-2">{dashboardStats.latestMeetingNote.title}</h3>
                   <p className="text-sm text-gray-600 mb-2">{formatDate(dashboardStats.latestMeetingNote.date)}</p>
                   <p className="text-sm text-gray-500 line-clamp-3">{dashboardStats.latestMeetingNote.notes}</p>

@@ -42,13 +42,13 @@ export const ForumPostModal = memo(function ForumPostModal({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:outline-none rounded"
+            className="text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:outline-hidden rounded-sm"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
         {error && (
-          <div role="alert" className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div role="alert" className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-sm">
             {error}
           </div>
         )}
@@ -63,7 +63,7 @@ export const ForumPostModal = memo(function ForumPostModal({
               autoComplete="off"
               value={postData.title}
               onChange={(e) => onChangePostData({ ...postData, title: e.target.value.slice(0, 200) })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-violet-500 focus:ring-violet-500"
               placeholder="Enter post title..."
               maxLength={200}
             />
@@ -74,7 +74,7 @@ export const ForumPostModal = memo(function ForumPostModal({
               name="category"
               value={postData.category}
               onChange={(e) => onChangePostData({ ...postData, category: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-violet-500 focus:ring-violet-500"
             >
               {CATEGORIES.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -90,7 +90,7 @@ export const ForumPostModal = memo(function ForumPostModal({
               value={postData.content}
               onChange={(e) => onChangePostData({ ...postData, content: e.target.value.slice(0, 10000) })}
               rows={6}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-violet-500 focus:ring-violet-500"
               placeholder="Write your post content here..."
               maxLength={10000}
             />
@@ -99,14 +99,14 @@ export const ForumPostModal = memo(function ForumPostModal({
             <button
               onClick={onClose}
               disabled={isPending}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none"
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-hidden"
             >
               Cancel
             </button>
             <button
               onClick={onSubmit}
               disabled={isPending || !postData.title.trim() || !postData.content.trim()}
-              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none"
+              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-hidden"
             >
               {isPending ? pendingLabel : submitLabel}
             </button>

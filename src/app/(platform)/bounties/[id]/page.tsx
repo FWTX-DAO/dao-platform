@@ -147,7 +147,7 @@ function DetailsTab({ bounty }: { bounty: any }) {
       <Section title="Deliverables" content={bounty.deliverables} />
 
       {bounty.technicalRequirements && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Technical Requirements
           </h2>
@@ -162,7 +162,7 @@ function DetailsTab({ bounty }: { bounty: any }) {
       {/* Organization Info */}
       {(bounty.organizationName || bounty.organizationType) &&
         !bounty.isAnonymous && (
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow-sm rounded-lg p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Organization
             </h2>
@@ -185,7 +185,7 @@ function DetailsTab({ bounty }: { bounty: any }) {
 
       {/* Sponsor Info (admin or submitter only) */}
       {(bounty.isAdmin || bounty.isSubmitter) && bounty.sponsorFirstName && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Sponsor Contact
           </h2>
@@ -285,7 +285,7 @@ function ProposalsTab({
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="bg-white shadow rounded-lg p-6 space-y-4"
+          className="bg-white shadow-sm rounded-lg p-6 space-y-4"
         >
           <h3 className="text-lg font-semibold text-gray-900">
             Submit Your Proposal
@@ -345,7 +345,7 @@ function ProposalsTab({
       ) : (
         <div className="space-y-4">
           {proposals.map((p) => (
-            <div key={p.id} className="bg-white shadow rounded-lg p-6">
+            <div key={p.id} className="bg-white shadow-sm rounded-lg p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="font-semibold text-gray-900">
@@ -431,7 +431,7 @@ function CommentsTab({
     <div className="space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow rounded-lg p-4 space-y-3"
+        className="bg-white shadow-sm rounded-lg p-4 space-y-3"
       >
         {replyTo && (
           <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -450,7 +450,7 @@ function CommentsTab({
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add a comment..."
           rows={3}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -467,7 +467,7 @@ function CommentsTab({
                   type="checkbox"
                   checked={isInternal}
                   onChange={(e) => setIsInternal(e.target.checked)}
-                  className="rounded"
+                  className="rounded-sm"
                 />
                 Internal only
               </label>
@@ -512,14 +512,14 @@ function CommentItem({
   isAdmin: boolean;
 }) {
   return (
-    <div className="bg-white shadow rounded-lg p-4">
+    <div className="bg-white shadow-sm rounded-lg p-4">
       <div className="flex items-start justify-between">
         <div>
           <span className="font-medium text-sm text-gray-900">
             {comment.authorName || "User"}
           </span>
           {comment.isInternal && (
-            <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+            <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">
               Internal
             </span>
           )}
@@ -556,7 +556,7 @@ function CommentItem({
                   {r.authorName || "User"}
                 </span>
                 {r.isInternal && (
-                  <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+                  <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-sm">
                     Internal
                   </span>
                 )}
@@ -585,7 +585,7 @@ function Section({
 }) {
   if (!content) return null;
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow-sm rounded-lg p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
       <p className="text-gray-700 whitespace-pre-line">{content}</p>
     </div>
@@ -627,7 +627,7 @@ function FormField({
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       />
     </div>
   );
@@ -659,7 +659,7 @@ function FormTextarea({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       />
     </div>
   );

@@ -3,9 +3,12 @@ import {
   getAccessToken,
   useSessionSigners,
   useSignMessage,
-  useSignMessage as useSignMessageSolana,
   WalletWithMetadata,
 } from "@privy-io/react-auth";
+import {
+  useSignMessage as useSignMessageSolana,
+  useWallets as useSolanaWallets,
+} from "@privy-io/react-auth/solana";
 import axios from "axios";
 
 const SESSION_SIGNER_ID = process.env.NEXT_PUBLIC_SESSION_SIGNER_ID;
@@ -18,6 +21,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
   const { addSessionSigners, removeSessionSigners } = useSessionSigners();
   const { signMessage: signMessageEthereum } = useSignMessage();
   const { signMessage: signMessageSolana } = useSignMessageSolana();
+  const { wallets: solanaWallets } = useSolanaWallets();
   const [isLoading, setIsLoading] = useState(false);
   const [isRemoteSigning, setIsRemoteSigning] = useState(false);
   const [isClientSigning, setIsClientSigning] = useState(false);
@@ -76,8 +80,13 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         const result = await signMessageEthereum({ message });
         signature = result.signature;
       } else if (wallet.chainType === "solana") {
+        const solanaWallet = solanaWallets.find(
+          (w) => w.address === wallet.address
+        );
+        if (!solanaWallet) throw new Error("Solana wallet not connected");
         const result = await signMessageSolana({
-          message,
+          message: new TextEncoder().encode(message),
+          wallet: solanaWallet,
         });
         signature = result.signature;
       }
@@ -139,7 +148,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={() => addSessionSigner(wallet.address)}
           disabled={isLoading || hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 ${
             isLoading || hasSessionSigners
               ? "bg-violet-400 cursor-not-allowed"
               : "bg-violet-600 hover:bg-violet-700"
@@ -151,7 +160,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={() => removeSessionSigner(wallet.address)}
           disabled={isLoading || !hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 ${
             isLoading || !hasSessionSigners
               ? "bg-red-400 cursor-not-allowed"
               : "bg-red-600 hover:bg-red-700"
@@ -171,7 +180,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={handleRemoteSign}
           disabled={isRemoteSigning || !hasSessionSigners}
-          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
             isRemoteSigning || !hasSessionSigners
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
@@ -183,7 +192,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <button
           onClick={handleClientSign}
           disabled={isClientSigning}
-          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+          className={`text-sm py-2 px-4 rounded-md text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
             isClientSigning
               ? "bg-green-400 cursor-not-allowed"
               : "bg-green-600 hover:bg-green-700"

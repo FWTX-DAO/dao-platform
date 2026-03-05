@@ -137,7 +137,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Description */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Description
         </h2>
@@ -145,14 +145,14 @@ export default function ProjectDetailPage() {
       </div>
 
       {p.intent && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Intent</h2>
           <p className="text-gray-700 whitespace-pre-line">{p.intent}</p>
         </div>
       )}
 
       {p.benefit && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Community Benefit
           </h2>
@@ -161,7 +161,7 @@ export default function ProjectDetailPage() {
       )}
 
       {p.githubRepo && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
             GitHub Repository
           </h2>
@@ -195,7 +195,7 @@ export default function ProjectDetailPage() {
 
       {/* Collaborators */}
       {project.collaborators && project.collaborators.length > 0 && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Collaborators ({project.total_collaborators})
           </h2>
@@ -203,7 +203,7 @@ export default function ProjectDetailPage() {
             {project.collaborators.map((c: any) => (
               <div
                 key={c.userId}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-sm"
               >
                 <span className="text-sm text-gray-700">
                   {c.username || "Anonymous"}
@@ -216,7 +216,7 @@ export default function ProjectDetailPage() {
       )}
 
       {/* Project Updates */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Updates</h2>
           {p.user_is_collaborator && (
@@ -242,7 +242,7 @@ export default function ProjectDetailPage() {
                 setUpdateForm((p) => ({ ...p, title: e.target.value }))
               }
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
             <textarea
               placeholder="What's new?"
@@ -252,7 +252,7 @@ export default function ProjectDetailPage() {
               }
               required
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
             <button
               type="submit"

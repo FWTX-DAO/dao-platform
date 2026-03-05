@@ -20,7 +20,7 @@ export const MemberCard = memo(function MemberCard({ member }: MemberCardProps) 
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 150px' }}
     >
       <div className="flex items-start gap-4">
-        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
           {member.avatarUrl ? (
             <Image
               src={member.avatarUrl}
@@ -30,7 +30,7 @@ export const MemberCard = memo(function MemberCard({ member }: MemberCardProps) 
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-blue-500 to-purple-600">
               <User className="w-8 h-8 text-white" />
             </div>
           )}

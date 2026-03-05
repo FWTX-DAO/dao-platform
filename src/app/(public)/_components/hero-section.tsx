@@ -125,7 +125,7 @@ export function HeroSection() {
             backgroundPosition: 'center',
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-dao-charcoal/95 via-dao-charcoal/80 to-dao-charcoal" />
+        <div className="absolute inset-0 bg-linear-to-b from-dao-charcoal/95 via-dao-charcoal/80 to-dao-charcoal" />
       </div>
 
       {/* Blue Matrix rain overlay */}
@@ -146,7 +146,7 @@ export function HeroSection() {
           </div>
           <button
             onClick={login}
-            className="text-xs md:text-sm text-dao-gold/80 hover:text-dao-gold transition-colors tracking-wide uppercase focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+            className="text-xs md:text-sm text-dao-gold/80 hover:text-dao-gold transition-colors tracking-wide uppercase focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
           >
             Sign In
           </button>
@@ -162,7 +162,7 @@ export function HeroSection() {
                 transform: mounted ? 'translateY(0)' : 'translateY(16px)',
               }}
             >
-              <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-7xl lg:text-[5.5rem] xl:text-[6.5rem] text-dao-warm leading-[1] tracking-[-0.01em]">
+              <h1 className="font-display text-[2.75rem] sm:text-6xl md:text-7xl lg:text-[5.5rem] xl:text-[6.5rem] text-dao-warm leading-none tracking-[-0.01em]">
                 Digital Sovereignty
                 <br />
                 <span className="text-dao-gold italic">is Mission Critical.</span>
@@ -170,7 +170,7 @@ export function HeroSection() {
             </div>
 
             <div
-              className="mt-8 md:mt-10 mb-7 md:mb-9 h-px bg-gradient-to-r from-dao-gold/50 to-transparent transition-[width,opacity] duration-1000 delay-200 ease-out"
+              className="mt-8 md:mt-10 mb-7 md:mb-9 h-px bg-linear-to-r from-dao-gold/50 to-transparent transition-[width,opacity] duration-1000 delay-200 ease-out"
               style={{
                 width: mounted ? '5rem' : '0',
                 opacity: mounted ? 1 : 0,
@@ -200,7 +200,7 @@ export function HeroSection() {
             >
               <button
                 onClick={login}
-                className="group relative px-7 md:px-9 py-3 md:py-3.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm md:text-base font-semibold tracking-wide transition-colors duration-300 hover:shadow-lg hover:shadow-dao-gold/15 active:scale-[0.98] touch-manipulation focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                className="group relative px-7 md:px-9 py-3 md:py-3.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm md:text-base font-semibold tracking-wide transition-colors duration-300 hover:shadow-lg hover:shadow-dao-gold/15 active:scale-[0.98] touch-manipulation focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
               >
                 <span>Enter Platform</span>
                 <span className="inline-block ml-2 transition-transform duration-300 group-hover:translate-x-1">
@@ -212,7 +212,7 @@ export function HeroSection() {
                 href="https://constitution.fwtx.city"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-7 md:px-9 py-3 md:py-3.5 border border-dao-warm/15 hover:border-dao-warm/30 text-dao-warm/60 hover:text-dao-warm/90 text-sm md:text-base tracking-wide transition-colors duration-300 active:scale-[0.98] touch-manipulation focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+                className="px-7 md:px-9 py-3 md:py-3.5 border border-dao-warm/15 hover:border-dao-warm/30 text-dao-warm/60 hover:text-dao-warm/90 text-sm md:text-base tracking-wide transition-colors duration-300 active:scale-[0.98] touch-manipulation focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
               >
                 Whitepaper &amp; Constitution
               </a>
@@ -239,7 +239,7 @@ export function HeroSection() {
 
         {/* Footer */}
         <footer className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-dao-warm/[0.06] pt-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-dao-warm/6 pt-5">
             <p className="text-[11px] text-dao-cool/30">
               Governed by{' '}
               <a

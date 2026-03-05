@@ -240,7 +240,7 @@ export default function EditBountyPage() {
             onChange={(e) =>
               setFormData((p) => ({ ...p, isAnonymous: e.target.checked }))
             }
-            className="rounded"
+            className="rounded-sm"
           />
           Submit anonymously
         </label>
@@ -248,20 +248,20 @@ export default function EditBountyPage() {
           <button
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </button>
           <button
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             Delete
           </button>
           <button
             onClick={() => router.back()}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             Cancel
           </button>
@@ -295,7 +295,7 @@ function Field({
         autoComplete="off"
         value={value}
         onChange={onChange}
-        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       />
     </div>
   );
@@ -325,7 +325,7 @@ function TextArea({
         value={value}
         onChange={onChange}
         rows={rows}
-        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       />
     </div>
   );

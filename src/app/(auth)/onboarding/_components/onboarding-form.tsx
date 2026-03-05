@@ -60,12 +60,12 @@ const AVAILABILITY_OPTIONS = [
 ];
 
 const inputBase =
-  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded text-dao-warm placeholder-dao-cool/40 focus-visible:outline-none focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm';
+  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded-sm text-dao-warm placeholder-dao-cool/40 focus-visible:outline-hidden focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm';
 const inputError =
-  'w-full px-4 py-2.5 bg-dao-surface border border-red-500/50 rounded text-dao-warm placeholder-dao-cool/40 focus-visible:outline-none focus-visible:border-red-400 focus-visible:ring-1 focus-visible:ring-red-400/30 transition text-sm';
+  'w-full px-4 py-2.5 bg-dao-surface border border-red-500/50 rounded-sm text-dao-warm placeholder-dao-cool/40 focus-visible:outline-hidden focus-visible:border-red-400 focus-visible:ring-1 focus-visible:ring-red-400/30 transition text-sm';
 const labelBase = 'block text-sm text-dao-cool mb-1.5';
 const selectBase =
-  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded text-dao-warm focus-visible:outline-none focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm';
+  'w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded-sm text-dao-warm focus-visible:outline-hidden focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm';
 
 function validateUsernameFormat(username: string) {
   if (!username || username.trim().length < 3) return { valid: false, error: 'Username must be at least 3 characters' };
@@ -259,7 +259,7 @@ export function OnboardingForm() {
           }
         `}</style>
         <div className="absolute inset-0 grid-bg" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-dao-charcoal/60" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-dao-charcoal/60" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -278,7 +278,7 @@ export function OnboardingForm() {
               transform: mounted ? 'translateY(0)' : 'translateY(12px)',
             }}
           >
-            <div className="bg-dao-dark/80 backdrop-blur-sm border border-dao-border/60 rounded-lg p-6 sm:p-8 md:p-10">
+            <div className="bg-dao-dark/80 backdrop-blur-xs border border-dao-border/60 rounded-lg p-6 sm:p-8 md:p-10">
               <div className="mb-8">
                 <h1 className="font-display text-3xl md:text-4xl text-dao-warm mb-2">Join the DAO</h1>
                 <p className="text-sm text-dao-cool/60">Complete your profile to become a member</p>
@@ -384,7 +384,7 @@ export function OnboardingForm() {
                     <label htmlFor="email" className={labelBase}>
                       Email <span className="text-dao-gold/70">*</span>
                       {isEmailFromPrivy && (
-                        <span className="ml-2 text-[10px] tracking-wider uppercase text-dao-gold/60 bg-dao-gold/10 px-2 py-0.5 rounded">
+                        <span className="ml-2 text-[10px] tracking-wider uppercase text-dao-gold/60 bg-dao-gold/10 px-2 py-0.5 rounded-sm">
                           verified
                         </span>
                       )}
@@ -407,7 +407,7 @@ export function OnboardingForm() {
                       id="terms"
                       checked={formData.termsAccepted}
                       onChange={(e) => updateField('termsAccepted', e.target.checked)}
-                      className="mt-0.5 rounded border-dao-border bg-dao-surface text-dao-gold focus:ring-dao-gold/30 focus:ring-offset-0"
+                      className="mt-0.5 rounded-sm border-dao-border bg-dao-surface text-dao-gold focus:ring-dao-gold/30 focus:ring-offset-0"
                     />
                     <label htmlFor="terms" className="text-sm text-dao-cool/70">
                       I accept the{' '}
@@ -513,7 +513,7 @@ export function OnboardingForm() {
               )}
 
               {globalError && (
-                <div role="alert" className="mt-5 p-3 bg-red-500/10 border border-red-500/20 rounded">
+                <div role="alert" className="mt-5 p-3 bg-red-500/10 border border-red-500/20 rounded-sm">
                   <p className="text-sm text-red-400">{globalError}</p>
                 </div>
               )}
@@ -522,7 +522,7 @@ export function OnboardingForm() {
                 <button
                   onClick={handleBack}
                   disabled={step === 0}
-                  className="px-6 py-2.5 text-sm text-dao-cool/60 hover:text-dao-warm border border-dao-border hover:border-dao-warm/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-dao-cool/60 disabled:hover:border-dao-border"
+                  className="px-6 py-2.5 text-sm text-dao-cool/60 hover:text-dao-warm border border-dao-border hover:border-dao-warm/20 rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-dao-cool/60 disabled:hover:border-dao-border"
                 >
                   Back
                 </button>
@@ -530,7 +530,7 @@ export function OnboardingForm() {
                 {step < STEPS.length - 1 ? (
                   <button
                     onClick={handleNext}
-                    className="group px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded transition-colors active:scale-[0.98]"
+                    className="group px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded-sm transition-colors active:scale-[0.98]"
                   >
                     <span>Continue</span>
                     <span className="inline-block ml-1.5 transition-transform group-hover:translate-x-0.5">&rarr;</span>
@@ -539,7 +539,7 @@ export function OnboardingForm() {
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light disabled:bg-dao-border disabled:text-dao-cool/40 disabled:cursor-not-allowed text-dao-charcoal text-sm font-semibold rounded transition-colors active:scale-[0.98]"
+                    className="px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light disabled:bg-dao-border disabled:text-dao-cool/40 disabled:cursor-not-allowed text-dao-charcoal text-sm font-semibold rounded-sm transition-colors active:scale-[0.98]"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center">

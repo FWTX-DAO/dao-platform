@@ -165,7 +165,7 @@ function PersonalFeedContent({ limit }: { limit?: number }) {
 
 function ActivityFeed({ variant, limit, showHeader = false }: ActivityFeedProps) {
   return (
-    <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6">
+    <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
       {showHeader && (
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {variant === 'platform' ? 'Platform Activity' : 'Your Activity'}

@@ -46,7 +46,7 @@ export default function MeetingNotesPage() {
         placeholder="Search meeting notes..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none w-64"
+        className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden w-64"
       />
 
       {isLoading ? (
@@ -61,7 +61,7 @@ export default function MeetingNotesPage() {
             <Link
               key={note.id}
               href={`/meeting-notes/${note.id}`}
-              className="block bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="block bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             >
               <h3 className="text-lg font-semibold text-gray-900">
                 {note.title}
@@ -84,7 +84,7 @@ export default function MeetingNotesPage() {
                     .map((tag: string) => (
                       <span
                         key={tag}
-                        className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
+                        className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-sm"
                       >
                         {tag.trim()}
                       </span>

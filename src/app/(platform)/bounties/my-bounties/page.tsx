@@ -41,7 +41,7 @@ export default function MyBountiesPage() {
             <Link
               key={bounty.id}
               href={`/bounties/${bounty.id}`}
-              className="block bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100"
+              className="block bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100"
             >
               <div className="flex items-start justify-between">
                 <div>

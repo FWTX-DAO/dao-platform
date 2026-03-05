@@ -28,7 +28,7 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
 
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-4">
           <div>
@@ -40,7 +40,7 @@ export default function SettingsPage() {
               onChange={(e) => setUsername(e.target.value)}
               name="username"
               autoComplete="username"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -51,23 +51,23 @@ export default function SettingsPage() {
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               name="bio"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <button
             onClick={handleSave}
             disabled={updateProfile.isPending}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             {updateProfile.isPending ? 'Saving\u2026' : 'Save Changes'}
           </button>
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Connected Accounts</h2>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-sm">
             <div>
               <p className="text-sm font-medium text-gray-700">Email</p>
               <p className="text-xs text-gray-500">{user?.email?.address || 'Not connected'}</p>
@@ -81,7 +81,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow-sm rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Wallets</h2>
         <WalletList />
       </div>

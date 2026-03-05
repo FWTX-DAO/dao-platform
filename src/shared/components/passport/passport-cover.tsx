@@ -34,7 +34,7 @@ export function PassportCover({ size = 'md', className = '' }: PassportCoverProp
 
       {/* Subtle border glow */}
       <div className="absolute inset-0 border border-dao-gold/15 rounded-md" />
-      <div className="absolute inset-1 border border-dao-gold/8 rounded-sm" />
+      <div className="absolute inset-1 border border-dao-gold/8 rounded-xs" />
 
       {/* PASSPORT text */}
       <span className="relative text-dao-gold tracking-[0.3em] uppercase font-display text-xs mb-6 select-none">
@@ -58,7 +58,7 @@ export function PassportCover({ size = 'md', className = '' }: PassportCoverProp
       </span>
 
       {/* Bottom emboss line */}
-      <div className="absolute bottom-4 left-6 right-6 h-px bg-gradient-to-r from-transparent via-dao-gold/20 to-transparent" />
+      <div className="absolute bottom-4 left-6 right-6 h-px bg-linear-to-r from-transparent via-dao-gold/20 to-transparent" />
     </div>
   );
 }

@@ -72,7 +72,7 @@ const SidebarItem = memo(({ item, isActive, onClick }: SidebarItemProps) => {
       }`}
       aria-current={isActive ? "page" : undefined}
     >
-      <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+      <Icon className="mr-3 h-5 w-5 shrink-0" />
       <span className="truncate">{item.name}</span>
     </Link>
   );

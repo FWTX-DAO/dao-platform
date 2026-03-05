@@ -60,18 +60,6 @@ export interface DocumentShareEntry {
   sharedWithId: string | null;
 }
 
-export interface DocumentInput {
-  pinataId: string;
-  cid: string;
-  name: string;
-  description?: string;
-  category?: string;
-  mimeType: string;
-  fileSize: number;
-  isPublic?: boolean;
-  tags?: string;
-}
-
 export interface DocumentUpdate {
   id: string;
   name?: string;
@@ -140,51 +128,20 @@ export const useDocumentShares = (documentId: string | null) => {
 };
 
 // ============================================================================
-// FILE UPLOAD (uses fetch for large files — server actions have size limits)
+// FILE UPLOAD (FormData — binary, no base64 overhead)
 // ============================================================================
 
-const convertFileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        const base64Parts = result.split(",");
-        if (base64Parts.length > 1 && base64Parts[1]) {
-          resolve(base64Parts[1]);
-        } else {
-          reject(new Error("Invalid data URL format"));
-        }
-      } else {
-        reject(new Error("Failed to read file as data URL"));
-      }
-    };
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
-};
-
-const uploadFileToServer = async (file: File, metadata: any): Promise<any> => {
+const uploadFileToServer = async (file: File): Promise<any> => {
   const accessToken = await getAccessToken();
-  const fileBase64 = await convertFileToBase64(file);
+  const formData = new FormData();
+  formData.append("file", file);
 
   const response = await fetch("/api/documents/server-upload", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({
-      fileBase64,
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      name: metadata.name,
-      description: metadata.description || "",
-      category: metadata.category || "General",
-      tags: metadata.tags || "",
-      isPublic: metadata.isPublic || false,
-    }),
+    body: formData,
   });
 
   if (!response.ok) {
@@ -205,21 +162,7 @@ export const useUploadDocument = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      file,
-      metadata,
-    }: {
-      file: File;
-      metadata: {
-        name: string;
-        description?: string;
-        category?: string;
-        tags?: string;
-        isPublic?: boolean;
-      };
-    }) => {
-      return uploadFileToServer(file, metadata);
-    },
+    mutationFn: (file: File) => uploadFileToServer(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
     },

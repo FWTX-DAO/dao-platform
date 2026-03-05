@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -30,7 +31,7 @@ function formatFileSize(bytes: number): string {
 export default function DocumentsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [showUpload, setShowUpload] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: docs = [], isLoading } = useDocuments({
     search: search || undefined,
@@ -40,32 +41,15 @@ export default function DocumentsPage() {
   const uploadMutation = useUploadDocument();
   const downloadMutation = useDownloadDocument();
 
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadMeta, setUploadMeta] = useState({
-    name: "",
-    description: "",
-    category: "General",
-    tags: "",
-  });
-
-  const handleUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadFile) return;
-    uploadMutation.mutate(
-      { file: uploadFile, metadata: uploadMeta },
-      {
-        onSuccess: () => {
-          setShowUpload(false);
-          setUploadFile(null);
-          setUploadMeta({
-            name: "",
-            description: "",
-            category: "General",
-            tags: "",
-          });
-        },
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadMutation.mutate(file, {
+      onSettled: () => {
+        // Reset the input so the same file can be re-selected
+        if (fileInputRef.current) fileInputRef.current.value = "";
       },
-    );
+    });
   };
 
   return (
@@ -78,128 +62,27 @@ export default function DocumentsPage() {
           </p>
         </div>
         <UpgradeCTA allowed={can.uploadDocument} feature="upload documents">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileSelect}
+            disabled={uploadMutation.isPending}
+          />
           <button
-            onClick={() => setShowUpload(!showUpload)}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadMutation.isPending}
+            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm disabled:opacity-50"
           >
-            {showUpload ? "Cancel" : "Upload Document"}
+            {uploadMutation.isPending ? "Uploading\u2026" : "Upload Document"}
           </button>
         </UpgradeCTA>
       </div>
 
-      {/* Upload Form */}
-      {showUpload && (
-        <form
-          onSubmit={handleUpload}
-          className="bg-white shadow rounded-lg p-6 space-y-4"
-        >
-          <h3 className="text-lg font-semibold text-gray-900">
-            Upload Document
-          </h3>
-          <div>
-            <label
-              htmlFor="upload-file"
-              className="block text-sm font-medium text-gray-700"
-            >
-              File *
-            </label>
-            <input
-              id="upload-file"
-              type="file"
-              required
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setUploadFile(file);
-                  if (!uploadMeta.name)
-                    setUploadMeta((p) => ({ ...p, name: file.name }));
-                }
-              }}
-              className="mt-1 w-full text-sm"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="upload-name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Name *
-            </label>
-            <input
-              id="upload-name"
-              type="text"
-              required
-              value={uploadMeta.name}
-              onChange={(e) =>
-                setUploadMeta((p) => ({ ...p, name: e.target.value }))
-              }
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="upload-desc"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Description
-            </label>
-            <textarea
-              id="upload-desc"
-              value={uploadMeta.description}
-              onChange={(e) =>
-                setUploadMeta((p) => ({ ...p, description: e.target.value }))
-              }
-              rows={2}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="upload-category"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Category
-            </label>
-            <select
-              id="upload-category"
-              value={uploadMeta.category}
-              onChange={(e) =>
-                setUploadMeta((p) => ({ ...p, category: e.target.value }))
-              }
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
-            >
-              {DOCUMENT_CATEGORIES.filter((c) => c !== "all").map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="upload-tags"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Tags (comma separated)
-            </label>
-            <input
-              id="upload-tags"
-              type="text"
-              value={uploadMeta.tags}
-              onChange={(e) =>
-                setUploadMeta((p) => ({ ...p, tags: e.target.value }))
-              }
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={uploadMutation.isPending || !uploadFile}
-            className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 text-sm font-medium disabled:opacity-50"
-          >
-            {uploadMutation.isPending ? "Uploading\u2026" : "Upload"}
-          </button>
-        </form>
+      {uploadMutation.isError && (
+        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          Upload failed: {uploadMutation.error.message}
+        </div>
       )}
 
       {/* Filters */}
@@ -209,12 +92,12 @@ export default function DocumentsPage() {
           placeholder="Search documents..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none w-64"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden w-64"
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="px-3 py-1.5 text-xs border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-none"
+          className="px-3 py-1.5 text-xs border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         >
           {DOCUMENT_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -226,7 +109,9 @@ export default function DocumentsPage() {
 
       {/* Document List */}
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading{"\u2026"}</div>
+        <div className="py-8 text-center text-gray-500">
+          Loading{"\u2026"}
+        </div>
       ) : docs.length === 0 ? (
         <div className="py-8 text-center text-gray-500">
           No documents found.
@@ -236,7 +121,7 @@ export default function DocumentsPage() {
           {docs.map((doc: any) => (
             <div
               key={doc.id}
-              className="bg-white shadow rounded-lg p-6 border border-gray-100"
+              className="bg-white shadow-sm rounded-lg p-6 border border-gray-100"
             >
               <div className="flex items-start justify-between">
                 <Link
@@ -244,7 +129,7 @@ export default function DocumentsPage() {
                   className="flex-1 hover:text-violet-600"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-sm">
                       {doc.category || "General"}
                     </span>
                     <span className="text-xs text-gray-400">

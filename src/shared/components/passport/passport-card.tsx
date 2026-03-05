@@ -35,7 +35,7 @@ export function PassportCard({ data }: PassportCardProps) {
         }}
       >
         {/* Inner border */}
-        <div className="absolute inset-1.5 border border-dao-gold/10 rounded-sm" />
+        <div className="absolute inset-1.5 border border-dao-gold/10 rounded-xs" />
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-3 text-center">
           {/* Mini logo */}
@@ -62,7 +62,7 @@ export function PassportCard({ data }: PassportCardProps) {
         </div>
 
         {/* Bottom line */}
-        <div className="absolute bottom-3 left-4 right-4 h-px bg-gradient-to-r from-transparent via-dao-gold/15 to-transparent" />
+        <div className="absolute bottom-3 left-4 right-4 h-px bg-linear-to-r from-transparent via-dao-gold/15 to-transparent" />
       </motion.div>
     </Link>
   );

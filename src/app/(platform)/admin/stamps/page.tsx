@@ -79,7 +79,7 @@ export default function AdminStampsPage() {
             value={eventName}
             onChange={(e) => setEventName(e.target.value)}
             placeholder="DAO Town Hall #4"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-hidden focus-visible:ring-2 focus-visible:ring-dao-gold"
             required
           />
         </div>
@@ -93,7 +93,7 @@ export default function AdminStampsPage() {
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-hidden focus-visible:ring-2 focus-visible:ring-dao-gold"
             />
           </div>
           <div>
@@ -102,7 +102,7 @@ export default function AdminStampsPage() {
               id="stamp-event-type"
               value={eventType}
               onChange={(e) => setEventType(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold bg-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-hidden focus-visible:ring-2 focus-visible:ring-dao-gold bg-white"
             >
               {EVENT_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -124,7 +124,7 @@ export default function AdminStampsPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Monthly community gathering at Panther Island Pavilion"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-hidden focus-visible:ring-2 focus-visible:ring-dao-gold"
           />
         </div>
 
@@ -138,7 +138,7 @@ export default function AdminStampsPage() {
             onChange={(e) => setPoints(Number(e.target.value))}
             min={0}
             max={100}
-            className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold"
+            className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-hidden focus-visible:ring-2 focus-visible:ring-dao-gold"
           />
         </div>
 
@@ -157,7 +157,7 @@ export default function AdminStampsPage() {
             rows={6}
             placeholder={"alice@example.com\nbob@example.com\ncharlie@example.com"}
             spellCheck={false}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-none focus-visible:ring-2 focus-visible:ring-dao-gold resize-y"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-dao-gold focus:ring-1 focus:ring-dao-gold outline-hidden focus-visible:ring-2 focus-visible:ring-dao-gold resize-y"
             required
           />
         </div>

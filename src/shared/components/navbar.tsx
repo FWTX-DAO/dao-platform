@@ -17,7 +17,7 @@ function Navbar() {
 
             <Link
               href="/dashboard"
-              className="flex items-center gap-3 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark rounded"
+              className="flex items-center gap-3 shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dao-dark rounded-sm"
               aria-label="Go to dashboard"
             >
               <Image

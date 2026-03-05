@@ -91,7 +91,7 @@ export default function PassportPage() {
                 key={stamp.id}
                 className="flex items-center gap-4 bg-white rounded-lg border border-gray-200 p-4"
               >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-dao-gold/10 flex items-center justify-center">
+                <div className="shrink-0 w-10 h-10 rounded-full bg-dao-gold/10 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-dao-gold" />
                 </div>
                 <div className="flex-1 min-w-0">

@@ -123,7 +123,7 @@ export function ForumsClient() {
         </div>
         <button
           onClick={() => setShowCreatePost(true)}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus-visible:ring-2 focus-visible:outline-none"
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus-visible:ring-2 focus-visible:outline-hidden"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           New Post
@@ -133,7 +133,7 @@ export function ForumsClient() {
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setSelectedCategory('All')}
-          className={`px-4 py-2 rounded-full text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${
+          className={`px-4 py-2 rounded-full text-sm font-medium focus-visible:ring-2 focus-visible:outline-hidden ${
             selectedCategory === 'All' ? 'bg-violet-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
@@ -143,7 +143,7 @@ export function ForumsClient() {
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-full text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${
+            className={`px-4 py-2 rounded-full text-sm font-medium focus-visible:ring-2 focus-visible:outline-hidden ${
               selectedCategory === category ? 'bg-violet-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -213,16 +213,16 @@ export function ForumsClient() {
                       </div>
                       <p className="text-gray-700 whitespace-pre-line mb-3">{reply.content}</p>
                       <div className="flex items-center justify-between">
-                        <button onClick={() => handleUpvote(reply.id, reply.has_upvoted)} className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-none" aria-label="Upvote">
+                        <button onClick={() => handleUpvote(reply.id, reply.has_upvoted)} className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-hidden" aria-label="Upvote">
                           {reply.has_upvoted ? <HeartSolidIcon className="h-4 w-4 text-violet-600" /> : <HeartIcon className="h-4 w-4" />}
                           <span className="text-sm">{reply.upvotes}</span>
                         </button>
                         {user && reply.author_privy_did === user.id && (
                           <div className="flex items-center gap-2">
-                            <button onClick={() => startEditPost(reply)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded focus-visible:ring-2 focus-visible:outline-none">
+                            <button onClick={() => startEditPost(reply)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-sm focus-visible:ring-2 focus-visible:outline-hidden">
                               <PencilIcon className="h-3 w-3" /> Edit
                             </button>
-                            <button onClick={() => handleDeletePost(reply.id)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50 rounded focus-visible:ring-2 focus-visible:outline-none">
+                            <button onClick={() => handleDeletePost(reply.id)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-sm focus-visible:ring-2 focus-visible:outline-hidden">
                               <TrashIcon className="h-3 w-3" /> Delete
                             </button>
                           </div>
@@ -246,7 +246,7 @@ export function ForumsClient() {
       ) : (
         <div className="space-y-4">
           {filteredPosts.map((post) => (
-            <div key={post.id} className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow" onMouseEnter={() => handlePostHover(post.id)}>
+            <div key={post.id} className="bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow" onMouseEnter={() => handlePostHover(post.id)}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -260,21 +260,21 @@ export function ForumsClient() {
                   <p className="text-gray-600 whitespace-pre-line line-clamp-3">{post.content}</p>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-6">
-                      <button onClick={() => handleUpvote(post.id, post.has_upvoted)} className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-none" aria-label="Upvote">
+                      <button onClick={() => handleUpvote(post.id, post.has_upvoted)} className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-hidden" aria-label="Upvote">
                         {post.has_upvoted ? <HeartSolidIcon className="h-5 w-5 text-violet-600" /> : <HeartIcon className="h-5 w-5" />}
                         <span className="text-sm">{post.upvotes}</span>
                       </button>
-                      <button onClick={() => setViewingReplies(post)} className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-none">
+                      <button onClick={() => setViewingReplies(post)} className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-hidden">
                         <ChatBubbleBottomCenterTextIcon className="h-5 w-5" />
                         <span className="text-sm">{post.reply_count} replies</span>
                       </button>
                     </div>
                     {user && post.author_privy_did === user.id && (
                       <div className="flex items-center gap-2">
-                        <button onClick={() => startEditPost(post)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded focus-visible:ring-2 focus-visible:outline-none">
+                        <button onClick={() => startEditPost(post)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-sm focus-visible:ring-2 focus-visible:outline-hidden">
                           <PencilIcon className="h-4 w-4" /> Edit
                         </button>
-                        <button onClick={() => handleDeletePost(post.id)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50 rounded focus-visible:ring-2 focus-visible:outline-none">
+                        <button onClick={() => handleDeletePost(post.id)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-sm focus-visible:ring-2 focus-visible:outline-hidden">
                           <TrashIcon className="h-4 w-4" /> Delete
                         </button>
                       </div>
