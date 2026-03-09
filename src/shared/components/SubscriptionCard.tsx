@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircle } from 'lucide-react';
 import type { SubscriptionTier } from '@shared/hooks/useSubscriptions';
 
 interface SubscriptionCardProps {
@@ -40,7 +40,7 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
     >
       {isCurrentTier && (
         <div className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 bg-violet-50 rounded-full px-3 py-1 mb-3 self-start">
-          <CheckCircleIcon className="h-3.5 w-3.5" />
+          <CheckCircle className="h-3.5 w-3.5" />
           Current Plan
         </div>
       )}
@@ -65,7 +65,7 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
         <ul className="space-y-2 mb-6 flex-1">
           {features.map((feature, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-              <CheckCircleIcon className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
+              <CheckCircle className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
               {feature}
             </li>
           ))}

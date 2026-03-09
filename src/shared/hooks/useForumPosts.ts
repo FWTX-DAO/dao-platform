@@ -7,6 +7,7 @@ import {
   deletePost as deletePostAction,
   vote as voteAction,
 } from "@/app/_actions/forum";
+import { useAuthReady } from "./useAuthReady";
 
 export interface ForumPost {
   id: string;
@@ -39,18 +40,21 @@ export interface ForumPostUpdate {
 
 // Query Hooks
 export const useForumPosts = () => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["forum-posts"],
     queryFn: () => getPostsAction() as unknown as Promise<ForumPost[]>,
+    enabled: authReady,
     staleTime: 1000 * 60,
   });
 };
 
 export const useForumReplies = (postId: string | null) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["forum-replies", postId],
     queryFn: () => getRepliesAction(postId!) as unknown as Promise<ForumPost[]>,
-    enabled: !!postId,
+    enabled: authReady && !!postId,
     staleTime: 1000 * 60,
   });
 };

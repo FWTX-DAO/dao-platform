@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { X } from 'lucide-react';
 
 const CATEGORIES = ["General", "Governance", "Technical", "Events", "Education"] as const;
 
@@ -35,16 +35,16 @@ export const ForumPostModal = memo(function ForumPostModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-      <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50" style={{ overscrollBehavior: 'contain' }}>
+      <div className="bg-white rounded-t-xl sm:rounded-lg w-full sm:max-w-2xl p-6 sm:my-8 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:outline-hidden rounded-sm"
+            className="text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:outline-hidden rounded-md p-2 -m-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
-            <XMarkIcon className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
         {error && (
@@ -99,14 +99,14 @@ export const ForumPostModal = memo(function ForumPostModal({
             <button
               onClick={onClose}
               disabled={isPending}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-hidden"
+              className="px-4 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-hidden min-h-[44px]"
             >
               Cancel
             </button>
             <button
               onClick={onSubmit}
               disabled={isPending || !postData.title.trim() || !postData.content.trim()}
-              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-hidden"
+              className="px-4 py-2.5 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-hidden min-h-[44px]"
             >
               {isPending ? pendingLabel : submitLabel}
             </button>

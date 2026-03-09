@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/solid';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { NAICS_CODES, type NaicsCode } from '@shared/constants/naics';
 
 interface IndustrySelectProps {
@@ -63,7 +63,7 @@ export default function IndustrySelect({ value, onChange, className, variant = '
           className={inputClass}
         />
         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-3" aria-label="Toggle industry list">
-          <ChevronUpDownIcon className={`h-5 w-5 ${isDark ? 'text-dao-cool/40' : 'text-gray-400'}`} />
+          <ChevronsUpDown className={`h-5 w-5 ${isDark ? 'text-dao-cool/40' : 'text-gray-400'}`} />
         </ComboboxButton>
 
         <ComboboxOptions className={dropdownClass}>
@@ -114,7 +114,7 @@ function IndustryOption({ item, variant = 'light' }: { item: NaicsCode; variant?
             {item.label}
             <span className={`ml-2 text-xs ${isDark ? 'text-dao-cool/40' : 'text-gray-400'}`}>({item.sector})</span>
           </span>
-          {selected && <CheckIcon className={`h-4 w-4 shrink-0 ${isDark ? 'text-dao-gold' : 'text-violet-600'}`} />}
+          {selected && <Check className={`h-4 w-4 shrink-0 ${isDark ? 'text-dao-gold' : 'text-violet-600'}`} />}
         </>
       )}
     </ComboboxOption>

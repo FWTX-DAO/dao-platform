@@ -428,6 +428,11 @@ export const innovationBounties = pgTable("innovation_bounties", {
   viewCount: integer("view_count").notNull().default(0),
   proposalCount: integer("proposal_count").notNull().default(0),
 
+  // Submission Attribution
+  submissionSource: text("submission_source").notNull().default("platform"),
+  submitterEmail: text("submitter_email"),
+  submitterIp: text("submitter_ip"),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -435,6 +440,7 @@ export const innovationBounties = pgTable("innovation_bounties", {
   index("idx_innovation_bounties_status").on(table.status),
   index("idx_innovation_bounties_category").on(table.category),
   index("idx_innovation_bounties_created_at").on(table.createdAt),
+  index("idx_innovation_bounties_submission_source").on(table.submissionSource),
 ]);
 
 // Bounty Proposals table (links projects to bounties)

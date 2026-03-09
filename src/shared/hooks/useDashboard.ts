@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/app/_actions/dashboard";
 import { getMemberStats } from "@/app/_actions/members";
+import { useAuthReady } from "./useAuthReady";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -79,9 +80,12 @@ export interface MembershipData {
 }
 
 export const useDashboardData = () => {
+  const authReady = useAuthReady();
+
   const statsQuery = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: () => getDashboardStats() as unknown as Promise<DashboardStats>,
+    enabled: authReady,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -91,6 +95,7 @@ export const useDashboardData = () => {
   const membershipQuery = useQuery({
     queryKey: ["dashboard", "membership"],
     queryFn: () => getMemberStats() as unknown as Promise<MembershipData>,
+    enabled: authReady,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,

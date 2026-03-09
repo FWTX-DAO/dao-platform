@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -109,6 +110,7 @@ function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = usePrivy();
+  const queryClient = useQueryClient();
   const { isOpen, close } = useSidebar();
   const { data: profile } = useProfile();
   const currentPath = pathname;
@@ -121,9 +123,10 @@ function Sidebar() {
 
   // Memoize handlers to prevent recreation on each render
   const handleLogout = useCallback(async () => {
+    queryClient.clear();
     await logout();
-    router.push("/");
-  }, [logout, router]);
+    router.replace("/");
+  }, [logout, queryClient, router]);
 
   const handleNavigation = useCallback(
     (href: string) => {

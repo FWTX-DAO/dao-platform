@@ -11,14 +11,21 @@ import {
 import { useEntitlements } from "@hooks/useEntitlements";
 import { UpgradeCTA } from "@components/UpgradeCTA";
 import { BOUNTY_CATEGORIES, BOUNTY_STATUS_FILTERS } from "@shared/constants";
+import { PageHeader } from "@components/ui/page-header";
+import { FilterPills } from "@components/ui/filter-pills";
+import { SearchInput } from "@components/ui/search-input";
+import { EmptyState } from "@components/ui/empty-state";
+import { ErrorState } from "@components/ui/error-state";
+import { SkeletonList } from "@components/ui/skeleton";
+import { Trophy } from "lucide-react";
 
 export function BountiesClient() {
-  const [statusFilter, setStatusFilter] = useState<string>("published");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  const { data: bounties = [], isLoading } = useBounties({
-    status: statusFilter,
+  const { data: bounties = [], isLoading, isError, refetch } = useBounties({
+    status: statusFilter !== "all" ? statusFilter : undefined,
     category: categoryFilter !== "all" ? categoryFilter : undefined,
     search: search || undefined,
   });
@@ -26,62 +33,46 @@ export function BountiesClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Innovation Bounties
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Browse funded opportunities to contribute to Fort Worth civic
-            innovation
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <UpgradeCTA allowed={can.submitBounty} feature="submit bounties">
-            <Link
-              href="/bounties/submit"
-              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm"
-            >
-              Submit Bounty
-            </Link>
-          </UpgradeCTA>
+      <PageHeader
+        title="Innovation Bounties"
+        subtitle="Browse funded opportunities to contribute to Fort Worth civic innovation"
+      >
+        <UpgradeCTA allowed={can.submitBounty} feature="submit bounties">
           <Link
-            href="/bounties/my-bounties"
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium text-gray-700"
+            href="/bounties/submit"
+            className="inline-flex items-center px-4 py-2.5 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm min-h-[44px] focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden transition-colors"
           >
-            My Bounties
+            Submit Bounty
           </Link>
-        </div>
-      </div>
+        </UpgradeCTA>
+        <Link
+          href="/bounties/my-bounties"
+          className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium text-gray-700 min-h-[44px] focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden transition-colors"
+        >
+          My Bounties
+        </Link>
+      </PageHeader>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          type="text"
-          placeholder="Search bounties..."
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+        <SearchInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden w-64"
+          onChange={setSearch}
+          placeholder="Search bounties\u2026"
+          aria-label="Search bounties"
         />
-        <div className="flex gap-1">
-          {BOUNTY_STATUS_FILTERS.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-xs rounded-full font-medium transition-colors ${
-                statusFilter === s
-                  ? "bg-violet-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
+        <FilterPills
+          options={BOUNTY_STATUS_FILTERS as readonly string[]}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          ariaLabel="Filter by status"
+        />
+        <label className="sr-only" htmlFor="bounty-category">Category</label>
         <select
+          id="bounty-category"
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-1.5 text-xs border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+          className="px-3 py-2.5 text-sm border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
         >
           {BOUNTY_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>
@@ -95,67 +86,78 @@ export function BountiesClient() {
         </select>
       </div>
 
-      {isLoading ? (
-        <div className="py-8 text-center text-gray-500">
-          Loading bounties{"\u2026"}
-        </div>
+      {isError ? (
+        <ErrorState title="Failed to load bounties" onRetry={() => refetch()} />
+      ) : isLoading ? (
+        <SkeletonList count={4} />
       ) : bounties.length === 0 ? (
-        <div className="py-8 text-center text-gray-500">
-          No bounties match your filters.
-        </div>
+        <EmptyState
+          icon={<Trophy />}
+          title="No bounties match your filters"
+          description="Try adjusting your search or filters to find what you're looking for."
+          action={
+            (search || statusFilter !== "all" || categoryFilter !== "all") ? (
+              <button
+                onClick={() => { setSearch(""); setStatusFilter("all"); setCategoryFilter("all"); }}
+                className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium text-sm min-h-[44px]"
+              >
+                Clear all filters
+              </button>
+            ) : undefined
+          }
+        />
       ) : (
-        <div className="space-y-4">
+        <ul className="space-y-4">
           {bounties.map((bounty: any) => (
-            <Link
-              key={bounty.id}
-              href={`/bounties/${bounty.id}`}
-              className="block bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {bounty.category && (
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                        {bounty.category}
+            <li key={bounty.id}>
+              <Link
+                href={`/bounties/${bounty.id}`}
+                className="block bg-white shadow-xs rounded-lg p-6 hover:shadow-md transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {bounty.category && (
+                        <span className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
+                          {bounty.category}
+                        </span>
+                      )}
+                      <span
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${getBountyStatusColor(bounty.status)}`}
+                      >
+                        {bounty.status}
                       </span>
-                    )}
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${getBountyStatusColor(bounty.status)}`}
-                    >
-                      {bounty.status}
-                    </span>
-                    {bounty.organizationType && (
-                      <span className="text-xs text-gray-500">
-                        {getOrgTypeLabel(bounty.organizationType)}
+                      {bounty.organizationType && (
+                        <span className="text-xs text-gray-500">
+                          {getOrgTypeLabel(bounty.organizationType)}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      {bounty.title}
+                    </h3>
+                    <p className="text-gray-600 mt-1 line-clamp-2 text-sm">
+                      {bounty.problemStatement}
+                    </p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <span>
+                        {bounty.proposalCount || 0} proposal
+                        {bounty.proposalCount !== 1 ? "s" : ""}
                       </span>
-                    )}
+                      <span>{bounty.viewCount || 0} views</span>
+                      {bounty.organizationName && !bounty.isAnonymous && (
+                        <span>{bounty.organizationName}</span>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {bounty.title}
-                  </h3>
-                  <p className="text-gray-600 mt-1 line-clamp-2">
-                    {bounty.problemStatement}
-                  </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <span>
-                      {bounty.proposalCount || 0} proposal
-                      {bounty.proposalCount !== 1 ? "s" : ""}
-                    </span>
-                    <span>{bounty.viewCount || 0} views</span>
-                    {bounty.organizationName && !bounty.isAnonymous && (
-                      <span>{bounty.organizationName}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="text-right ml-4">
-                  <p className="font-bold text-green-600 text-xl tabular-nums">
+                  <p className="font-bold text-green-600 text-xl tabular-nums shrink-0">
                     {formatBountyAmount(bounty.bountyAmount)}
                   </p>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

@@ -7,21 +7,25 @@ import { formatDate } from '@utils/format';
 import ActivityFeed from '@components/ActivityFeed';
 import { useEntitlements } from '@hooks/useEntitlements';
 import { UpgradeCTA } from '@components/UpgradeCTA';
+import { PageHeader } from '@components/ui/page-header';
+import { Card, CardHeader, CardContent } from '@components/ui/card';
+import { EmptyState } from '@components/ui/empty-state';
+import { ErrorState } from '@components/ui/error-state';
+import { SkeletonStats, SkeletonCard } from '@components/ui/skeleton';
 import {
-  UsersIcon,
-  DocumentTextIcon,
-  RocketLaunchIcon,
-  ChatBubbleLeftRightIcon,
-  CurrencyDollarIcon,
-  CalendarIcon,
-  ArrowTrendingUpIcon,
-  CheckCircleIcon,
-  PlusIcon,
-  SparklesIcon,
-} from '@heroicons/react/24/outline';
+  Users,
+  FileText,
+  Rocket,
+  MessageSquare,
+  DollarSign,
+  Calendar,
+  CheckCircle,
+  Plus,
+  Sparkles,
+} from 'lucide-react';
 
 export function DashboardClient() {
-  const { dashboardStats, membershipData, isLoading } = useDashboardData();
+  const { dashboardStats, membershipData, isLoading, isError, refetch } = useDashboardData();
   const { can } = useEntitlements();
 
   const calculateTenure = useCallback((joinedAt: string) => {
@@ -42,10 +46,10 @@ export function DashboardClient() {
 
   const getActivityLevel = useCallback((stats: MembershipData['stats']) => {
     const total = stats.forumPosts + stats.projects + stats.meetingNotes;
-    if (total === 0) return { level: 'Getting Started', color: 'text-gray-600', message: 'Start contributing to earn points!' };
-    if (total < 5) return { level: 'Active', color: 'text-blue-600', message: 'Keep up the great work!' };
-    if (total < 10) return { level: 'Engaged', color: 'text-green-600', message: "You're making an impact!" };
-    return { level: 'Champion', color: 'text-violet-600', message: 'Outstanding contribution!' };
+    if (total === 0) return { level: 'Getting Started', badge: 'bg-gray-100 text-gray-700', message: 'Start contributing to earn points!' };
+    if (total < 5) return { level: 'Active', badge: 'bg-blue-100 text-blue-700', message: 'Keep up the great work!' };
+    if (total < 10) return { level: 'Engaged', badge: 'bg-green-100 text-green-700', message: "You're making an impact!" };
+    return { level: 'Champion', badge: 'bg-violet-100 text-violet-700', message: 'Outstanding contribution!' };
   }, []);
 
   const activityLevel = useMemo(
@@ -55,117 +59,129 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">Fort Worth TX DAO Overview</p>
-        </div>
-        <div className="flex gap-3">
-          <UpgradeCTA allowed={can.createProject} feature="create projects">
-            <Link
-              href="/innovation-lab"
-              className="inline-flex items-center px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              New Project
-            </Link>
-          </UpgradeCTA>
+      <PageHeader title="Dashboard" subtitle="Fort Worth TX DAO Overview">
+        <UpgradeCTA allowed={can.createProject} feature="create projects">
           <Link
-            href="/forums"
-            className="inline-flex items-center px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors"
+            href="/innovation-lab"
+            className="inline-flex items-center px-4 py-2.5 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Start Discussion
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
           </Link>
-        </div>
-      </div>
+        </UpgradeCTA>
+        <Link
+          href="/forums"
+          className="inline-flex items-center px-4 py-2.5 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Start Discussion
+        </Link>
+      </PageHeader>
 
-      {isLoading ? (
-        <div className="py-12 text-center text-gray-500">Loading dashboard{'\u2026'}</div>
+      {isError ? (
+        <ErrorState
+          title="Failed to load dashboard"
+          message="We couldn't load your dashboard data."
+          onRetry={() => refetch()}
+        />
+      ) : isLoading ? (
+        <div className="space-y-8">
+          <SkeletonStats count={3} />
+          <SkeletonCard />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </div>
       ) : (
         <>
+          {/* Stat cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Link href="/members" className="bg-white shadow-xs hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
-                  <UsersIcon className="h-6 w-6 text-violet-600" />
+                  <Users className="h-6 w-6 text-violet-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Members</p>
-                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalUsers || 0}</p>
-                </div>
+                <dl className="ml-4">
+                  <dt className="text-sm font-medium text-gray-600">Total Members</dt>
+                  <dd className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalUsers || 0}</dd>
+                </dl>
               </div>
             </Link>
 
             <Link href="/innovation-lab" className="bg-white shadow-xs hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
-                  <RocketLaunchIcon className="h-6 w-6 text-violet-600" />
+                  <Rocket className="h-6 w-6 text-violet-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Innovation Lab Projects</p>
-                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalProjects || 0}</p>
-                </div>
+                <dl className="ml-4">
+                  <dt className="text-sm font-medium text-gray-600">Innovation Lab Projects</dt>
+                  <dd className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalProjects || 0}</dd>
+                </dl>
               </div>
             </Link>
 
             <Link href="/documents" className="bg-white shadow-xs hover:shadow-md rounded-lg p-6 transition-shadow cursor-pointer border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
               <div className="flex items-center">
                 <div className="p-3 bg-violet-50 rounded-lg">
-                  <DocumentTextIcon className="h-6 w-6 text-violet-600" />
+                  <FileText className="h-6 w-6 text-violet-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Documents</p>
-                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalDocuments || 0}</p>
-                </div>
+                <dl className="ml-4">
+                  <dt className="text-sm font-medium text-gray-600">Documents</dt>
+                  <dd className="text-2xl font-bold text-gray-900 tabular-nums">{dashboardStats?.totalDocuments || 0}</dd>
+                </dl>
               </div>
             </Link>
           </div>
 
+          {/* Membership card */}
           {membershipData && (
-            <div className="bg-white border-2 border-violet-100 shadow-xs rounded-lg p-8">
-              <div className="flex items-start justify-between mb-6">
+            <Card className="border-2 border-violet-100 p-8">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <CheckCircleIcon className="h-6 w-6 mr-2 text-violet-600" />
+                    <CheckCircle className="h-6 w-6 mr-2 text-violet-600" />
                     Your Membership
                   </h2>
-                  <p className={`mt-1 text-sm font-medium ${activityLevel?.color}`}>
-                    {activityLevel?.level} · {activityLevel?.message}
+                  <p className="mt-1 text-sm font-medium flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${activityLevel?.badge}`}>
+                      {activityLevel?.level}
+                    </span>
+                    <span className="text-gray-500">{activityLevel?.message}</span>
                   </p>
                 </div>
-                <Link href="/settings" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
-                  Settings →
+                <Link href="/settings" className="text-sm text-violet-600 hover:text-violet-700 font-medium min-h-[44px] inline-flex items-center">
+                  Settings &rarr;
                 </Link>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Member Since</p>
-                  <p className="text-lg font-bold text-gray-900 mt-1" suppressHydrationWarning>{formatDate(membershipData.user.createdAt)}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{calculateTenure(membershipData.user.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Membership Type</p>
-                  <p className="text-lg font-bold text-gray-900 mt-1 capitalize">{membershipData.membership.type}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Voting Power</p>
-                  <p className="text-lg font-bold text-gray-900 mt-1 tabular-nums">{membershipData.membership.votingPower}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Contribution Points</p>
-                  <p className="text-lg font-bold text-violet-600 mt-1 flex items-center tabular-nums">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-600">Member Since</dt>
+                  <dd className="text-lg font-bold text-gray-900 mt-1" suppressHydrationWarning>{formatDate(membershipData.user.createdAt)}</dd>
+                  <dd className="text-xs text-gray-500 mt-0.5">{calculateTenure(membershipData.user.createdAt)}</dd>
+                </dl>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-600">Membership Type</dt>
+                  <dd className="text-lg font-bold text-gray-900 mt-1 capitalize">{membershipData.membership.type}</dd>
+                </dl>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-600">Voting Power</dt>
+                  <dd className="text-lg font-bold text-gray-900 mt-1 tabular-nums">{membershipData.membership.votingPower}</dd>
+                </dl>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-600">Contribution Points</dt>
+                  <dd className="text-lg font-bold text-violet-600 mt-1 flex items-center tabular-nums">
                     {membershipData.membership.contributionPoints}
-                    <SparklesIcon className="h-4 w-4 ml-1" />
-                  </p>
-                </div>
+                    <Sparkles className="h-4 w-4 ml-1" />
+                  </dd>
+                </dl>
               </div>
 
               <div className="pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-1">
                   <p className="text-sm font-semibold text-gray-700">Your Activity</p>
-                  <p className="text-xs text-gray-500">Contribute more to earn points & increase voting power</p>
+                  <p className="text-xs text-gray-500">Contribute more to earn points &amp; increase voting power</p>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-gray-50 rounded-lg p-3">
@@ -186,195 +202,224 @@ export function DashboardClient() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
 
+          {/* My Active Projects */}
           {dashboardStats?.userActiveProjects && dashboardStats.userActiveProjects.length > 0 && (
-            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold flex items-center text-gray-900">
-                  <RocketLaunchIcon className="h-5 w-5 mr-2 text-violet-600" />
-                  My Active Projects
-                </h2>
-                <Link href="/innovation-lab" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700">
-                  View All →
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {dashboardStats.userActiveProjects.map((project: any) => (
-                  <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-gray-900">{project.title}</h3>
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${project.user_role === 'creator' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
-                            {project.user_role}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          by {project.creator_name || 'Anonymous'} · {project.collaborators} collaborator{project.collaborators > 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <ArrowTrendingUpIcon className="h-4 w-4 text-green-600 shrink-0 ml-2" />
-                    </div>
+            <Card>
+              <CardHeader
+                title="My Active Projects"
+                icon={<Rocket className="h-5 w-5" />}
+                action={
+                  <Link href="/innovation-lab" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700 min-h-[44px]">
+                    View All &rarr;
                   </Link>
-                ))}
-              </div>
-            </div>
+                }
+              />
+              <CardContent>
+                <ul className="space-y-3">
+                  {dashboardStats.userActiveProjects.slice(0, 5).map((project: any) => (
+                    <li key={project.id}>
+                      <Link href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${project.user_role === 'creator' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {project.user_role}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              by {project.creator_name || 'Anonymous'} &middot; {project.collaborators} collaborator{project.collaborators !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {dashboardStats.userActiveProjects.length > 5 && (
+                  <p className="text-xs text-gray-500 mt-3 text-center">
+                    and {dashboardStats.userActiveProjects.length - 5} more&hellip;
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           )}
 
+          {/* Community Projects + Forum Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold flex items-center text-gray-900">
-                  <RocketLaunchIcon className="h-5 w-5 mr-2 text-violet-600" />
-                  Community Projects
-                </h2>
-                <Link href="/innovation-lab" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700">
-                  Explore All →
-                </Link>
-              </div>
-              {dashboardStats?.activeProjects.length === 0 ? (
-                <div className="text-center py-8">
-                  <RocketLaunchIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">No active projects yet</p>
-                  <p className="text-gray-500 text-sm mt-1">Be the first to propose a civic innovation project!</p>
-                  <UpgradeCTA allowed={can.createProject} feature="create projects">
-                    <Link href="/innovation-lab" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors">
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      Submit Project
-                    </Link>
-                  </UpgradeCTA>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dashboardStats?.activeProjects.slice(0, 5).map((project: any) => (
-                    <Link key={project.id} href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+            <Card>
+              <CardHeader
+                title="Community Projects"
+                icon={<Rocket className="h-5 w-5" />}
+                action={
+                  <Link href="/innovation-lab" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700 min-h-[44px]">
+                    Explore All &rarr;
+                  </Link>
+                }
+              />
+              <CardContent>
+                {dashboardStats?.activeProjects.length === 0 ? (
+                  <EmptyState
+                    icon={<Rocket />}
+                    title="No active projects yet"
+                    description="Be the first to propose a civic innovation project!"
+                    action={
+                      <UpgradeCTA allowed={can.createProject} feature="create projects">
+                        <Link href="/innovation-lab" className="inline-flex items-center px-4 py-2.5 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors min-h-[44px]">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Submit Project
+                        </Link>
+                      </UpgradeCTA>
+                    }
+                  />
+                ) : (
+                  <ul className="space-y-3">
+                    {dashboardStats?.activeProjects.slice(0, 5).map((project: any) => (
+                      <li key={project.id}>
+                        <Link href={`/innovation-lab/${project.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
                           <h3 className="font-medium text-gray-900">{project.title}</h3>
                           <p className="text-xs text-gray-500 mt-1">
-                            by {project.creator_name || 'Anonymous'} · {project.collaborators} collaborator{project.collaborators > 1 ? 's' : ''}
+                            by {project.creator_name || 'Anonymous'} &middot; {project.collaborators} collaborator{project.collaborators !== 1 ? 's' : ''}
                           </p>
-                        </div>
-                        <ArrowTrendingUpIcon className="h-4 w-4 text-green-600 shrink-0 ml-2" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                        </Link>
+                      </li>
+                    ))}
+                    {(dashboardStats?.activeProjects.length ?? 0) > 5 && (
+                      <p className="text-xs text-gray-500 text-center pt-2">
+                        and {(dashboardStats?.activeProjects.length ?? 0) - 5} more&hellip;
+                      </p>
+                    )}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
 
-            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold flex items-center text-gray-900">
-                  <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2 text-violet-600" />
-                  Latest Forum Activity
-                </h2>
-                <Link href="/forums" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700">
-                  View All →
-                </Link>
-              </div>
-              {dashboardStats?.latestForumPosts.length === 0 ? (
-                <div className="text-center py-8">
-                  <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">No discussions yet</p>
-                  <p className="text-gray-500 text-sm mt-1">Start a conversation with the community!</p>
-                  <Link href="/forums" className="inline-flex items-center mt-4 px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors">
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Start Discussion
+            <Card>
+              <CardHeader
+                title="Latest Forum Activity"
+                icon={<MessageSquare className="h-5 w-5" />}
+                action={
+                  <Link href="/forums" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700 min-h-[44px]">
+                    View All &rarr;
                   </Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dashboardStats?.latestForumPosts.map((post: any) => (
-                    <Link key={post.id} href={`/forums?post=${post.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                }
+              />
+              <CardContent>
+                {dashboardStats?.latestForumPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<MessageSquare />}
+                    title="No discussions yet"
+                    description="Start a conversation with the community!"
+                    action={
+                      <Link href="/forums" className="inline-flex items-center px-4 py-2.5 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm transition-colors min-h-[44px]">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Start Discussion
+                      </Link>
+                    }
+                  />
+                ) : (
+                  <ul className="space-y-3">
+                    {dashboardStats?.latestForumPosts.map((post: any) => (
+                      <li key={post.id}>
+                        <Link href={`/forums?post=${post.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
                           <h3 className="font-medium text-gray-900">{post.title}</h3>
                           <p className="text-xs text-gray-500 mt-1">
-                            {post.category} · {post.author_name || 'Anonymous'} · {post.reply_count} replies · {post.upvotes} votes
+                            {post.category} &middot; {post.author_name || 'Anonymous'} &middot; {post.reply_count} replies &middot; {post.upvotes} votes
                           </p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
+          {/* Bounties + Meeting Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold flex items-center text-gray-900">
-                  <CurrencyDollarIcon className="h-5 w-5 mr-2 text-violet-600" />
-                  Innovation Bounties
-                </h2>
-                <Link href="/bounties" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700">
-                  Browse All →
-                </Link>
-              </div>
-              {dashboardStats?.innovationAssetsRanking.length === 0 ? (
-                <div className="text-center py-8">
-                  <CurrencyDollarIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">No bounties available</p>
-                  <p className="text-gray-500 text-sm mt-1">Check back soon for funded opportunities to contribute!</p>
-                  <Link href="/bounties" className="inline-flex items-center mt-4 px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors">
-                    Explore Bounties
+            <Card>
+              <CardHeader
+                title="Innovation Bounties"
+                icon={<DollarSign className="h-5 w-5" />}
+                action={
+                  <Link href="/bounties" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700 min-h-[44px]">
+                    Browse All &rarr;
                   </Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dashboardStats?.innovationAssetsRanking.map((bounty: any) => (
-                    <Link key={bounty.id} href={`/bounties/${bounty.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">{bounty.title}</h3>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {bounty.category} · {bounty.proposalCount} proposal{bounty.proposalCount !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        {bounty.bountyAmount && (
-                          <div className="text-right ml-2">
-                            <p className="font-bold text-green-600 text-lg tabular-nums">${(bounty.bountyAmount / 100).toLocaleString()}</p>
+                }
+              />
+              <CardContent>
+                {dashboardStats?.innovationAssetsRanking.length === 0 ? (
+                  <EmptyState
+                    icon={<DollarSign />}
+                    title="No bounties available"
+                    description="Check back soon for funded opportunities to contribute!"
+                    action={
+                      <Link href="/bounties" className="inline-flex items-center px-4 py-2.5 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors min-h-[44px]">
+                        Explore Bounties
+                      </Link>
+                    }
+                  />
+                ) : (
+                  <ul className="space-y-3">
+                    {dashboardStats?.innovationAssetsRanking.map((bounty: any) => (
+                      <li key={bounty.id}>
+                        <Link href={`/bounties/${bounty.id}`} className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 truncate">{bounty.title}</h3>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {bounty.category} &middot; {bounty.proposalCount} proposal{bounty.proposalCount !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                            {bounty.bountyAmount && (
+                              <p className="font-bold text-green-600 text-lg tabular-nums ml-2 shrink-0">
+                                ${(bounty.bountyAmount / 100).toLocaleString()}
+                              </p>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
 
-            <div className="bg-white shadow-xs border border-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold flex items-center text-gray-900">
-                  <CalendarIcon className="h-5 w-5 mr-2 text-violet-600" />
-                  Latest Meeting Notes
-                </h2>
-                <Link href="/meeting-notes" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700">
-                  View All →
-                </Link>
-              </div>
-              {!dashboardStats?.latestMeetingNote ? (
-                <div className="text-center py-8">
-                  <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">No meeting notes yet</p>
-                  <p className="text-gray-500 text-sm mt-1">Stay tuned for upcoming DAO meetings and summaries</p>
-                  <Link href="/meeting-notes" className="inline-flex items-center mt-4 px-4 py-2 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors">
-                    View Archive
+            <Card>
+              <CardHeader
+                title="Latest Meeting Notes"
+                icon={<Calendar className="h-5 w-5" />}
+                action={
+                  <Link href="/meeting-notes" className="inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700 min-h-[44px]">
+                    View All &rarr;
                   </Link>
-                </div>
-              ) : (
-                <Link href="/meeting-notes" className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors">
-                  <h3 className="font-medium text-gray-900 mb-2">{dashboardStats.latestMeetingNote.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{formatDate(dashboardStats.latestMeetingNote.date)}</p>
-                  <p className="text-sm text-gray-500 line-clamp-3">{dashboardStats.latestMeetingNote.notes}</p>
-                  <p className="text-xs text-gray-400 mt-2">by {dashboardStats.latestMeetingNote.author_name || 'Anonymous'}</p>
-                </Link>
-              )}
-            </div>
+                }
+              />
+              <CardContent>
+                {!dashboardStats?.latestMeetingNote ? (
+                  <EmptyState
+                    icon={<Calendar />}
+                    title="No meeting notes yet"
+                    description="Stay tuned for upcoming DAO meetings and summaries"
+                    action={
+                      <Link href="/meeting-notes" className="inline-flex items-center px-4 py-2.5 border border-violet-600 text-violet-600 rounded-md hover:bg-violet-50 font-medium text-sm transition-colors min-h-[44px]">
+                        View Archive
+                      </Link>
+                    }
+                  />
+                ) : (
+                  <Link href="/meeting-notes" className="block p-4 border border-gray-200 rounded-lg hover:border-violet-300 hover:shadow-xs transition-colors focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden">
+                    <h3 className="font-medium text-gray-900 mb-2">{dashboardStats.latestMeetingNote.title}</h3>
+                    <p className="text-sm text-gray-600 mb-2" suppressHydrationWarning>{formatDate(dashboardStats.latestMeetingNote.date)}</p>
+                    <p className="text-sm text-gray-500 line-clamp-3">{dashboardStats.latestMeetingNote.notes}</p>
+                    <p className="text-xs text-gray-400 mt-2">by {dashboardStats.latestMeetingNote.author_name || 'Anonymous'}</p>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <ActivityFeed variant="platform" limit={5} showHeader />

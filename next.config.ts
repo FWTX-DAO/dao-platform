@@ -18,8 +18,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: [
       'lucide-react',
-      '@heroicons/react/24/outline',
-      '@heroicons/react/24/solid',
       '@tanstack/react-query',
     ],
   },

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { User, Calendar, Award, Shield } from 'lucide-react';
 
 interface MemberCardProps {
@@ -15,33 +16,34 @@ interface MemberCardProps {
 
 export const MemberCard = memo(function MemberCard({ member }: MemberCardProps) {
   return (
-    <div
-      className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+    <Link
+      href={`/directory?member=${member.id}`}
+      className="block bg-white rounded-lg shadow-xs p-6 hover:shadow-md transition-shadow border border-gray-100 hover:border-violet-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 150px' }}
     >
       <div className="flex items-start gap-4">
-        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
+        <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-200 shrink-0">
           {member.avatarUrl ? (
             <Image
               src={member.avatarUrl}
               alt={member.username || 'Member'}
-              width={64}
-              height={64}
+              width={56}
+              height={56}
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-blue-500 to-purple-600">
-              <User className="w-8 h-8 text-white" />
+            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-blue-500 to-purple-600" aria-hidden="true">
+              <User className="w-7 h-7 text-white" />
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
+          <h3 className="text-base font-semibold text-gray-900 truncate">
             {member.username || 'Anonymous Member'}
           </h3>
 
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 member.membershipType === 'council'
@@ -78,6 +80,6 @@ export const MemberCard = memo(function MemberCard({ member }: MemberCardProps) 
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 });

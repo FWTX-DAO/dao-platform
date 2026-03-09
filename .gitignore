@@ -107,3 +107,4 @@ dist
 bun.lock
 
 tmp/
+.env.production
