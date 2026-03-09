@@ -1,5 +1,7 @@
-import { useQueries } from "@tanstack/react-query";
-import { getAccessToken } from "@privy-io/react-auth";
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardStats } from "@/app/_actions/dashboard";
+import { getMemberStats } from "@/app/_actions/members";
+import { useAuthReady } from "./useAuthReady";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -77,66 +79,38 @@ export interface MembershipData {
   };
 }
 
-const fetchDashboardStats = async (): Promise<DashboardStats> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/dashboard/stats", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch dashboard stats");
-  }
-
-  return response.json();
-};
-
-const fetchMembershipData = async (): Promise<MembershipData> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/members/stats", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch membership data");
-  }
-
-  return response.json();
-};
-
-/**
- * Hook to fetch dashboard data using React Query
- * Provides automatic caching, background refetching, and error handling
- */
 export const useDashboardData = () => {
-  const results = useQueries({
-    queries: [
-      {
-        queryKey: ["dashboard", "stats"],
-        queryFn: fetchDashboardStats,
-        staleTime: 2 * 60 * 1000, // 2 minutes - moderate update frequency
-        gcTime: 10 * 60 * 1000,   // Keep in cache for 10 minutes
-        refetchOnWindowFocus: true, // Refresh when user returns to tab
-        retry: 2,
-      },
-      {
-        queryKey: ["dashboard", "membership"],
-        queryFn: fetchMembershipData,
-        staleTime: 5 * 60 * 1000, // 5 minutes - low update frequency
-        gcTime: 10 * 60 * 1000,
-        refetchOnWindowFocus: false, // User stats don't change often
-        retry: 2,
-      },
-    ],
+  const authReady = useAuthReady();
+
+  const statsQuery = useQuery({
+    queryKey: ["dashboard", "stats"],
+    queryFn: () => getDashboardStats() as unknown as Promise<DashboardStats>,
+    enabled: authReady,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 2,
+  });
+
+  const membershipQuery = useQuery({
+    queryKey: ["dashboard", "membership"],
+    queryFn: () => getMemberStats() as unknown as Promise<MembershipData>,
+    enabled: authReady,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   return {
-    dashboardStats: results[0].data,
-    membershipData: results[1].data,
-    isLoading: results.some((r) => r.isLoading),
-    isError: results.some((r) => r.isError),
-    error: results.find((r) => r.error)?.error,
+    dashboardStats: statsQuery.data,
+    membershipData: membershipQuery.data,
+    isLoading: statsQuery.isLoading || membershipQuery.isLoading,
+    isError: statsQuery.isError || membershipQuery.isError,
+    error: statsQuery.error || membershipQuery.error,
     refetch: () => {
-      results.forEach((r) => r.refetch());
+      statsQuery.refetch();
+      membershipQuery.refetch();
     },
   };
 };

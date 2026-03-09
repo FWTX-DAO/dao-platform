@@ -4,55 +4,64 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Next.js 14+ (Pages Router) DAO platform for Fort Worth civic innovation. Features multi-provider auth (Privy), distributed SQLite (Turso), and forum/project management.
+Next.js 16 (App Router) DAO platform for Fort Worth civic innovation. Features multi-provider auth (Privy), PostgreSQL (PlanetScale via pg), Pinata for IPFS file storage, and forum/project management.
 
 ## Development Commands
 
-```bash
-npm install          # Install deps (Node >=18, npm >=9)
-npm run dev          # Dev server
-npm run build        # Production build
-npm run lint         # Lint + type check
-npm run format       # Prettier format
+**Always use `bun` (not npm/node).** `bun dev` works as shorthand for `bun run dev`.
 
-# Database (Drizzle + Turso)
-npm run db:generate  # Generate migrations
-npm run db:migrate   # Run migrations
-npm run db:push      # Push schema directly
-npm run db:studio    # Drizzle Studio GUI
-npm run db:seed      # Seed sample data
+```bash
+bun install          # Install deps
+bun dev              # Dev server at localhost:3000
+bun run build        # Production build
+bun run lint         # ESLint + Prettier check + TypeScript check
+bun run format       # Prettier format
+
+# Database (Drizzle + PostgreSQL)
+bun run db:generate  # Generate migrations from schema changes
+bun run db:push      # Push schema directly to database
+bun run db:studio    # Drizzle Studio GUI
+bun run db:seed      # Seed sample data (tsx src/db/seed.ts)
+bun run db:seed-rbac # Seed RBAC tiers, roles, permissions
 ```
 
 ## Environment Variables
 
 Required in `.env.local`:
+
 - `NEXT_PUBLIC_PRIVY_APP_ID` / `PRIVY_APP_SECRET` - Privy auth
-- `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` - Database
+- `DATABASE_URL` - PostgreSQL connection string (PlanetScale)
+- `PINATA_JWT` / `PINATA_GATEWAY` / `PINATA_GATEWAY_KEY` - IPFS file storage
 
 ## Architecture
 
-Feature-based architecture with service/repository pattern:
+Service/repository pattern colocated with App Router:
 
 ```
 src/
+├── app/
+│   ├── _lib/          # Auth helpers (auth.ts), action utilities (action-utils.ts)
+│   ├── _actions/      # Server actions (bounties, forum, projects, etc.)
+│   ├── _services/     # Service/repository modules (each has: services/, types/, index.ts)
+│   │   ├── activities/    # ActivitiesService + ActivitiesRepository
+│   │   ├── forum/         # ForumService + ForumRepository
+│   │   ├── members/       # MembersService + MembersRepository
+│   │   ├── rbac/          # RbacService + RbacRepository
+│   │   └── subscriptions/ # SubscriptionsService + SubscriptionsRepository
+│   ├── _providers/    # PrivyProvider, QueryClientProvider
+│   ├── (platform)/    # Authenticated platform pages (layout guards auth + onboarding)
+│   └── (auth)/        # Auth pages (onboarding — layout guards auth + redirect if onboarded)
 ├── core/              # Infrastructure
-│   ├── auth/          # Privy token verification
 │   ├── database/      # Schema, client, queries
-│   ├── middleware/    # compose, withAuth, errorHandler, withValidation
-│   ├── errors/        # AppError, NotFoundError, ValidationError, UnauthorizedError
+│   ├── middleware/     # compose, withAuth, errorHandler, withValidation
+│   ├── errors/        # AppError, NotFoundError, ValidationError, UnauthorizedError, ForbiddenError
 │   └── utils/         # apiResponse helpers
-├── shared/
-│   ├── components/    # UI components (AppLayout, ui/)
-│   ├── hooks/         # Shared React hooks
-│   ├── types/         # Global TypeScript types
-│   ├── utils/         # id-generator, cn, etc.
-│   └── constants/     # API_ROUTES, queryKeys, VALIDATION_LIMITS
-└── features/          # Each has: services/, types/, index.ts
-    ├── forum/         # ForumService + ForumRepository
-    ├── projects/
-    ├── bounties/
-    ├── meeting-notes/
-    └── members/
+└── shared/
+    ├── components/    # UI components (AppLayout, ui/)
+    ├── hooks/         # React Query hooks + useAuthReady
+    ├── types/         # Global TypeScript types
+    ├── utils/         # id-generator, cn, query-client, etc.
+    └── constants/     # API_ROUTES, queryKeys, VALIDATION_LIMITS
 ```
 
 ## Path Aliases
@@ -62,52 +71,160 @@ import { db } from '@core/database';
 import { compose, withAuth } from '@core/middleware';
 import { apiResponse } from '@core/utils';
 import { NotFoundError } from '@core/errors';
-import { forumService } from '@features/forum';
+import { forumService } from '@services/forum';
 import { generateId } from '@utils/id-generator';
 import { Button } from '@components/ui/button';
 import type { User } from '@shared/types';
 ```
 
-## API Route Pattern
+## Server Action Patterns (App Router)
 
-All API routes use middleware composition:
+All data fetching and mutations use server actions in `src/app/_actions/`.
+
+### Authentication (`src/app/_lib/auth.ts`)
 
 ```typescript
-import type { NextApiResponse } from 'next';
-import { compose, errorHandler, withAuth, type AuthenticatedRequest } from '@core/middleware';
-import { apiResponse } from '@core/utils';
-import { forumService } from '@features/forum';
+import { getAuthUser, requireAuth, requireAdmin, isUserAdmin } from '@/app/_lib/auth';
 
-async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
-    const data = await forumService.getPostsWithMetadata(req.claims.userId);
-    return apiResponse.success(res, data);
+// getAuthUser()    — returns { claims, user } or null (never throws)
+// requireAuth()    — redirects to '/' if not authenticated
+// isUserAdmin(id)  — returns boolean, checks admin/council_member/screener roles
+// requireAdmin()   — requireAuth + isUserAdmin, returns { ...auth, isAdmin: boolean }
+```
+
+**Rules:**
+- Server components/layouts: use `getAuthUser()` + manual redirect
+- Server actions: use `requireAuth()` (auto-redirects on auth failure, never 500s)
+- Admin-only actions: use `requireAdmin()`, check `isAdmin` before proceeding
+
+### ActionResult Pattern (`src/app/_lib/action-utils.ts`)
+
+**Queries** return data directly — auth failure triggers redirect, not a thrown error.
+
+**Mutations** return `ActionResult<T>` — never throw raw `Error()`:
+
+```typescript
+import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
+
+export async function createBounty(data: Record<string, any>): Promise<ActionResult<{ id: string }>> {
+  try {
+    const { user } = await requireAuth();
+    // ... business logic ...
+    return actionSuccess({ id });
+  } catch (err) {
+    return actionError(err);
   }
-  return apiResponse.error(res, 'Method not allowed', 405);
 }
+```
 
-export default compose(errorHandler, withAuth)(handler);
+**Consumer pattern:**
+```typescript
+const result = await createBounty(data);
+if (!result.success) {
+  setError(result.error);
+  return;
+}
+// result.data.id is available
+```
+
+### Admin RBAC
+
+Admin routes are guarded at two levels:
+1. **Layout level** (`(platform)/admin/layout.tsx`): server-side redirect for non-admins
+2. **Action level**: each admin action checks `requireAdmin()` + `isAdmin`
+
+```typescript
+export async function getRoles() {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) return [];
+  return rbacService.getAllRoles();
+}
+```
+
+## React Query Hooks
+
+All hooks in `src/shared/hooks/` follow these conventions:
+
+### Auth Guard with `useAuthReady`
+
+Every `useQuery` hook MUST use the `useAuthReady()` guard to prevent queries from firing before Privy initializes:
+
+```typescript
+import { useAuthReady } from './useAuthReady';
+
+export const useProjects = () => {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: ["projects"],
+    queryFn: () => getProjectsAction(),
+    enabled: authReady,    // <-- REQUIRED for all authenticated queries
+    staleTime: 1000 * 60,
+  });
+};
+```
+
+When combining with other `enabled` conditions:
+```typescript
+enabled: authReady && !!projectId,
+```
+
+### Mutation Hooks
+
+Mutations don't need `useAuthReady` (they're user-initiated). Use optimistic updates with rollback:
+
+```typescript
+export const useCreateProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ProjectInput) => createProjectAction(data),
+    onMutate: async (newData) => { /* optimistic update */ },
+    onError: (_err, _data, context) => { /* rollback */ },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["projects"] }); },
+  });
+};
 ```
 
 ## Key Patterns
 
 **ID Generation**: Always use `generateId()` from `@utils/id-generator` for new records (UUIDv7)
 
-**Error Classes**: Use from `@core/errors`:
+**Error Classes**: Use from `@core/errors` (for services/repositories, NOT server actions):
+
 - `NotFoundError('Post')` → 404
 - `ValidationError('Invalid input')` → 400
 - `UnauthorizedError()` → 401
+- `ForbiddenError()` → 403
 
-**Service/Repository**: Business logic in services, data access in repositories. See `src/features/forum/` as reference.
+**Service/Repository**: Business logic in services, data access in repositories. See `src/app/_services/forum/` as reference.
 
 **Authentication**:
-- Client: `usePrivy()` hook, PrivyProvider in `_app.tsx`
-- Server: `withAuth` middleware adds `req.claims.userId`
+
+- Client: `usePrivy()` hook, PrivyProvider in `_providers/privy-provider.tsx`
+- Server: `requireAuth()` in server actions, `getAuthUser()` in layouts
 - Embedded wallets created automatically on login
+- User identity: `usePrivy().user.id` is the Privy DID, `requireAuth().user.id` is the DB UUID — never compare these directly
+
+**File Storage**: Pinata helpers in `@utils/api-helpers` for IPFS upload/download:
+
+```typescript
+import { pinataHelpers } from '@utils/api-helpers';
+await pinataHelpers.uploadFile(file, { name: 'doc.pdf', network: 'private' });
+```
 
 ## Database
 
-Schema in `src/core/database/schema.ts`. Key tables: `users`, `members`, `forum_posts`, `projects`, `meeting_notes`, `forum_votes`, `documents`, `innovation_bounties`
+PostgreSQL via `pg` + `drizzle-orm/node-postgres`. Schema in `src/core/database/schema.ts` (pgTable). Key tables: `users`, `members`, `forum_posts`, `projects`, `meeting_notes`, `forum_votes`, `documents`, `innovation_bounties`, `roles`, `permissions`, `member_roles`, `member_activities`
+
+## API Route Patterns (Legacy Pages Router)
+
+Some API routes still use the Pages Router middleware pattern:
+
+```typescript
+import { compose, errorHandler, withAuth, type AuthenticatedRequest } from '@core/middleware';
+export default compose(errorHandler, withAuth)(handler);
+```
+
+Prefer server actions for new code.
 
 ## Legacy Compatibility
 

@@ -22,7 +22,9 @@
     "moduleResolution": "node",
     "paths": {
       "@/*": ["./src/*"],
-      "@features/*": ["./src/features/*"],
+      "@app/*": ["./src/app/*"],
+      "@actions/*": ["./src/app/_actions/*"],
+      "@services/*": ["./src/app/_services/*"],
       "@core/*": ["./src/core/*"],
       "@shared/*": ["./src/shared/*"],
       "@components/*": ["./src/shared/components/*"],

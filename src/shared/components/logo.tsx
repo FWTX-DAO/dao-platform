@@ -2,12 +2,14 @@ interface LogoPropsType {
   fontColor?: string;
   width?: string;
   height?: string;
+  ariaLabel?: string;
 }
 
 export function Logo(props: LogoPropsType) {
   const fontColor = props.fontColor || "white";
   const width = props.width || "151";
   const height = props.height || "44";
+  const ariaLabel = props.ariaLabel || "Privy";
 
   return (
     <svg
@@ -16,6 +18,8 @@ export function Logo(props: LogoPropsType) {
       viewBox={`0 0 ${width} ${height}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label={ariaLabel}
     >
       <g clipPath="url(#clip0_1922_14635)">
         <path

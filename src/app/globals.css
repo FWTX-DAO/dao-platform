@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+
+@theme {
+  --font-sans:
+    Adelle Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-display: 'Instrument Serif', Georgia, serif;
+
+  --color-privy-navy: #160b45;
+  --color-privy-light-blue: #eff1fd;
+  --color-privy-blueish: #d4d9fc;
+  --color-privy-pink: #ff8271;
+
+  --color-dao-charcoal: #0f1b33;
+  --color-dao-dark: #1a2744;
+  --color-dao-surface: #223152;
+  --color-dao-border: #2e4068;
+  --color-dao-gold: #c4963a;
+  --color-dao-gold-light: #dbb06b;
+  --color-dao-gold-muted: #8b7448;
+  --color-dao-warm: #f4efe8;
+  --color-dao-cool: #8b9bb0;
+  --color-dao-cream: #faf8f5;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@utility touch-manipulation {
+  touch-action: manipulation;
+}
+
+@layer base {
+  /* normal */
+  @font-face {
+    font-family: "Adelle Sans";
+    src: url("/fonts/AdelleSans-Regular.woff2") format("woff2"),
+         url("/fonts/AdelleSans-Regular.woff") format("woff");
+    font-style: normal;
+    font-display: swap;
+    font-weight: 300;
+  }
+
+  /* semibold */
+  @font-face {
+    font-family: "Adelle Sans";
+    src: url("/fonts/AdelleSans-Semibold.woff2") format("woff2"),
+         url("/fonts/AdelleSans-Semibold.woff") format("woff");
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem; /* Account for sticky navbar (h-16 = 64px = 4rem) */
+    background-color: #0f1b33;
+  }
+
+  body {
+    font-family: 'Adelle Sans', system-ui, -apple-system, sans-serif;
+    background-color: #0f1b33;
+  }
+}

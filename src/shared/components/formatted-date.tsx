@@ -1,17 +1,24 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 type Props = {
   secsSinceEpoch: number;
 };
 
 export default function FormattedDate({ secsSinceEpoch }: Props) {
-  const formattedDate = new Date(secsSinceEpoch * 1000).toLocaleDateString(
-    "en-us",
-    {
-      weekday: "long",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    },
-  );
+  const [formattedDate, setFormattedDate] = useState<string>('');
 
-  return <p>{formattedDate}</p>;
+  useEffect(() => {
+    setFormattedDate(
+      new Date(secsSinceEpoch * 1000).toLocaleDateString("en-us", {
+        weekday: "long",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+    );
+  }, [secsSinceEpoch]);
+
+  return <p suppressHydrationWarning>{formattedDate}</p>;
 }

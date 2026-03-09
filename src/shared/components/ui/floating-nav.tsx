@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/router";
+import { motion, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   Home,
   MessageSquare,
@@ -35,20 +36,20 @@ interface FloatingNavProps {
 }
 
 const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
-  const router = useRouter();
+  const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
   const [active, setActive] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, left: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const containerRef = useRef<HTMLElement>(null);
+  const btnRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   // Determine active item based on current route
   useEffect(() => {
-    const currentPath = router.pathname;
-    const activeIndex = items.findIndex((item) => item.href === currentPath);
+    const activeIndex = items.findIndex((item) => item.href === pathname);
     if (activeIndex !== -1) {
       setActive(activeIndex);
     }
-  }, [router.pathname, items]);
+  }, [pathname, items]);
 
   // Update indicator position when active changes or resize
   useEffect(() => {
@@ -72,26 +73,23 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
     return () => window.removeEventListener("resize", updateIndicator);
   }, [active]);
 
-  const handleNavigation = (index: number, href: string) => {
-    setActive(index);
-    router.push(href);
-  };
-
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-3 md:hidden">
-      <div
+      <nav
         ref={containerRef}
         className="relative flex items-center justify-between bg-gray-900 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] rounded-2xl px-2 py-3.5 border border-gray-700/50 ring-1 ring-white/10"
+        aria-label="Main navigation"
       >
         {items.map((item, index) => (
-          <button
+          <Link
             key={item.id}
+            href={item.href}
             ref={(el) => { btnRefs.current[index] = el; }}
-            onClick={() => handleNavigation(index, item.href)}
-            className={`relative flex flex-col items-center justify-center flex-1 px-1.5 py-2 text-sm font-medium transition-all duration-200 rounded-xl ${
+            className={`relative flex flex-col items-center justify-center flex-1 px-1.5 py-2 text-sm font-medium transition-colors duration-200 rounded-xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${
               active === index ? 'text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
             aria-label={item.label}
+            aria-current={active === index ? 'page' : undefined}
           >
             <div className="z-10 transition-transform duration-200" style={{ transform: active === index ? 'scale(1.1)' : 'scale(1)' }}>
               {item.icon}
@@ -102,16 +100,16 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
             }`}>
               {item.label}
             </span>
-          </button>
+          </Link>
         ))}
 
         {/* Sliding Active Indicator */}
         <motion.div
           animate={indicatorStyle}
-          transition={{ type: "spring", stiffness: 450, damping: 35 }}
-          className="absolute top-2.5 bottom-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-violet-700 shadow-lg shadow-violet-500/50"
+          transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 450, damping: 35 }}
+          className="absolute top-2.5 bottom-2.5 rounded-xl bg-linear-to-br from-violet-600 to-violet-700 shadow-lg shadow-violet-500/50"
         />
-      </div>
+      </nav>
     </div>
   );
 };

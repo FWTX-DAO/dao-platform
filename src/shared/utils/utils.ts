@@ -247,3 +247,4 @@ export const sanitizeProjectUpdateInput = (input: ProjectUpdateInput) => {
 
   return sanitized;
 };
+

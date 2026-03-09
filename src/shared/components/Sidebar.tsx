@@ -1,10 +1,13 @@
-import React, { memo } from 'react';
-import { useRouter } from 'next/router';
-import { usePrivy } from '@privy-io/react-auth';
-import Image from 'next/image';
-import { Button } from './ui/button';
-import { AnimatedSidebar, CollapsibleSection } from './ui/sidebar';
-import { useSidebar } from '../contexts/SidebarContext';
+import React, { memo, useCallback, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "./ui/button";
+import { AnimatedSidebar, CollapsibleSection } from "./ui/sidebar";
+import { useSidebar } from "../contexts/SidebarContext";
+import { useProfile } from "@shared/hooks/useProfile";
 import {
   Home,
   MessageSquare,
@@ -17,7 +20,13 @@ import {
   Trophy,
   Users,
   Send,
-} from 'lucide-react';
+  Search,
+  Activity,
+  CreditCard,
+  ShieldCheck,
+  BookOpen,
+  Stamp,
+} from "lucide-react";
 
 export type NavbarItem = {
   id: string;
@@ -27,12 +36,22 @@ export type NavbarItem = {
 };
 
 const navigationItems: NavbarItem[] = [
-  { id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: Home },
-  { id: 'forums', name: 'Forums', href: '/forums', icon: MessageSquare },
-  { id: 'bounties', name: 'Bounties', href: '/bounties', icon: Trophy },
-  { id: 'innovation-lab', name: 'Innovation Lab', href: '/innovation-lab', icon: Lightbulb },
-  { id: 'meeting-notes', name: 'Meeting Notes', href: '/meeting-notes', icon: FileText },
-  { id: 'documents', name: 'Documents', href: '/documents', icon: FolderOpen },
+  { id: "dashboard", name: "Dashboard", href: "/dashboard", icon: Home },
+  { id: "forums", name: "Forums", href: "/forums", icon: MessageSquare },
+  { id: "bounties", name: "Bounties", href: "/bounties", icon: Trophy },
+  {
+    id: "innovation-lab",
+    name: "Innovation Lab",
+    href: "/innovation-lab",
+    icon: Lightbulb,
+  },
+  {
+    id: "meeting-notes",
+    name: "Meeting Notes",
+    href: "/meeting-notes",
+    icon: FileText,
+  },
+  { id: "documents", name: "Documents", href: "/documents", icon: FolderOpen },
 ];
 
 interface SidebarItemProps {
@@ -44,81 +63,102 @@ interface SidebarItemProps {
 const SidebarItem = memo(({ item, isActive, onClick }: SidebarItemProps) => {
   const Icon = item.icon;
   return (
-    <Button
-      variant="ghost"
-      className={`w-full justify-start transition-all duration-200 ${
-        isActive
-          ? 'bg-gray-700 text-white hover:bg-gray-600'
-          : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-      }`}
+    <Link
+      href={item.href}
       onClick={onClick}
-      aria-current={isActive ? 'page' : undefined}
+      className={`flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+        isActive
+          ? "bg-dao-surface text-white hover:bg-dao-surface/80"
+          : "text-dao-cool hover:text-white hover:bg-dao-surface/50"
+      }`}
+      aria-current={isActive ? "page" : undefined}
     >
-      <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+      <Icon className="mr-3 h-5 w-5 shrink-0" />
       <span className="truncate">{item.name}</span>
-    </Button>
+    </Link>
   );
 });
 
-SidebarItem.displayName = 'SidebarItem';
+SidebarItem.displayName = "SidebarItem";
 
-const UserAvatar = memo(({ src, size = 40 }: { src: string; size?: number }) => (
-  <div
-    className="relative rounded-full overflow-hidden bg-gray-600 flex items-center justify-center"
-    style={{ width: size, height: size }}
-  >
-    <Image
-      src={src}
-      alt="User avatar"
-      width={size}
-      height={size}
-      className="rounded-full object-cover"
-      loading="lazy"
-      onError={(e) => {
-        e.currentTarget.style.display = 'none';
-        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-      }}
-    />
-    <User className="h-6 w-6 text-gray-300 hidden" />
-  </div>
-));
+const UserAvatar = memo(
+  ({ src, size = 40 }: { src: string; size?: number }) => (
+    <div
+      className="relative rounded-full overflow-hidden bg-dao-surface flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <Image
+        src={src}
+        alt="User avatar"
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+        loading="lazy"
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+          e.currentTarget.nextElementSibling?.classList.remove("hidden");
+        }}
+      />
+      <User className="h-6 w-6 text-dao-cool hidden" />
+    </div>
+  ),
+);
 
-UserAvatar.displayName = 'UserAvatar';
+UserAvatar.displayName = "UserAvatar";
 
 function Sidebar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = usePrivy();
+  const queryClient = useQueryClient();
   const { isOpen, close } = useSidebar();
-  const currentPath = router.pathname;
+  const { data: profile } = useProfile();
+  const currentPath = pathname;
+  const isAdmin = profile?.roleNames?.includes("admin");
 
-  const isActive = (href: string) => currentPath === href;
+  const isActive = useCallback(
+    (href: string) => currentPath === href,
+    [currentPath],
+  );
 
-  const handleLogout = async () => {
+  // Memoize handlers to prevent recreation on each render
+  const handleLogout = useCallback(async () => {
+    queryClient.clear();
     await logout();
-    router.push('/');
-  };
+    router.replace("/");
+  }, [logout, queryClient, router]);
 
-  const handleNavigation = (href: string) => {
-    router.push(href);
-    // Auto-close on mobile
-    if (window.innerWidth < 768) {
-      close();
-    }
-  };
+  const handleNavigation = useCallback(
+    (href: string) => {
+      router.push(href);
+      // Auto-close on mobile
+      if (window.innerWidth < 768) {
+        close();
+      }
+    },
+    [router, close],
+  );
 
-  const userInfo = {
-    email: user?.email?.address || 'User',
-    id: user?.id?.substring(0, 8) || '',
-  };
+  // Memoize derived user info
+  const userInfo = useMemo(
+    () => ({
+      email: user?.email?.address || "User",
+      id: user?.id?.substring(0, 8) || "",
+    }),
+    [user?.email?.address, user?.id],
+  );
 
   // Profile Section Component
   const profileSection = (
     <div className="flex items-center space-x-3">
-      <UserAvatar src="/images/avatar.png" size={48} />
+      <UserAvatar src="/images/avatar.webp" size={48} />
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-white truncate">{userInfo.email}</p>
         {userInfo.id && (
-          <p className="text-sm text-gray-400 truncate">{userInfo.id}...</p>
+          <p className="text-sm text-dao-cool/70 truncate">
+            {userInfo.id}
+            {"\u2026"}
+          </p>
         )}
       </div>
     </div>
@@ -142,41 +182,85 @@ function Sidebar() {
       {/* Collapsible Sections */}
       <CollapsibleSection title="Community" defaultOpen={false}>
         <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
-            onClick={() => handleNavigation('/members')}
+          <Link
+            href="/members"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <Users className="mr-3 h-4 w-4" />
             Members
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50"
-            onClick={() => window.open('https://t.me/fwtxdao', '_blank')}
+          </Link>
+          <Link
+            href="/directory"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+          >
+            <Search className="mr-3 h-4 w-4" />
+            Directory
+          </Link>
+          <Link
+            href="/activity"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+          >
+            <Activity className="mr-3 h-4 w-4" />
+            Activity
+          </Link>
+          <a
+            href="https://t.me/fwtxdao"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             <Send className="mr-3 h-4 w-4" />
             Telegram
-          </Button>
+          </a>
         </div>
       </CollapsibleSection>
 
+      {isAdmin && (
+        <CollapsibleSection title="Admin" defaultOpen={false}>
+          <div className="space-y-1">
+            <Link
+              href="/admin"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+            >
+              <ShieldCheck className="mr-3 h-4 w-4" />
+              Admin Panel
+            </Link>
+            <Link
+              href="/admin/bounties"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+            >
+              <Trophy className="mr-3 h-4 w-4" />
+              Bounty Screening
+            </Link>
+            <Link
+              href="/admin/stamps"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+            >
+              <Stamp className="mr-3 h-4 w-4" />
+              Stamps
+            </Link>
+          </div>
+        </CollapsibleSection>
+      )}
+
       <CollapsibleSection title="Resources" defaultOpen={false}>
         <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50 text-sm"
-            onClick={() => window.open('https://constitution.fwtx.city', '_blank')}
+          <a
+            href="https://constitution.fwtx.city"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             About DAO
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700/50 text-sm"
-            onClick={() => window.open('https://github.com/fwtx-dao', '_blank')}
+          </a>
+          <a
+            href="https://github.com/fwtx-dao"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
           >
             GitHub
-          </Button>
+          </a>
         </div>
       </CollapsibleSection>
     </>
@@ -185,14 +269,27 @@ function Sidebar() {
   // Footer Section Component
   const footerSection = (
     <div className="space-y-2">
-      <Button
-        variant="ghost"
-        className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-        onClick={() => handleNavigation('/settings')}
+      <Link
+        href="/passport"
+        className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
+      >
+        <BookOpen className="mr-3 h-4 w-4" />
+        Passport
+      </Link>
+      <Link
+        href="/billing"
+        className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
+      >
+        <CreditCard className="mr-3 h-4 w-4" />
+        Billing
+      </Link>
+      <Link
+        href="/settings"
+        className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"
       >
         <Settings className="mr-3 h-4 w-4" />
         Settings
-      </Button>
+      </Link>
       <Button
         variant="ghost"
         className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"

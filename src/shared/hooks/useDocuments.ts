@@ -1,46 +1,63 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getDocuments as getDocumentsAction,
+  getDocumentById as getDocumentByIdAction,
+  getDocumentAuditTrail as getDocumentAuditTrailAction,
+  getDocumentShares as getDocumentSharesAction,
+  updateDocument as updateDocumentAction,
+  deleteDocument as deleteDocumentAction,
+  shareDocument as shareDocumentAction,
+  revokeShare as revokeShareAction,
+  getDownloadUrl as getDownloadUrlAction,
+} from "@/app/_actions/documents";
 import { getAccessToken } from "@privy-io/react-auth";
+import { queryKeys } from "../utils/query-client";
+import { useAuthReady } from "./useAuthReady";
 
-export interface Document {
+export interface DocumentListItem {
   id: string;
   name: string;
-  description?: string;
-  category: string;
+  description?: string | null;
+  category: string | null;
   mimeType: string;
   fileSize: number;
-  pinataId: string;
-  cid: string;
-  network: string;
-  isPublic: number;
-  tags?: string;
+  isPublic: boolean;
   accessCount: number;
-  lastAccessedAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  author_name: string | null;
   uploaderId: string;
-  status: string;
+  createdAt: string;
 }
 
-export interface DocumentWithUploader {
-  document: Document;
-  uploader: {
-    id: string;
-    username: string;
-    avatarUrl?: string;
-  } | null;
-  downloadUrl?: string;
-}
-
-export interface DocumentInput {
+export interface DocumentDetail extends DocumentListItem {
   pinataId: string;
   cid: string;
-  name: string;
-  description?: string;
-  category?: string;
-  mimeType: string;
-  fileSize: number;
-  isPublic?: boolean;
-  tags?: string;
+  tags?: string | null;
+  lastAccessedAt?: string | null;
+  uploaderName: string | null;
+  status: string;
+  updatedAt: string;
+  isUploader: boolean;
+  isAdmin: boolean;
+}
+
+export interface DocumentAuditEntry {
+  id: string;
+  action: string;
+  metadata: any;
+  timestamp: string;
+  userName: string | null;
+  userId: string;
+}
+
+export interface DocumentShareEntry {
+  id: string;
+  shareType: string;
+  isActive: boolean;
+  expiresAt?: string | null;
+  createdAt: string;
+  sharedByName: string | null;
+  sharedById: string;
+  sharedWithId: string | null;
 }
 
 export interface DocumentUpdate {
@@ -52,300 +69,181 @@ export interface DocumentUpdate {
   isPublic?: boolean;
 }
 
-export interface UploadResult {
-  id: string;
-  cid: string;
-  name: string;
-  size: number;
-  mimeType: string;
-}
+// ============================================================================
+// QUERY HOOKS
+// ============================================================================
 
-const fetchDocuments = async (params?: {
-  category?: string;
-  search?: string;
-  user_id?: string;
-}): Promise<DocumentWithUploader[]> => {
-  const accessToken = await getAccessToken();
-  const searchParams = new URLSearchParams();
-  
-  if (params?.category) searchParams.append("category", params.category);
-  if (params?.search) searchParams.append("search", params.search);
-  if (params?.user_id) searchParams.append("user_id", params.user_id);
-  
-  const url = `/api/documents${searchParams.toString() ? `?${searchParams}` : ""}`;
-  
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch documents: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const fetchDocument = async (id: string): Promise<DocumentWithUploader> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/documents/${id}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch document: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-
-
-
-
-
-
-const updateDocument = async (documentData: DocumentUpdate): Promise<DocumentWithUploader> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/documents/${documentData.id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(documentData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to update document: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const deleteDocument = async (documentId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`/api/documents/${documentId}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete document: ${response.statusText}`);
-  }
-};
-
-// Query Hooks
 export const useDocuments = (params?: {
   category?: string;
   search?: string;
-  user_id?: string;
 }) => {
+  const authReady = useAuthReady();
   return useQuery({
-    queryKey: ["documents", params],
-    queryFn: () => fetchDocuments(params),
-    staleTime: 1000 * 60 * 3, // 3 minutes
+    queryKey: [...queryKeys.documents.lists(), params],
+    queryFn: () =>
+      getDocumentsAction({
+        search: params?.search,
+        category: params?.category,
+      }) as unknown as Promise<DocumentListItem[]>,
+    enabled: authReady,
+    staleTime: 1000 * 60 * 3,
   });
 };
 
 export const useDocument = (id: string | null) => {
+  const authReady = useAuthReady();
   return useQuery({
-    queryKey: ["document", id],
-    queryFn: () => fetchDocument(id!),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 3, // 3 minutes
+    queryKey: queryKeys.documents.detail(id!),
+    queryFn: () =>
+      getDocumentByIdAction(id!) as unknown as Promise<DocumentDetail | null>,
+    enabled: authReady && !!id,
+    staleTime: 1000 * 60,
   });
 };
 
-const convertFileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        const base64Parts = result.split(',');
-        if (base64Parts.length > 1 && base64Parts[1]) {
-          resolve(base64Parts[1]); // Remove data:type;base64, prefix
-        } else {
-          reject(new Error('Invalid data URL format'));
-        }
-      } else {
-        reject(new Error('Failed to read file as data URL'));
-      }
-    };
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
+export const useDocumentAuditTrail = (documentId: string | null) => {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: [...queryKeys.documents.detail(documentId!), "audit"],
+    queryFn: () =>
+      getDocumentAuditTrailAction(documentId!) as unknown as Promise<
+        DocumentAuditEntry[]
+      >,
+    enabled: authReady && !!documentId,
+    staleTime: 1000 * 30,
   });
 };
 
-const uploadFileToServer = async (file: File, metadata: any): Promise<any> => {
+export const useDocumentShares = (documentId: string | null) => {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: [...queryKeys.documents.detail(documentId!), "shares"],
+    queryFn: () =>
+      getDocumentSharesAction(documentId!) as unknown as Promise<
+        DocumentShareEntry[]
+      >,
+    enabled: authReady && !!documentId,
+    staleTime: 1000 * 30,
+  });
+};
+
+// ============================================================================
+// FILE UPLOAD (FormData — binary, no base64 overhead)
+// ============================================================================
+
+const uploadFileToServer = async (file: File): Promise<any> => {
   const accessToken = await getAccessToken();
-  
-  // Convert file to base64
-  const fileBase64 = await convertFileToBase64(file);
-  
+  const formData = new FormData();
+  formData.append("file", file);
+
   const response = await fetch("/api/documents/server-upload", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({
-      fileBase64,
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      name: metadata.name,
-      description: metadata.description || '',
-      category: metadata.category || 'General',
-      tags: metadata.tags || '',
-      isPublic: metadata.isPublic || false,
-    }),
+    body: formData,
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || `Failed to upload file: ${response.statusText}`);
+    throw new Error(
+      errorData.error || `Failed to upload file: ${response.statusText}`,
+    );
   }
 
   return response.json();
 };
 
-// Mutation Hooks
+// ============================================================================
+// MUTATION HOOKS
+// ============================================================================
+
 export const useUploadDocument = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ file, metadata }: { 
-      file: File; 
-      metadata: Omit<DocumentInput, 'pinataId' | 'cid' | 'mimeType' | 'fileSize'> 
-    }) => {
-      const result = await uploadFileToServer(file, metadata);
-      return result;
-    },
-    onMutate: async ({ file, metadata }) => {
-      await queryClient.cancelQueries({ queryKey: ["documents"] });
-      
-      const previousDocuments = queryClient.getQueryData<DocumentWithUploader[]>(["documents"]);
-      
-      const optimisticDoc: DocumentWithUploader = {
-        document: {
-          id: `temp-${Date.now()}`,
-          name: metadata.name,
-          description: metadata.description,
-          category: (metadata as any).category || 'General',
-          mimeType: file.type,
-          fileSize: file.size,
-          pinataId: 'pending',
-          cid: 'pending',
-          network: 'ipfs',
-          isPublic: (metadata as any).isPublic ? 1 : 0,
-          tags: (metadata as any).tags || '',
-          accessCount: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          uploaderId: 'temp',
-          status: 'uploading',
-        },
-        uploader: {
-          id: 'temp',
-          username: 'You',
-        },
-      };
-      
-      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) => 
-        old ? [optimisticDoc, ...old] : [optimisticDoc]
-      );
-      
-      return { previousDocuments };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previousDocuments) {
-        queryClient.setQueryData(["documents"], context.previousDocuments);
-      }
-    },
+    mutationFn: (file: File) => uploadFileToServer(file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
     },
   });
 };
 
 export const useUpdateDocument = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: updateDocument,
-    onMutate: async (updatedDoc) => {
-      await queryClient.cancelQueries({ queryKey: ["documents"] });
-      await queryClient.cancelQueries({ queryKey: ["document", updatedDoc.id] });
-      
-      const previousDocuments = queryClient.getQueryData<DocumentWithUploader[]>(["documents"]);
-      const previousDocument = queryClient.getQueryData<DocumentWithUploader>(["document", updatedDoc.id]);
-      
-      queryClient.setQueryData<DocumentWithUploader[]>(["documents"], (old) => 
-        old ? old.map((doc): DocumentWithUploader => 
-          doc.document.id === updatedDoc.id 
-            ? {
-                ...doc,
-                document: {
-                  ...doc.document,
-                  name: updatedDoc.name || doc.document.name,
-                  description: updatedDoc.description || doc.document.description,
-                  category: updatedDoc.category || doc.document.category,
-                  tags: updatedDoc.tags || doc.document.tags,
-                  isPublic: updatedDoc.isPublic !== undefined ? (updatedDoc.isPublic ? 1 : 0) : doc.document.isPublic,
-                  updatedAt: new Date().toISOString(),
-                },
-              }
-            : doc
-        ) : []
-      );
-      
-      return { previousDocuments, previousDocument };
-    },
-    onError: (_err, updatedDoc, context) => {
-      if (context?.previousDocuments) {
-        queryClient.setQueryData(["documents"], context.previousDocuments);
-      }
-      if (context?.previousDocument) {
-        queryClient.setQueryData(["document", updatedDoc.id], context.previousDocument);
-      }
-    },
-    onSuccess: (updatedDocument, variables) => {
-      queryClient.setQueryData(["documents"], (oldData: DocumentWithUploader[] | undefined) => {
-        return oldData ? oldData.map(doc => 
-          doc.document.id === variables.id ? updatedDocument : doc
-        ) : [updatedDocument];
+    mutationFn: (documentData: DocumentUpdate) =>
+      updateDocumentAction(documentData.id, documentData),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.documents.detail(variables.id),
       });
-      
-      queryClient.setQueryData(["document", variables.id], updatedDocument);
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
 };
 
 export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: deleteDocument,
-    onSuccess: (_, deletedDocumentId) => {
-      // Remove the document from all lists
-      queryClient.setQueryData(["documents"], (oldData: DocumentWithUploader[] | undefined) => {
-        return oldData ? oldData.filter(doc => doc.document.id !== deletedDocumentId) : [];
+    mutationFn: (documentId: string) => deleteDocumentAction(documentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+    },
+  });
+};
+
+export const useShareDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      documentId,
+      sharedWithId,
+      shareType,
+    }: {
+      documentId: string;
+      sharedWithId: string;
+      shareType?: string;
+    }) => shareDocumentAction(documentId, sharedWithId, shareType),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.documents.detail(variables.documentId),
+          "shares",
+        ],
       });
-      
-      // Remove the individual document query
-      queryClient.removeQueries({ queryKey: ["document", deletedDocumentId] });
-      
-      // Invalidate all document queries to be safe
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.documents.detail(variables.documentId),
+          "audit",
+        ],
+      });
+    },
+  });
+};
+
+export const useRevokeShare = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (shareId: string) => revokeShareAction(shareId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+    },
+  });
+};
+
+export const useDownloadDocument = () => {
+  return useMutation({
+    mutationFn: async (documentId: string) => {
+      const result = await getDownloadUrlAction(documentId);
+      if (!result.success) throw new Error(result.error);
+      // Open download URL in new tab
+      window.open(result.data.url, "_blank");
+      return result.data;
     },
   });
 };

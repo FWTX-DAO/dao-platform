@@ -75,19 +75,23 @@ export function createQueryClient() {
 
         // OPTIMIZED: Selective window focus refetch
         // Only refetch real-time data when user returns to tab
+        // Using Set for O(1) lookup instead of array.some()
         refetchOnWindowFocus: (query) => {
-          const realtimeKeys = [
+          const realtimeKeys = new Set([
             'forum-posts',
             'forum-replies',
             'bounties',
             'dashboard'
-          ];
+          ]);
 
-          return realtimeKeys.some(key =>
-            query.queryKey.some(k =>
-              typeof k === 'string' && k.includes(key)
-            )
-          );
+          for (const k of query.queryKey) {
+            if (typeof k === 'string') {
+              for (const key of realtimeKeys) {
+                if (k.includes(key)) return true;
+              }
+            }
+          }
+          return false;
         },
 
         // Refetch on reconnect
@@ -133,121 +137,6 @@ export function createQueryClient() {
     },
   });
 }
-
-// Prefetch utilities
-export const prefetchUtils = {
-  // Prefetch bounties list
-  prefetchBounties: async (queryClient: QueryClient, filters?: any) => {
-    const { getAccessToken } = await import("@privy-io/react-auth");
-    const accessToken = await getAccessToken();
-
-    return queryClient.prefetchQuery({
-      queryKey: queryKeys.bounties.list(filters),
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (filters) {
-          Object.entries(filters).forEach(([key, value]) => {
-            if (value) params.append(key, value.toString());
-          });
-        }
-
-        const response = await fetch(`/api/bounties?${params.toString()}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch bounties");
-        return response.json();
-      },
-      staleTime: 30 * 1000,
-    });
-  },
-
-  // Prefetch bounty details
-  prefetchBountyDetails: async (queryClient: QueryClient, id: string) => {
-    const { getAccessToken } = await import("@privy-io/react-auth");
-    const accessToken = await getAccessToken();
-
-    return queryClient.prefetchQuery({
-      queryKey: queryKeys.bounties.detail(id),
-      queryFn: async () => {
-        const response = await fetch(`/api/bounties/${id}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch bounty");
-        return response.json();
-      },
-      staleTime: 30 * 1000,
-    });
-  },
-
-  // Prefetch projects
-  prefetchProjects: async (queryClient: QueryClient) => {
-    const { getAccessToken } = await import("@privy-io/react-auth");
-    const accessToken = await getAccessToken();
-
-    return queryClient.prefetchQuery({
-      queryKey: queryKeys.projects.lists(),
-      queryFn: async () => {
-        const response = await fetch("/api/projects", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch projects");
-        return response.json();
-      },
-      staleTime: 60 * 1000,
-    });
-  },
-
-  // Prefetch dashboard-related data (forums, projects, bounties)
-  prefetchDashboardRelated: async (queryClient: QueryClient) => {
-    const { getAccessToken } = await import("@privy-io/react-auth");
-    const accessToken = await getAccessToken();
-
-    // Run all prefetches in parallel - use allSettled to not fail if one fails
-    return Promise.allSettled([
-      // Prefetch recent forum posts
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.forums.posts(),
-        queryFn: async () => {
-          const response = await fetch("/api/forums/posts", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (!response.ok) throw new Error("Failed to fetch");
-          return response.json();
-        },
-        staleTime: 30 * 1000,
-      }),
-
-      // Prefetch projects list
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.projects.lists(),
-        queryFn: async () => {
-          const response = await fetch("/api/projects", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (!response.ok) throw new Error("Failed to fetch");
-          return response.json();
-        },
-        staleTime: 60 * 1000,
-      }),
-
-      // Prefetch bounties list
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.bounties.lists(),
-        queryFn: async () => {
-          const response = await fetch("/api/bounties", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (!response.ok) throw new Error("Failed to fetch");
-          return response.json();
-        },
-        staleTime: 60 * 1000,
-      }),
-    ]);
-  },
-};
 
 // Optimistic update helpers
 export const optimisticHelpers = {

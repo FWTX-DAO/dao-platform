@@ -1,16 +1,16 @@
 import {
   useCreateWallet,
-  useSolanaWallets,
   WalletWithMetadata,
   useUser,
 } from "@privy-io/react-auth";
+import { useCreateWallet as useCreateSolanaWallet } from "@privy-io/react-auth/solana";
 import { useCallback, useMemo, useState } from "react";
 import WalletCard from "./WalletCard";
 
 export default function WalletList() {
   const { user } = useUser();
   const { createWallet: createEthereumWallet } = useCreateWallet();
-  const { createWallet: createSolanaWallet } = useSolanaWallets();
+  const { createWallet: createSolanaWallet } = useCreateSolanaWallet();
   const [isCreating, setIsCreating] = useState(false);
 
   const ethereumEmbeddedWallets = useMemo<WalletWithMetadata[]>(
@@ -63,9 +63,9 @@ export default function WalletList() {
           <button
             onClick={() => handleCreateWallet("ethereum")}
             disabled={isCreating}
-            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed"
+            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
-            {isCreating ? "Creating..." : "Create Ethereum Embedded Wallet"}
+            {isCreating ? "Creating…" : "Create Ethereum Embedded Wallet"}
           </button>
         </div>
       ) : (
@@ -83,9 +83,9 @@ export default function WalletList() {
           <button
             onClick={() => handleCreateWallet("solana")}
             disabled={isCreating}
-            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed"
+            className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
-            {isCreating ? "Creating..." : "Create Solana Embedded Wallet"}
+            {isCreating ? "Creating…" : "Create Solana Embedded Wallet"}
           </button>
         </div>
       ) : (

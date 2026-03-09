@@ -1,6 +1,31 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import { getAccessToken } from "@privy-io/react-auth";
-import { queryKeys, optimisticHelpers, invalidationPatterns } from "../utils/query-client";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
+import {
+  getBounties as getBountiesAction,
+  getBountyById as getBountyByIdAction,
+  getMyBounties as getMyBountiesAction,
+  getScreeningBounties as getScreeningBountiesAction,
+  getBountyComments as getBountyCommentsAction,
+  createBounty as createBountyAction,
+  updateBounty as updateBountyAction,
+  deleteBounty as deleteBountyAction,
+  submitProposal as submitProposalAction,
+  reviewProposal as reviewProposalAction,
+  addBountyComment as addBountyCommentAction,
+  deleteBountyComment as deleteBountyCommentAction,
+  screenBounty as screenBountyAction,
+  updateBountyStatus as updateBountyStatusAction,
+} from "@/app/_actions/bounties";
+import {
+  queryKeys,
+  optimisticHelpers,
+  invalidationPatterns,
+} from "../utils/query-client";
+import { useAuthReady } from "./useAuthReady";
 
 export interface Bounty {
   id: string;
@@ -20,12 +45,39 @@ export interface Bounty {
   status: string;
   viewCount: number;
   proposalCount: number;
-  isAnonymous: number;
+  isAnonymous: boolean;
   submitterId?: string;
-  submitterName?: string;
-  submitterAvatar?: string;
   createdAt: string;
   publishedAt?: string;
+}
+
+export interface BountyProposal {
+  id: string;
+  bountyId: string;
+  projectId?: string;
+  proposerId: string;
+  proposerName?: string;
+  proposalTitle: string;
+  proposalDescription: string;
+  approach: string;
+  timeline?: string;
+  budget?: string;
+  teamMembers?: any;
+  status: string;
+  reviewNotes?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
+export interface BountyComment {
+  id: string;
+  bountyId: string;
+  content: string;
+  isInternal: boolean;
+  authorId: string;
+  authorName?: string;
+  parentId?: string;
+  createdAt: string;
 }
 
 export interface BountyDetails extends Bounty {
@@ -39,7 +91,7 @@ export interface BountyDetails extends Bounty {
   sponsorPhone?: string;
   sponsorTitle?: string;
   commonToolsUsed?: string;
-  technicalRequirements?: string;
+  technicalRequirements?: any;
   constraints?: string;
   deliverables?: string;
   screeningNotes?: string;
@@ -47,19 +99,10 @@ export interface BountyDetails extends Bounty {
   screenedAt?: string;
   updatedAt?: string;
   comments: BountyComment[];
+  proposals: BountyProposal[];
   userHasProposal: boolean;
-  userIsSubmitter: boolean;
-}
-
-export interface BountyComment {
-  id: string;
-  content: string;
-  isInternal: number;
-  authorId: string;
-  authorName?: string;
-  authorAvatar?: string;
-  parentId?: string;
-  createdAt: string;
+  isSubmitter: boolean;
+  isAdmin: boolean;
 }
 
 export interface BountyInput {
@@ -90,122 +133,22 @@ export interface BountyInput {
   category?: string;
   tags?: string | string[];
   isAnonymous?: boolean;
-  submitForReview?: boolean;
 }
 
-// API Functions
-const fetchBounties = async (filters?: {
-  status?: string;
-  category?: string;
-  organizationType?: string;
-  search?: string;
-  includeAll?: boolean;
-  limit?: number;
-  offset?: number;
-}): Promise<Bounty[]> => {
-  const accessToken = await getAccessToken();
-  
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, value.toString());
-      }
-    });
-  }
-  
-  const response = await fetch(`/api/bounties?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+export interface ProposalInput {
+  proposalTitle: string;
+  proposalDescription: string;
+  approach: string;
+  timeline?: string;
+  budget?: string;
+  teamMembers?: any;
+  projectId?: string;
+}
 
-  if (!response.ok) {
-    const error: any = new Error(`Failed to fetch bounties: ${response.statusText}`);
-    error.status = response.status;
-    throw error;
-  }
+// ============================================================================
+// QUERY HOOKS
+// ============================================================================
 
-  return response.json();
-};
-
-const fetchBountyDetails = async (bountyId: string, includeAll?: boolean): Promise<BountyDetails> => {
-  const accessToken = await getAccessToken();
-  const params = includeAll ? '?includeAll=true' : '';
-  const response = await fetch(`/api/bounties/${bountyId}${params}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error: any = new Error(`Failed to fetch bounty details: ${response.statusText}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.json();
-};
-
-const createBounty = async (bountyData: BountyInput): Promise<Bounty> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/bounties", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(bountyData),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || `Failed to create bounty: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const updateBounty = async ({ 
-  id, 
-  ...updates 
-}: BountyInput & { id: string }): Promise<Bounty> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/bounties", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ id, ...updates }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || `Failed to update bounty: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const deleteBounty = async (bountyId: string): Promise<void> => {
-  const accessToken = await getAccessToken();
-  const response = await fetch("/api/bounties", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ id: bountyId }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || `Failed to delete bounty: ${response.statusText}`);
-  }
-};
-
-// Optimized Query Hooks
 export const useBounties = (filters?: {
   status?: string;
   category?: string;
@@ -213,16 +156,16 @@ export const useBounties = (filters?: {
   search?: string;
   includeAll?: boolean;
 }) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.bounties.list(filters),
-    queryFn: () => fetchBounties(filters),
-    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchInterval: filters?.status === "published" ? 60 * 1000 : false, // Auto-refetch published bounties every minute
+    queryFn: () => getBountiesAction(filters) as unknown as Promise<Bounty[]>,
+    enabled: authReady,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
-// Infinite scrolling for large lists
 export const useBountiesInfinite = (filters?: {
   status?: string;
   category?: string;
@@ -230,75 +173,77 @@ export const useBountiesInfinite = (filters?: {
   search?: string;
   limit?: number;
 }) => {
+  const authReady = useAuthReady();
   return useInfiniteQuery({
     queryKey: [...queryKeys.bounties.list(filters), "infinite"],
-    queryFn: ({ pageParam = 0 }) => 
-      fetchBounties({ ...filters, limit: filters?.limit || 20, offset: pageParam }),
+    queryFn: () =>
+      getBountiesAction({ ...filters }) as unknown as Promise<Bounty[]>,
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * (filters?.limit || 20);
-      return lastPage.length === (filters?.limit || 20) ? totalFetched : undefined;
+      return lastPage.length === (filters?.limit || 20)
+        ? totalFetched
+        : undefined;
     },
+    enabled: authReady,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     initialPageParam: 0,
   });
 };
 
-export const useBountyDetails = (bountyId: string | null, options?: { includeAll?: boolean }) => {
+export const useBountyDetails = (bountyId: string | null) => {
+  const authReady = useAuthReady();
   return useQuery({
-    queryKey: [...queryKeys.bounties.detail(bountyId!), options?.includeAll ? 'all' : 'public'],
-    queryFn: () => fetchBountyDetails(bountyId!, options?.includeAll),
-    enabled: !!bountyId,
-    staleTime: 10 * 1000, // Details are fresh for 10 seconds
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    queryKey: queryKeys.bounties.detail(bountyId!),
+    queryFn: () =>
+      getBountyByIdAction(bountyId!) as unknown as Promise<BountyDetails>,
+    enabled: authReady && !!bountyId,
+    staleTime: 10 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
-// Optimized Mutation Hooks with optimistic updates
+export const useMyBounties = () => {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: [...queryKeys.bounties.all, "my"],
+    queryFn: () => getMyBountiesAction() as unknown as Promise<Bounty[]>,
+    enabled: authReady,
+    staleTime: 30 * 1000,
+  });
+};
+
+export const useScreeningBounties = () => {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: queryKeys.bounties.screening(),
+    queryFn: () => getScreeningBountiesAction() as unknown as Promise<any[]>,
+    enabled: authReady,
+    staleTime: 15 * 1000,
+  });
+};
+
+export const useBountyComments = (bountyId: string | null) => {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: [...queryKeys.bounties.detail(bountyId!), "comments"],
+    queryFn: () =>
+      getBountyCommentsAction(bountyId!) as unknown as Promise<BountyComment[]>,
+    enabled: authReady && !!bountyId,
+    staleTime: 15 * 1000,
+  });
+};
+
+// ============================================================================
+// MUTATION HOOKS
+// ============================================================================
+
 export const useCreateBounty = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: createBounty,
-    // Optimistic update
-    onMutate: async (newBounty) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: queryKeys.bounties.lists() });
-      
-      // Snapshot previous value
-      const previousBounties = queryClient.getQueryData(queryKeys.bounties.lists());
-      
-      // Optimistically update to the new value
-      const optimisticBounty: Bounty = {
-        id: `temp-${Date.now()}`,
-        title: newBounty.title,
-        organizationName: newBounty.organizationName,
-        organizationType: newBounty.organizationType,
-        problemStatement: newBounty.problemStatement,
-        useCase: newBounty.useCase,
-        desiredOutcome: newBounty.desiredOutcome,
-        status: "screening",
-        viewCount: 0,
-        proposalCount: 0,
-        isAnonymous: newBounty.isAnonymous ? 1 : 0,
-        createdAt: new Date().toISOString(),
-      };
-      
-      queryClient.setQueryData(
-        queryKeys.bounties.lists(),
-        (old: Bounty[] | undefined) => optimisticHelpers.addToList(old, optimisticBounty)
-      );
-      
-      // Return context with snapshot
-      return { previousBounties };
-    },
-    // On error, revert to previous value
-    onError: (_err, _newBounty, context) => {
-      if (context?.previousBounties) {
-        queryClient.setQueryData(queryKeys.bounties.lists(), context.previousBounties);
-      }
-    },
-    // Always refetch after error or success
+    mutationFn: (bountyData: BountyInput) =>
+      createBountyAction(bountyData as Record<string, any>),
     onSettled: () => {
       invalidationPatterns.smartInvalidate(queryClient, "bounties", "create");
     },
@@ -307,91 +252,165 @@ export const useCreateBounty = () => {
 
 export const useUpdateBounty = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: updateBounty,
-    // Optimistic update
-    onMutate: async (updatedBounty) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        queryKey: queryKeys.bounties.detail(updatedBounty.id) 
-      });
-      
-      // Snapshot previous values
-      const previousBounty = queryClient.getQueryData(
-        queryKeys.bounties.detail(updatedBounty.id)
-      );
-      const previousBounties = queryClient.getQueryData(queryKeys.bounties.lists());
-      
-      // Optimistically update bounty details
-      queryClient.setQueryData(
-        queryKeys.bounties.detail(updatedBounty.id),
-        (old: BountyDetails | undefined) => ({
-          ...old,
-          ...updatedBounty,
-        })
-      );
-      
-      // Optimistically update in list
-      queryClient.setQueryData(
-        queryKeys.bounties.lists(),
-        (old: Bounty[] | undefined) => 
-          optimisticHelpers.updateInList(old, updatedBounty as any)
-      );
-      
-      return { previousBounty, previousBounties };
-    },
-    onError: (_err, updatedBounty, context) => {
-      if (context?.previousBounty) {
-        queryClient.setQueryData(
-          queryKeys.bounties.detail(updatedBounty.id),
-          context.previousBounty
-        );
-      }
-      if (context?.previousBounties) {
-        queryClient.setQueryData(queryKeys.bounties.lists(), context.previousBounties);
-      }
-    },
+    mutationFn: ({ id, ...updates }: BountyInput & { id: string }) =>
+      updateBountyAction(id, updates as Record<string, any>),
     onSettled: (_data, _error, variables) => {
-      invalidationPatterns.smartInvalidate(queryClient, "bounties", "update", variables.id);
+      invalidationPatterns.smartInvalidate(
+        queryClient,
+        "bounties",
+        "update",
+        variables.id,
+      );
     },
   });
 };
 
 export const useDeleteBounty = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: deleteBounty,
-    // Optimistic update
+    mutationFn: (bountyId: string) => deleteBountyAction(bountyId),
     onMutate: async (bountyId) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.bounties.lists() });
-      
-      // Snapshot previous value
-      const previousBounties = queryClient.getQueryData(queryKeys.bounties.lists());
-      
-      // Optimistically remove from list
+      const previousBounties = queryClient.getQueryData(
+        queryKeys.bounties.lists(),
+      );
+
       queryClient.setQueryData(
         queryKeys.bounties.lists(),
-        (old: Bounty[] | undefined) => 
-          optimisticHelpers.removeFromList(old, bountyId)
+        (old: Bounty[] | undefined) =>
+          optimisticHelpers.removeFromList(old, bountyId),
       );
-      
-      // Remove from cache
-      queryClient.removeQueries({ 
-        queryKey: queryKeys.bounties.detail(bountyId) 
+
+      queryClient.removeQueries({
+        queryKey: queryKeys.bounties.detail(bountyId),
       });
-      
+
       return { previousBounties };
     },
     onError: (_err, _bountyId, context) => {
       if (context?.previousBounties) {
-        queryClient.setQueryData(queryKeys.bounties.lists(), context.previousBounties);
+        queryClient.setQueryData(
+          queryKeys.bounties.lists(),
+          context.previousBounties,
+        );
       }
     },
     onSettled: (_data, _error, bountyId) => {
-      invalidationPatterns.smartInvalidate(queryClient, "bounties", "delete", bountyId);
+      invalidationPatterns.smartInvalidate(
+        queryClient,
+        "bounties",
+        "delete",
+        bountyId,
+      );
+    },
+  });
+};
+
+export const useSubmitProposal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ bountyId, ...data }: ProposalInput & { bountyId: string }) =>
+      submitProposalAction(bountyId, data),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bounties.detail(variables.bountyId),
+      });
+    },
+  });
+};
+
+export const useReviewProposal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      proposalId,
+      decision,
+      notes,
+    }: {
+      proposalId: string;
+      decision: "accepted" | "rejected" | "revision_requested";
+      notes?: string;
+    }) => reviewProposalAction(proposalId, decision, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all });
+    },
+  });
+};
+
+export const useAddBountyComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      bountyId,
+      content,
+      parentId,
+      isInternal,
+    }: {
+      bountyId: string;
+      content: string;
+      parentId?: string;
+      isInternal?: boolean;
+    }) => addBountyCommentAction(bountyId, content, parentId, isInternal),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bounties.detail(variables.bountyId),
+      });
+    },
+  });
+};
+
+export const useDeleteBountyComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId: string) => deleteBountyCommentAction(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all });
+    },
+  });
+};
+
+export const useScreenBounty = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+      notes,
+    }: {
+      id: string;
+      action: "approve" | "reject" | "request_changes";
+      notes?: string;
+    }) => screenBountyAction(id, action, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all });
+    },
+  });
+};
+
+export const useUpdateBountyStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: "assigned" | "completed" | "cancelled";
+    }) => updateBountyStatusAction(id, status),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bounties.detail(variables.id),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.lists() });
     },
   });
 };
@@ -400,16 +419,17 @@ export const useDeleteBounty = () => {
 export const usePrefetchBounty = () => {
   const queryClient = useQueryClient();
 
-  return (bountyId: string, includeAll?: boolean) => {
+  return (bountyId: string) => {
     queryClient.prefetchQuery({
-      queryKey: [...queryKeys.bounties.detail(bountyId), includeAll ? 'all' : 'public'],
-      queryFn: () => fetchBountyDetails(bountyId, includeAll),
+      queryKey: queryKeys.bounties.detail(bountyId),
+      queryFn: () =>
+        getBountyByIdAction(bountyId) as unknown as Promise<BountyDetails>,
       staleTime: 10 * 1000,
     });
   };
 };
 
-// Utility function to format bounty amount
+// Utility functions
 export const formatBountyAmount = (amountInCents?: number | null): string => {
   if (!amountInCents) return "Open";
   return new Intl.NumberFormat("en-US", {
@@ -420,18 +440,19 @@ export const formatBountyAmount = (amountInCents?: number | null): string => {
   }).format(amountInCents / 100);
 };
 
-// Utility function to get status color
 export const getBountyStatusColor = (status: string): string => {
   const statusColors: Record<string, string> = {
+    draft: "bg-gray-100 text-gray-800",
+    screening: "bg-yellow-100 text-yellow-800",
     published: "bg-green-100 text-green-800",
     assigned: "bg-blue-100 text-blue-800",
     completed: "bg-purple-100 text-purple-800",
+    rejected: "bg-red-100 text-red-800",
     cancelled: "bg-red-100 text-red-800",
   };
   return statusColors[status] || "bg-gray-100 text-gray-800";
 };
 
-// Utility function to get organization type label
 export const getOrgTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
     civic: "Civic Organization",

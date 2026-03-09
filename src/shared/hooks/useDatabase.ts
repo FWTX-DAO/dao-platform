@@ -1,70 +1,34 @@
 import { useState, useEffect } from 'react';
-import { getAccessToken } from '@privy-io/react-auth';
+import { getUserProfile } from '@/app/_actions/users';
+import { getMemberProfile } from '@/app/_actions/members';
 
 export function useDatabase() {
+  return { loading: false, error: null };
+}
+
+export function useUser() {
+  const [user, setUser] = useState<any>(null);
+  const [membership, setMembership] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const fetchUser = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const accessToken = await getAccessToken();
-      const response = await fetch(`/api/db/${endpoint}`, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`API call failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data;
+      const [userData, memberData] = await Promise.all([
+        getUserProfile(),
+        getMemberProfile(),
+      ]);
+      setUser(userData);
+      setMembership(memberData);
+      return { user: userData, membership: memberData };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-      throw err;
+      console.error('Failed to fetch user:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  return { apiCall, loading, error };
-}
-
-// Specific hooks for different resources
-export function useUser() {
-  const { apiCall, loading, error } = useDatabase();
-  const [user, setUser] = useState(null);
-  const [membership, setMembership] = useState(null);
-
-  const fetchUser = async () => {
-    try {
-      const data = await apiCall('user');
-      setUser(data.user);
-      setMembership(data.membership);
-      return data;
-    } catch (err) {
-      console.error('Failed to fetch user:', err);
-    }
-  };
-
-  const updateProfile = async (updates: any) => {
-    try {
-      await apiCall('user', {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-      });
-      await fetchUser(); // Refresh user data
-    } catch (err) {
-      console.error('Failed to update profile:', err);
-      throw err;
     }
   };
 
@@ -72,5 +36,5 @@ export function useUser() {
     fetchUser();
   }, []);
 
-  return { user, membership, loading, error, refetch: fetchUser, updateProfile };
+  return { user, membership, loading, error, refetch: fetchUser, updateProfile: async () => {} };
 }
