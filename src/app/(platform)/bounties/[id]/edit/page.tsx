@@ -261,7 +261,7 @@ export default function EditBountyPage() {
           </button>
           <button
             onClick={() => router.back()}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             Cancel
           </button>

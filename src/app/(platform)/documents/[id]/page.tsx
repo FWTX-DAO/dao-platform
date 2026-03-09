@@ -188,7 +188,7 @@ export default function DocumentDetailPage() {
             </button>
             <button
               onClick={() => setEditing(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
