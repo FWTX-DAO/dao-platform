@@ -102,11 +102,14 @@ export async function getBounties(filters?: {
 
   const conditions = [];
 
-  if (!admin || !filters?.includeAll) {
-    conditions.push(eq(innovationBounties.status, "published"));
-  }
   if (filters?.status && filters.status !== "all") {
+    // Explicit status filter from the UI
     conditions.push(eq(innovationBounties.status, filters.status));
+  } else if (!admin || !filters?.includeAll) {
+    // Default: non-admin users see only published, assigned, and completed bounties
+    conditions.push(
+      sql`${innovationBounties.status} IN ('published', 'assigned', 'completed')`,
+    );
   }
   if (filters?.category && filters.category !== "all") {
     conditions.push(eq(innovationBounties.category, filters.category));
