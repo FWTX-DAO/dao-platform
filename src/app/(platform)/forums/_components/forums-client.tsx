@@ -10,6 +10,7 @@ import {
   Pencil,
   Trash2,
   X,
+  Send,
 } from 'lucide-react';
 import { ForumPostModal } from '@components/modals/ForumPostModal';
 import {
@@ -21,6 +22,7 @@ import {
   useVoteOnPost,
   type ForumPost,
 } from '@hooks/useForumPosts';
+import { getReplies as getRepliesAction } from '@/app/_actions/forum';
 import { formatDate } from '@utils/format';
 import { PageHeader } from '@components/ui/page-header';
 import { FilterPills } from '@components/ui/filter-pills';
@@ -49,12 +51,19 @@ export function ForumsClient() {
   const [error, setError] = useState('');
   const [newPost, setNewPost] = useState({ title: '', content: '', category: 'General' });
   const [editPost, setEditPost] = useState({ title: '', content: '', category: 'General' });
+  const [replyContent, setReplyContent] = useState('');
 
   const { data: replies = [], isLoading: isLoadingReplies } = useForumReplies(viewingReplies?.id || null);
+
+  // Reply mutation scoped to current thread
+  const replyMutation = useCreateForumPost();
+  const replyVoteMutation = useVoteOnPost(viewingReplies?.id);
+  const replyDeleteMutation = useDeleteForumPost(viewingReplies?.id);
 
   // Focus trap ref for reply modal
   const replyModalRef = useRef<HTMLDivElement>(null);
   const replyTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Close modal on Escape
   useEffect(() => {
@@ -66,17 +75,25 @@ export function ForumsClient() {
     return () => document.removeEventListener('keydown', handler);
   }, [viewingReplies]);
 
-  // Return focus on modal close
+  // Return focus on modal close & reset reply input
   useEffect(() => {
-    if (!viewingReplies && replyTriggerRef.current) {
-      replyTriggerRef.current.focus();
-      replyTriggerRef.current = null;
+    if (!viewingReplies) {
+      setReplyContent('');
+      if (replyTriggerRef.current) {
+        replyTriggerRef.current.focus();
+        replyTriggerRef.current = null;
+      }
     }
   }, [viewingReplies]);
 
   const handleUpvote = (postId: string, currentUpvoted: number) => {
     const voteType = currentUpvoted ? 0 : 1;
     voteMutation.mutate({ postId, voteType });
+  };
+
+  const handleReplyUpvote = (postId: string, currentUpvoted: number) => {
+    const voteType = currentUpvoted ? 0 : 1;
+    replyVoteMutation.mutate({ postId, voteType });
   };
 
   const handleCreatePost = () => {
@@ -114,6 +131,32 @@ export function ForumsClient() {
     });
   };
 
+  const handleDeleteReply = (replyId: string) => {
+    setConfirmDelete(null);
+    replyDeleteMutation.mutate(replyId, {
+      onError: () => setError('Failed to delete reply. Please try again.'),
+    });
+  };
+
+  const handleSubmitReply = () => {
+    if (!viewingReplies || !replyContent.trim()) return;
+    replyMutation.mutate(
+      {
+        title: `Re: ${viewingReplies.title}`,
+        content: replyContent.trim(),
+        category: viewingReplies.category,
+        parentId: viewingReplies.id,
+      },
+      {
+        onSuccess: () => {
+          setReplyContent('');
+          replyInputRef.current?.focus();
+        },
+        onError: () => setError('Failed to post reply. Please try again.'),
+      }
+    );
+  };
+
   const startEditPost = (post: ForumPost) => {
     setEditingPost(post);
     setEditPost({ title: post.title, content: post.content, category: post.category });
@@ -128,15 +171,8 @@ export function ForumsClient() {
     (postId: string) => {
       queryClient.prefetchQuery({
         queryKey: ['forum-replies', postId],
-        queryFn: async () => {
-          const { getAccessToken } = await import('@privy-io/react-auth');
-          const accessToken = await getAccessToken();
-          const response = await fetch(`/api/forums/posts/${postId}/replies`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (!response.ok) throw new Error('Failed to fetch');
-          return response.json();
-        },
+        queryFn: () => getRepliesAction(postId) as unknown as Promise<ForumPost[]>,
+        staleTime: 1000 * 60,
       });
     },
     [queryClient]
@@ -210,7 +246,7 @@ export function ForumsClient() {
               <div className="min-w-0 flex-1 mr-4">
                 <h2 className="text-lg font-bold text-gray-900 truncate">Replies to: {viewingReplies.title}</h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  by {viewingReplies.author_name} &middot; {formatDate(viewingReplies.created_at)}
+                  by {viewingReplies.authorName || 'Anonymous'} &middot; {formatDate(viewingReplies.createdAt)}
                 </p>
               </div>
               <button
@@ -235,26 +271,26 @@ export function ForumsClient() {
                 />
               ) : (
                 <ul className="space-y-4">
-                  {replies.map((reply: any) => (
+                  {replies.map((reply: ForumPost) => (
                     <li key={reply.id} className="bg-white border rounded-lg p-4">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-medium text-gray-900">{reply.author_name || 'Anonymous'}</span>
+                        <span className="text-sm font-medium text-gray-900">{reply.authorName || 'Anonymous'}</span>
                         <span className="text-xs text-gray-500">
-                          {formatDate(reply.created_at)}
-                          {reply.updated_at && reply.updated_at !== reply.created_at && <span className="ml-1">(edited)</span>}
+                          {formatDate(reply.createdAt)}
+                          {reply.updatedAt && reply.updatedAt !== reply.createdAt && <span className="ml-1">(edited)</span>}
                         </span>
                       </div>
                       <p className="text-gray-700 whitespace-pre-line mb-3 text-sm">{reply.content}</p>
                       <div className="flex items-center justify-between">
                         <button
-                          onClick={() => handleUpvote(reply.id, reply.has_upvoted)}
+                          onClick={() => handleReplyUpvote(reply.id, reply.hasUpvoted)}
                           className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-hidden p-2 -ml-2 rounded-md min-h-[44px]"
-                          aria-label={`Upvote reply by ${reply.author_name || 'Anonymous'}`}
+                          aria-label={`Upvote reply by ${reply.authorName || 'Anonymous'}`}
                         >
-                          <Heart className={`h-4 w-4 ${reply.has_upvoted ? 'fill-violet-600 text-violet-600' : ''}`} />
+                          <Heart className={`h-4 w-4 ${reply.hasUpvoted ? 'fill-violet-600 text-violet-600' : ''}`} />
                           <span className="text-sm tabular-nums">{reply.upvotes}</span>
                         </button>
-                        {user && reply.author_privy_did === user.id && (
+                        {user && reply.authorPrivyDid === user.id && (
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => startEditPost(reply)}
@@ -276,6 +312,38 @@ export function ForumsClient() {
                 </ul>
               )}
             </div>
+            {/* Reply input form */}
+            <div className="border-t p-4 shrink-0 bg-white rounded-b-lg">
+              <div className="flex gap-3 items-end">
+                <textarea
+                  ref={replyInputRef}
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleSubmitReply();
+                    }
+                  }}
+                  placeholder="Write a reply..."
+                  rows={2}
+                  className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-hidden"
+                />
+                <button
+                  onClick={handleSubmitReply}
+                  disabled={!replyContent.trim() || replyMutation.isPending}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden transition-colors"
+                  aria-label="Send reply"
+                >
+                  {replyMutation.isPending ? (
+                    <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">Press Ctrl+Enter to send</p>
+            </div>
           </div>
         </div>
       )}
@@ -294,7 +362,14 @@ export function ForumsClient() {
                 Cancel
               </button>
               <button
-                onClick={() => handleDeletePost(confirmDelete)}
+                onClick={() => {
+                  // Check if deleting a reply (inside thread modal) or a top-level post
+                  if (viewingReplies && replies.some((r: ForumPost) => r.id === confirmDelete)) {
+                    handleDeleteReply(confirmDelete);
+                  } else {
+                    handleDeletePost(confirmDelete);
+                  }
+                }}
                 className="px-4 py-2.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium min-h-[44px] focus-visible:ring-2 focus-visible:outline-hidden"
               >
                 Delete
@@ -348,8 +423,8 @@ export function ForumsClient() {
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <span className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{post.category}</span>
                     <span className="text-xs text-gray-500">
-                      by {post.author_name || 'Anonymous'} &middot; {formatDate(post.created_at)}
-                      {post.updated_at && post.updated_at !== post.created_at && <span className="ml-1 text-gray-400">(edited)</span>}
+                      by {post.authorName || 'Anonymous'} &middot; {formatDate(post.createdAt)}
+                      {post.updatedAt && post.updatedAt !== post.createdAt && <span className="ml-1 text-gray-400">(edited)</span>}
                     </span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h3>
@@ -357,11 +432,11 @@ export function ForumsClient() {
                   <div className="flex items-center justify-between mt-4 flex-wrap gap-3">
                     <div className="flex items-center gap-4">
                       <button
-                        onClick={() => handleUpvote(post.id, post.has_upvoted)}
+                        onClick={() => handleUpvote(post.id, post.hasUpvoted)}
                         className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-hidden p-2 -ml-2 rounded-md min-h-[44px]"
                         aria-label={`Upvote "${post.title}"`}
                       >
-                        <Heart className={`h-5 w-5 ${post.has_upvoted ? 'fill-violet-600 text-violet-600' : ''}`} />
+                        <Heart className={`h-5 w-5 ${post.hasUpvoted ? 'fill-violet-600 text-violet-600' : ''}`} />
                         <span className="text-sm tabular-nums">{post.upvotes}</span>
                       </button>
                       <button
@@ -369,10 +444,10 @@ export function ForumsClient() {
                         className="flex items-center gap-2 text-gray-500 hover:text-violet-600 focus-visible:ring-2 focus-visible:outline-hidden p-2 rounded-md min-h-[44px]"
                       >
                         <MessageCircle className="h-5 w-5" />
-                        <span className="text-sm tabular-nums">{post.reply_count} replies</span>
+                        <span className="text-sm tabular-nums">{post.replyCount} replies</span>
                       </button>
                     </div>
-                    {user && post.author_privy_did === user.id && (
+                    {user && post.authorPrivyDid === user.id && (
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => startEditPost(post)}

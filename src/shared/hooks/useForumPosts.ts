@@ -13,22 +13,22 @@ export interface ForumPost {
   id: string;
   title: string;
   content: string;
-  author_name: string;
-  author_id: string;
-  author_privy_did?: string | null;
+  authorName: string;
+  authorId: string;
+  authorPrivyDid?: string | null;
   category: string;
   upvotes: number;
-  reply_count: number;
-  created_at: string;
-  updated_at?: string;
-  has_upvoted: number;
+  replyCount: number;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  hasUpvoted: number;
 }
 
 export interface ForumPostInput {
   title: string;
   content: string;
   category?: string;
-  parent_id?: string;
+  parentId?: string;
 }
 
 export interface ForumPostUpdate {
@@ -69,7 +69,7 @@ export const useCreateForumPost = () => {
         title: postData.title,
         content: postData.content,
         category: postData.category,
-        parentId: postData.parent_id,
+        parentId: postData.parentId,
       }) as unknown as Promise<ForumPost>,
     onMutate: async (newPost) => {
       await queryClient.cancelQueries({ queryKey: ["forum-posts"] });
@@ -80,17 +80,17 @@ export const useCreateForumPost = () => {
         id: `temp-${Date.now()}`,
         title: newPost.title,
         content: newPost.content,
-        author_name: 'You',
-        author_id: 'temp',
+        authorName: 'You',
+        authorId: 'temp',
         category: newPost.category || 'general',
         upvotes: 0,
-        reply_count: 0,
-        created_at: new Date().toISOString(),
-        has_upvoted: 0,
+        replyCount: 0,
+        createdAt: new Date().toISOString(),
+        hasUpvoted: 0,
       };
 
-      if (newPost.parent_id) {
-        queryClient.setQueryData<ForumPost[]>(["forum-replies", newPost.parent_id], (old) =>
+      if (newPost.parentId) {
+        queryClient.setQueryData<ForumPost[]>(["forum-replies", newPost.parentId], (old) =>
           old ? [optimisticPost, ...old] : [optimisticPost]
         );
       } else {
@@ -99,7 +99,7 @@ export const useCreateForumPost = () => {
         );
       }
 
-      return { previousPosts, parentId: newPost.parent_id };
+      return { previousPosts, parentId: newPost.parentId };
     },
     onError: (_err, _newPost, context) => {
       if (context?.previousPosts) {
@@ -110,8 +110,8 @@ export const useCreateForumPost = () => {
       }
     },
     onSuccess: (_result, variables) => {
-      if (variables.parent_id) {
-        queryClient.invalidateQueries({ queryKey: ["forum-replies", variables.parent_id] });
+      if (variables.parentId) {
+        queryClient.invalidateQueries({ queryKey: ["forum-replies", variables.parentId] });
         queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
       } else {
         queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
@@ -138,7 +138,7 @@ export const useUpdateForumPost = () => {
       queryClient.setQueryData<ForumPost[]>(["forum-posts"], (old) =>
         old ? old.map((post): ForumPost =>
           post.id === updatedPost.id
-            ? { ...post, title: updatedPost.title, content: updatedPost.content, category: updatedPost.category, updated_at: new Date().toISOString() }
+            ? { ...post, title: updatedPost.title, content: updatedPost.content, category: updatedPost.category, updatedAt: new Date().toISOString() }
             : post
         ) : []
       );
@@ -152,7 +152,7 @@ export const useUpdateForumPost = () => {
     },
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
-      const parentId = (variables as any).parent_id;
+      const parentId = (variables as any).parentId;
       if (parentId) {
         queryClient.invalidateQueries({ queryKey: ["forum-replies", parentId], exact: true });
       }
@@ -172,7 +172,7 @@ export const useDeleteForumPost = (parentId?: string | null) => {
           .filter(post => post.id !== deletedPostId)
           .map(post => {
             if (parentId && post.id === parentId) {
-              return { ...post, reply_count: Math.max(0, post.reply_count - 1) };
+              return { ...post, replyCount: Math.max(0, post.replyCount - 1) };
             }
             return post;
           });
@@ -205,7 +205,7 @@ export const useVoteOnPost = (parentId?: string | null) => {
       const updatePostVotesOptimistic = (posts: ForumPost[] | undefined): ForumPost[] => {
         return posts ? posts.map(post => {
           if (post.id === postId) {
-            const currentlyUpvoted = post.has_upvoted === 1;
+            const currentlyUpvoted = post.hasUpvoted === 1;
             let newUpvotes = post.upvotes;
             let newHasUpvoted = 0;
 
@@ -219,7 +219,7 @@ export const useVoteOnPost = (parentId?: string | null) => {
               }
             }
 
-            return { ...post, upvotes: newUpvotes, has_upvoted: newHasUpvoted };
+            return { ...post, upvotes: newUpvotes, hasUpvoted: newHasUpvoted };
           }
           return post;
         }) : [];
