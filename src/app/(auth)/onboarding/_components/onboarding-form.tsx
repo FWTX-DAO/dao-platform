@@ -153,10 +153,16 @@ export function OnboardingForm() {
           window.location.href = data.url;
           return;
         }
-      } catch {
-        // Fallback to dashboard if checkout fails
+        // Checkout returned but no URL — show the error
+        console.error('[onboarding] Checkout failed:', data.error || 'No checkout URL returned');
+        setGlobalError(data.error || 'Could not start checkout. Redirecting to dashboard.');
+      } catch (err) {
+        console.error('[onboarding] Checkout request failed:', err);
+        setGlobalError('Could not connect to payment service. Redirecting to dashboard.');
       }
     }
+    // Small delay so user can see the error before redirect
+    await new Promise((r) => setTimeout(r, 2000));
     router.push('/dashboard');
   };
 
