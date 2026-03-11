@@ -50,6 +50,11 @@ export async function deletePost(id: string) {
 export async function vote(postId: string, voteType: number) {
   const { user } = await requireAuth();
 
+  // Validate voteType is one of the allowed values
+  if (![1, -1, 0].includes(voteType)) {
+    return { success: false, error: 'Invalid vote type' };
+  }
+
   // Check for existing vote
   const existing = await db
     .select()

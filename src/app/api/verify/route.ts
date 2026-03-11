@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const claims = await client.verifyAuthToken(authToken);
     return NextResponse.json({ claims });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 401 });
+  } catch {
+    return NextResponse.json({ error: 'Invalid auth token' }, { status: 401 });
   }
 }

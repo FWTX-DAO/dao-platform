@@ -58,8 +58,8 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Subscriptions</h1>
-      <p className="text-gray-600">Support the DAO and unlock premium features</p>
+      <h1 className="text-3xl font-bold text-gray-900">Membership</h1>
+      <p className="text-gray-600">Choose a membership tier that reflects your commitment to the Fort Worth DAO mission</p>
 
       {success && (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
@@ -81,7 +81,7 @@ export default function SubscriptionsPage() {
         <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-violet-800">
-              You have an active subscription
+              You have an active membership
             </p>
             <p className="text-xs text-violet-600 mt-0.5">
               Status: {subscription.status} &middot; Manage billing, update payment method, or cancel.
@@ -92,7 +92,7 @@ export default function SubscriptionsPage() {
             disabled={portal.isPending}
             className="shrink-0 px-4 py-2 text-sm font-medium text-violet-700 bg-white border border-violet-300 rounded-md hover:bg-violet-100 transition-colors disabled:opacity-50"
           >
-            {portal.isPending ? 'Opening\u2026' : 'Manage Subscription'}
+            {portal.isPending ? 'Opening\u2026' : 'Manage Membership'}
           </button>
         </div>
       )}

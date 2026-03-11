@@ -11,7 +11,8 @@ export function actionError(error: unknown): { success: false; error: string } {
     return { success: false, error: error.message };
   }
   if (error instanceof Error) {
-    return { success: false, error: error.message };
+    console.error('Unexpected error in server action:', error);
+    return { success: false, error: 'An unexpected error occurred' };
   }
   return { success: false, error: 'An unexpected error occurred' };
 }

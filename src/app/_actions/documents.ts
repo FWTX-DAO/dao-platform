@@ -21,6 +21,35 @@ import { activitiesService } from "@services/activities";
 import { pinataHelpers } from "@utils/api-helpers";
 
 // ============================================================================
+// AUTHORIZATION HELPER
+// ============================================================================
+
+/** Check if a user can access a document (uploader, admin, active share, or public) */
+async function canAccessDocument(
+  documentId: string,
+  userId: string,
+  uploaderId: string | null,
+  isPublic: boolean | null,
+): Promise<boolean> {
+  if (uploaderId === userId) return true;
+  if (isPublic) return true;
+  const admin = await isUserAdmin(userId);
+  if (admin) return true;
+  const share = await db
+    .select({ id: documentShares.id })
+    .from(documentShares)
+    .where(
+      and(
+        eq(documentShares.documentId, documentId),
+        eq(documentShares.sharedWithId, userId),
+        eq(documentShares.isActive, true),
+      ),
+    )
+    .limit(1);
+  return share.length > 0;
+}
+
+// ============================================================================
 // QUERIES (return data directly — auth failure triggers redirect)
 // ============================================================================
 
@@ -93,6 +122,10 @@ export async function getDocumentById(id: string) {
 
   if (!doc[0] || doc[0].status !== "active") return null;
 
+  // Authorization: check user can access this document
+  const hasAccess = await canAccessDocument(id, user.id, doc[0].uploaderId, doc[0].isPublic);
+  if (!hasAccess) return null;
+
   // Increment access count and log audit trail (non-blocking)
   const now = new Date();
   Promise.all([
@@ -123,7 +156,17 @@ export async function getDocumentById(id: string) {
 }
 
 export async function getDocumentAuditTrail(documentId: string) {
-  await requireAuth();
+  const { user } = await requireAuth();
+
+  // Authorization: verify access to this document
+  const doc = await db
+    .select({ uploaderId: documents.uploaderId, isPublic: documents.isPublic })
+    .from(documents)
+    .where(eq(documents.id, documentId))
+    .limit(1);
+  if (!doc[0]) return [];
+  const hasAccess = await canAccessDocument(documentId, user.id, doc[0].uploaderId, doc[0].isPublic);
+  if (!hasAccess) return [];
 
   return db
     .select({
@@ -141,7 +184,19 @@ export async function getDocumentAuditTrail(documentId: string) {
 }
 
 export async function getDocumentShares(documentId: string) {
-  await requireAuth();
+  const { user } = await requireAuth();
+
+  // Authorization: only uploader or admin can see shares
+  const doc = await db
+    .select({ uploaderId: documents.uploaderId })
+    .from(documents)
+    .where(eq(documents.id, documentId))
+    .limit(1);
+  if (!doc[0]) return [];
+  if (doc[0].uploaderId !== user.id) {
+    const admin = await isUserAdmin(user.id);
+    if (!admin) return [];
+  }
 
   return db
     .select({
@@ -423,12 +478,21 @@ export async function getDownloadUrl(
     const { user } = await requireAuth();
 
     const doc = await db
-      .select({ cid: documents.cid, name: documents.name })
+      .select({
+        cid: documents.cid,
+        name: documents.name,
+        uploaderId: documents.uploaderId,
+        isPublic: documents.isPublic,
+      })
       .from(documents)
       .where(and(eq(documents.id, documentId), eq(documents.status, "active")))
       .limit(1);
 
     if (!doc[0]) return actionError(new Error("Document not found"));
+
+    // Authorization: verify access to this document
+    const hasAccess = await canAccessDocument(documentId, user.id, doc[0].uploaderId, doc[0].isPublic);
+    if (!hasAccess) return actionError(new Error("Not authorized"));
 
     const downloadLink = await pinataHelpers.createDownloadLink(doc[0].cid, {
       expires: 3600,

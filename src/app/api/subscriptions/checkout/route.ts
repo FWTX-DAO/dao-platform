@@ -136,9 +136,9 @@ export async function POST(request: Request) {
     console.log('[checkout] Session created, redirecting to:', session.url);
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    console.error('[checkout] FAILED at step - error:', err.message, 'stack:', err.stack);
+    console.error('[checkout] FAILED at step - error:', err.message);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: 'Failed to create checkout session' },
       { status: 500 },
     );
   }

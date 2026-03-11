@@ -46,7 +46,22 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
   return adminRoles.length > 0;
 }
 
+/**
+ * Enforces admin access — redirects to '/' if the user is not an admin.
+ * Use `checkAdmin()` if you need a soft check that returns `isAdmin: boolean`.
+ */
 export async function requireAdmin() {
+  const auth = await requireAuth();
+  const admin = await isUserAdmin(auth.user.id);
+  if (!admin) redirect('/');
+  return { ...auth, isAdmin: true as const };
+}
+
+/**
+ * Soft admin check — returns `isAdmin: boolean` without redirecting.
+ * Use when you need to conditionally return data based on admin status.
+ */
+export async function checkAdmin() {
   const auth = await requireAuth();
   const admin = await isUserAdmin(auth.user.id);
   return { ...auth, isAdmin: admin };

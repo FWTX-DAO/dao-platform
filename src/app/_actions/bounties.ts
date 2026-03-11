@@ -160,7 +160,55 @@ export async function getBountyById(id: string) {
   const admin = await isUserAdmin(user.id);
 
   const bounty = await db
-    .select()
+    .select({
+      id: innovationBounties.id,
+      title: innovationBounties.title,
+      problemStatement: innovationBounties.problemStatement,
+      useCase: innovationBounties.useCase,
+      currentState: innovationBounties.currentState,
+      commonToolsUsed: innovationBounties.commonToolsUsed,
+      desiredOutcome: innovationBounties.desiredOutcome,
+      technicalRequirements: innovationBounties.technicalRequirements,
+      constraints: innovationBounties.constraints,
+      deliverables: innovationBounties.deliverables,
+      category: innovationBounties.category,
+      bountyAmount: innovationBounties.bountyAmount,
+      bountyType: innovationBounties.bountyType,
+      deadline: innovationBounties.deadline,
+      tags: innovationBounties.tags,
+      status: innovationBounties.status,
+      organizationType: innovationBounties.organizationType,
+      organizationName: innovationBounties.organizationName,
+      organizationWebsite: innovationBounties.organizationWebsite,
+      organizationSize: innovationBounties.organizationSize,
+      organizationIndustry: innovationBounties.organizationIndustry,
+      organizationCity: innovationBounties.organizationCity,
+      organizationState: innovationBounties.organizationState,
+      isAnonymous: innovationBounties.isAnonymous,
+      viewCount: innovationBounties.viewCount,
+      proposalCount: innovationBounties.proposalCount,
+      submitterId: innovationBounties.submitterId,
+      publishedAt: innovationBounties.publishedAt,
+      createdAt: innovationBounties.createdAt,
+      updatedAt: innovationBounties.updatedAt,
+      // Sensitive fields — only returned to admin/submitter below
+      sponsorFirstName: innovationBounties.sponsorFirstName,
+      sponsorLastName: innovationBounties.sponsorLastName,
+      sponsorEmail: innovationBounties.sponsorEmail,
+      sponsorPhone: innovationBounties.sponsorPhone,
+      sponsorTitle: innovationBounties.sponsorTitle,
+      sponsorDepartment: innovationBounties.sponsorDepartment,
+      sponsorLinkedIn: innovationBounties.sponsorLinkedIn,
+      organizationContact: innovationBounties.organizationContact,
+      organizationAddress: innovationBounties.organizationAddress,
+      organizationZip: innovationBounties.organizationZip,
+      screeningNotes: innovationBounties.screeningNotes,
+      screenedBy: innovationBounties.screenedBy,
+      screenedAt: innovationBounties.screenedAt,
+      submitterEmail: innovationBounties.submitterEmail,
+      submitterIp: innovationBounties.submitterIp,
+      submissionSource: innovationBounties.submissionSource,
+    })
     .from(innovationBounties)
     .where(eq(innovationBounties.id, id))
     .limit(1);
@@ -217,8 +265,29 @@ export async function getBountyById(id: string) {
   const b = bounty[0];
   const userHasProposal = proposals.some((p) => p.proposerId === user.id);
 
+  // Strip sensitive PII fields for non-admin/non-submitter users
+  const canSeeSensitive = admin || isSubmitter;
+  const {
+    sponsorEmail,
+    sponsorPhone,
+    sponsorLinkedIn,
+    organizationContact,
+    organizationAddress,
+    organizationZip,
+    screeningNotes,
+    screenedBy,
+    screenedAt,
+    submitterEmail,
+    submitterIp,
+    ...publicFields
+  } = b;
+
+  const safeData = canSeeSensitive
+    ? b
+    : publicFields;
+
   return {
-    ...b,
+    ...safeData,
     proposals,
     comments: comments.filter((c) => !c.isInternal || isSubmitter || admin),
     isSubmitter,
@@ -228,8 +297,7 @@ export async function getBountyById(id: string) {
 }
 
 export async function getScreeningBounties() {
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) return [];
+  await requireAdmin();
 
   return db
     .select({
@@ -439,8 +507,7 @@ export async function screenBounty(
   notes?: string,
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
-    const { isAdmin, user } = await requireAdmin();
-    if (!isAdmin) return actionError(new Error("Not authorized"));
+    const { user } = await requireAdmin();
 
     const now = new Date();
 
@@ -560,8 +627,7 @@ export async function reviewProposal(
   notes?: string,
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
-    const { isAdmin, user } = await requireAdmin();
-    if (!isAdmin) return actionError(new Error("Not authorized"));
+    const { user } = await requireAdmin();
 
     const proposal = await db
       .select({ bountyId: bountyProposals.bountyId })
@@ -684,8 +750,7 @@ export async function updateBountyStatus(
   status: "assigned" | "completed" | "cancelled",
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
-    const { isAdmin } = await requireAdmin();
-    if (!isAdmin) return actionError(new Error("Not authorized"));
+    await requireAdmin();
 
     await db
       .update(innovationBounties)

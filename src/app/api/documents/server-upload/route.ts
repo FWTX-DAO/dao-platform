@@ -89,7 +89,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error uploading document:", error);
     return NextResponse.json(
-      { error: (error as Error).message },
+      { error: "Failed to upload document" },
       { status: 500 },
     );
   }

@@ -25,8 +25,9 @@ export async function POST(request: Request) {
   }
 
   const authToken = authHeader.replace(/^Bearer /, '');
+  let claims;
   try {
-    const claims = await client.verifyAuthToken(authToken);
+    claims = await client.verifyAuthToken(authToken);
     if (!claims || !('appId' in claims)) {
       return NextResponse.json({ error: 'Invalid auth token.' }, { status: 401 });
     }
@@ -41,6 +42,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Message and wallet_id are required' }, { status: 400 });
   }
 
+  // Verify wallet ownership: ensure the wallet belongs to the authenticated user
+  try {
+    const privyUser = await client.getUser(claims.userId);
+    const ownedWalletIds = (privyUser.linkedAccounts ?? [])
+      .filter((a: any) => a.type === 'wallet' && a.walletClientType === 'privy')
+      .map((a: any) => a.id);
+    if (!ownedWalletIds.includes(wallet_id)) {
+      return NextResponse.json({ error: 'Wallet not owned by user' }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Failed to verify wallet ownership' }, { status: 500 });
+  }
+
   try {
     const { signature } = await client.walletApi.ethereum.signMessage({
       walletId: wallet_id,
@@ -52,7 +66,7 @@ export async function POST(request: Request) {
       data: { signature, encoding: 'hex' },
     });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    console.error('Error signing Ethereum message:', error);
+    return NextResponse.json({ error: 'Failed to sign message' }, { status: 500 });
   }
 }
