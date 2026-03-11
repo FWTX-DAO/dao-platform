@@ -92,13 +92,13 @@ export default function SubscriptionsPage() {
             disabled={portal.isPending}
             className="shrink-0 px-4 py-2 text-sm font-medium text-violet-700 bg-white border border-violet-300 rounded-md hover:bg-violet-100 transition-colors disabled:opacity-50"
           >
-            {portal.isPending ? 'Opening\u2026' : 'Manage Membership'}
+            {portal.isPending ? 'Opening…' : 'Manage Membership'}
           </button>
         </div>
       )}
 
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Loading\u2026</div>
+        <div className="py-8 text-center text-gray-500">Loading…</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {tiers.map((tier: any) => (

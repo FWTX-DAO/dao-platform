@@ -189,7 +189,7 @@ export default function AdminStampsPage() {
         )}
 
         <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? 'Issuing Stamps\u2026' : 'Issue Stamps'}
+          {isPending ? 'Issuing Stamps…' : 'Issue Stamps'}
         </Button>
       </form>
     </div>

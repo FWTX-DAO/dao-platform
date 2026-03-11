@@ -63,7 +63,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               className="text-center"
             >
               <div aria-live="polite">
-                <TypingText text={`Issuing your Fort Worth DAO Passport\u2026`} shouldReduceMotion={!!shouldReduceMotion} />
+                <TypingText text={`Issuing your Fort Worth DAO Passport…`} shouldReduceMotion={!!shouldReduceMotion} />
               </div>
             </motion.div>
           )}

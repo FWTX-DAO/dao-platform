@@ -108,7 +108,7 @@ export default function SubmitBountyPage() {
               required
               value={formData.title}
               onChange={set("title")}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -124,7 +124,7 @@ export default function SubmitBountyPage() {
               value={formData.problemStatement}
               onChange={set("problemStatement")}
               rows={4}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -140,7 +140,7 @@ export default function SubmitBountyPage() {
               value={formData.useCase}
               onChange={set("useCase")}
               rows={3}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -156,7 +156,7 @@ export default function SubmitBountyPage() {
               value={formData.desiredOutcome}
               onChange={set("desiredOutcome")}
               rows={3}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -171,7 +171,7 @@ export default function SubmitBountyPage() {
               value={formData.currentState}
               onChange={set("currentState")}
               rows={2}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -186,7 +186,7 @@ export default function SubmitBountyPage() {
               value={formData.deliverables}
               onChange={set("deliverables")}
               rows={3}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -201,7 +201,7 @@ export default function SubmitBountyPage() {
                 id="submit-category"
                 value={formData.category}
                 onChange={set("category")}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
               >
                 {BOUNTY_CATEGORIES.filter((c) => c !== "all").map((cat) => (
                   <option key={cat} value={cat}>
@@ -225,7 +225,7 @@ export default function SubmitBountyPage() {
                 min="0"
                 value={formData.bountyAmount}
                 onChange={set("bountyAmount")}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
               />
             </div>
           </div>
@@ -241,7 +241,7 @@ export default function SubmitBountyPage() {
               type="text"
               value={formData.tags}
               onChange={set("tags")}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
         </section>
@@ -262,7 +262,7 @@ export default function SubmitBountyPage() {
               required
               value={formData.organizationName}
               onChange={set("organizationName")}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <div>
@@ -276,7 +276,7 @@ export default function SubmitBountyPage() {
               id="submit-org-type"
               value={formData.organizationType}
               onChange={set("organizationType")}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             >
               {BOUNTY_ORG_TYPES.filter((t) => t !== "all").map((t) => (
                 <option key={t} value={t}>
@@ -307,7 +307,7 @@ export default function SubmitBountyPage() {
                 type="text"
                 value={formData.sponsorFirstName}
                 onChange={set("sponsorFirstName")}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
               />
             </div>
             <div>
@@ -322,7 +322,7 @@ export default function SubmitBountyPage() {
                 type="text"
                 value={formData.sponsorLastName}
                 onChange={set("sponsorLastName")}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
               />
             </div>
           </div>
@@ -338,7 +338,7 @@ export default function SubmitBountyPage() {
               type="email"
               value={formData.sponsorEmail}
               onChange={set("sponsorEmail")}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
             />
           </div>
           <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -359,7 +359,7 @@ export default function SubmitBountyPage() {
           disabled={createMutation.isPending}
           className="px-6 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         >
-          {createMutation.isPending ? "Submitting\u2026" : "Submit Bounty"}
+          {createMutation.isPending ? "Submitting…" : "Submit Bounty"}
         </button>
       </form>
     </div>

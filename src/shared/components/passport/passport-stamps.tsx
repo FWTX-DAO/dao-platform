@@ -74,7 +74,7 @@ export function PassportStamps({ stamps, compact = false }: PassportStampsProps)
             </span>
             {!compact && (
               <span className={`${nameSize} ${style.color}/70 text-center leading-tight px-1 mt-0.5 line-clamp-2`}>
-                {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '\u2026' : stamp.eventName}
+                {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '…' : stamp.eventName}
               </span>
             )}
             {stamp.eventDate && (

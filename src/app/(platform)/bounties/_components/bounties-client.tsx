@@ -58,7 +58,7 @@ export function BountiesClient() {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search bounties\u2026"
+          placeholder="Search bounties…"
           aria-label="Search bounties"
         />
         <FilterPills
@@ -72,7 +72,7 @@ export function BountiesClient() {
           id="bounty-category"
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-2.5 text-sm border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
+          className="px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
         >
           {BOUNTY_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>

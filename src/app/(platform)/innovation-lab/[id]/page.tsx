@@ -29,7 +29,7 @@ export default function ProjectDetailPage() {
   if (isLoading)
     return (
       <div className="py-8 text-center text-gray-500">
-        Loading project{"\u2026"}
+        Loading project{"…"}
       </div>
     );
   if (!project)

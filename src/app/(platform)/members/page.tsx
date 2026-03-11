@@ -35,7 +35,7 @@ export default function MembersPage() {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search members\u2026"
+          placeholder="Search members…"
           aria-label="Search members"
         />
       )}

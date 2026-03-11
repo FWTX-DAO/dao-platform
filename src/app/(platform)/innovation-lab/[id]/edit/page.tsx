@@ -37,7 +37,7 @@ export default function EditProjectPage() {
 
   if (isLoading)
     return (
-      <div className="py-8 text-center text-gray-500">Loading{"\u2026"}</div>
+      <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
     );
   if (!project)
     return (
@@ -97,7 +97,7 @@ export default function EditProjectPage() {
             required
             value={formData.title}
             onChange={set("title")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -113,7 +113,7 @@ export default function EditProjectPage() {
             value={formData.description}
             onChange={set("description")}
             rows={4}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -129,7 +129,7 @@ export default function EditProjectPage() {
             placeholder="e.g. org/repo"
             value={formData.githubRepo}
             onChange={set("githubRepo")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -144,7 +144,7 @@ export default function EditProjectPage() {
             value={formData.intent}
             onChange={set("intent")}
             rows={2}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -159,7 +159,7 @@ export default function EditProjectPage() {
             value={formData.benefitToFortWorth}
             onChange={set("benefitToFortWorth")}
             rows={2}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -174,7 +174,7 @@ export default function EditProjectPage() {
             type="text"
             value={formData.tags}
             onChange={set("tags")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div className="flex gap-3">
@@ -183,7 +183,7 @@ export default function EditProjectPage() {
             disabled={updateMutation.isPending}
             className="px-6 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
-            {updateMutation.isPending ? "Saving\u2026" : "Save Changes"}
+            {updateMutation.isPending ? "Saving…" : "Save Changes"}
           </button>
           <button
             type="button"

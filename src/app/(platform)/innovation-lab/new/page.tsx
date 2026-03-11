@@ -77,7 +77,7 @@ export default function NewProjectPage() {
             required
             value={formData.title}
             onChange={set("title")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -93,7 +93,7 @@ export default function NewProjectPage() {
             value={formData.description}
             onChange={set("description")}
             rows={4}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -109,7 +109,7 @@ export default function NewProjectPage() {
             placeholder="e.g. org/repo"
             value={formData.githubRepo}
             onChange={set("githubRepo")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -124,7 +124,7 @@ export default function NewProjectPage() {
             value={formData.intent}
             onChange={set("intent")}
             rows={2}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -139,7 +139,7 @@ export default function NewProjectPage() {
             value={formData.benefitToFortWorth}
             onChange={set("benefitToFortWorth")}
             rows={2}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -154,7 +154,7 @@ export default function NewProjectPage() {
             type="text"
             value={formData.tags}
             onChange={set("tags")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div className="flex gap-3">
@@ -163,7 +163,7 @@ export default function NewProjectPage() {
             disabled={createMutation.isPending}
             className="px-6 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
-            {createMutation.isPending ? "Creating\u2026" : "Create Project"}
+            {createMutation.isPending ? "Creating…" : "Create Project"}
           </button>
           <button
             type="button"

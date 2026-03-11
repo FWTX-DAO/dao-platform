@@ -15,7 +15,7 @@ export default function MyBountiesPage() {
 
   if (isLoading)
     return (
-      <div className="py-8 text-center text-gray-500">Loading{"\u2026"}</div>
+      <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
     );
 
   return (

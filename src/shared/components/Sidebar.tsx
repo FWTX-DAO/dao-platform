@@ -157,7 +157,7 @@ function Sidebar() {
         {userInfo.id && (
           <p className="text-sm text-dao-cool/70 truncate">
             {userInfo.id}
-            {"\u2026"}
+            {"…"}
           </p>
         )}
       </div>

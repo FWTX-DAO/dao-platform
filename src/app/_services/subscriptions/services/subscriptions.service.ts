@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { NotFoundError } from '@core/errors';
 import { SubscriptionsRepository } from './subscriptions.repository';
 import { rbacService } from '@services/rbac';
+import { activitiesService } from '@services/activities';
 import Stripe from 'stripe';
 
 export class SubscriptionsService {
@@ -48,6 +49,17 @@ export class SubscriptionsService {
       .update(members)
       .set({ currentTierId: tierId, stripeCustomerId: stripeData.stripeCustomerId, updatedAt: new Date() })
       .where(eq(members.id, memberId));
+
+    // Track subscription activity — resolve userId from memberId
+    const member = await db
+      .select({ userId: members.userId })
+      .from(members)
+      .where(eq(members.id, memberId))
+      .limit(1)
+      .then((r) => r[0]);
+    if (member) {
+      await activitiesService.trackActivity(member.userId, 'subscription_created', 'subscription', sub.id);
+    }
 
     return sub;
   }

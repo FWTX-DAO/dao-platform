@@ -59,7 +59,7 @@ export default function SettingsPage() {
             disabled={updateProfile.isPending}
             className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
-            {updateProfile.isPending ? 'Saving\u2026' : 'Save Changes'}
+            {updateProfile.isPending ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>

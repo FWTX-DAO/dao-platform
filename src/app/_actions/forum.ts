@@ -2,6 +2,7 @@
 
 import { requireAuth } from "@/app/_lib/auth";
 import { forumService } from "@services/forum";
+import { activitiesService } from "@services/activities";
 import { db, forumVotes } from "@core/database";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -44,6 +45,12 @@ export async function createPost(data: {
     { ...data, category: data.category || "General" },
     user.id,
   );
+
+  if (result) {
+    const activityType = data.parentId ? "forum_reply" : "forum_post";
+    await activitiesService.trackActivity(user.id, activityType, "forum_post", result.id);
+  }
+
   revalidatePath("/forums");
   return result;
 }
@@ -98,12 +105,13 @@ export async function vote(postId: string, voteType: number) {
         and(eq(forumVotes.postId, postId), eq(forumVotes.userId, user.id)),
       );
   } else {
-    // Create new vote
+    // Create new vote — only award points for brand new votes
     await db.insert(forumVotes).values({
       postId,
       userId: user.id,
       voteType,
     });
+    await activitiesService.trackActivity(user.id, "forum_vote", "forum_post", postId);
   }
 
   revalidatePath("/forums");

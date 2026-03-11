@@ -16,7 +16,7 @@ interface SearchInputProps {
 export function SearchInput({
   value,
   onChange,
-  placeholder = 'Search\u2026',
+  placeholder = 'Search…',
   debounceMs = 300,
   className,
   'aria-label': ariaLabel,
@@ -45,8 +45,8 @@ export function SearchInput({
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}
-        aria-label={ariaLabel || placeholder.replace('\u2026', '')}
-        className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
+        aria-label={ariaLabel || placeholder.replace('…', '')}
+        className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 bg-white placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden min-h-[44px]"
       />
     </div>
   );

@@ -74,7 +74,7 @@ export default function DocumentsPage() {
             disabled={uploadMutation.isPending}
             className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium text-sm disabled:opacity-50"
           >
-            {uploadMutation.isPending ? "Uploading\u2026" : "Upload Document"}
+            {uploadMutation.isPending ? "Uploading…" : "Upload Document"}
           </button>
         </UpgradeCTA>
       </div>
@@ -110,7 +110,7 @@ export default function DocumentsPage() {
       {/* Document List */}
       {isLoading ? (
         <div className="py-8 text-center text-gray-500">
-          Loading{"\u2026"}
+          Loading{"…"}
         </div>
       ) : docs.length === 0 ? (
         <div className="py-8 text-center text-gray-500">

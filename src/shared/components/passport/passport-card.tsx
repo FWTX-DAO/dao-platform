@@ -7,7 +7,7 @@ import type { PassportData } from './types';
 
 function truncateWallet(addr: string | null): string {
   if (!addr) return '';
-  return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
 interface PassportCardProps {

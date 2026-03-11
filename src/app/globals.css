@@ -41,6 +41,14 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  /* Override dark colorScheme defaults for form controls */
+  input,
+  textarea,
+  select {
+    color: var(--color-gray-900, #111827);
+    background-color: #fff;
+  }
 }
 
 @utility pb-safe {

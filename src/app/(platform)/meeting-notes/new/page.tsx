@@ -84,7 +84,7 @@ export default function NewMeetingNotePage() {
             required
             value={formData.title}
             onChange={set("title")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -100,7 +100,7 @@ export default function NewMeetingNotePage() {
             required
             value={formData.date}
             onChange={set("date")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -116,7 +116,7 @@ export default function NewMeetingNotePage() {
             value={formData.attendees}
             onChange={set("attendees")}
             placeholder="Alice, Bob, Charlie"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -131,7 +131,7 @@ export default function NewMeetingNotePage() {
             value={formData.agenda}
             onChange={set("agenda")}
             rows={3}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -147,7 +147,7 @@ export default function NewMeetingNotePage() {
             value={formData.notes}
             onChange={set("notes")}
             rows={6}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -163,7 +163,7 @@ export default function NewMeetingNotePage() {
             value={formData.actionItems}
             onChange={set("actionItems")}
             placeholder="Follow up with X, Review Y"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div>
@@ -178,7 +178,7 @@ export default function NewMeetingNotePage() {
             type="text"
             value={formData.tags}
             onChange={set("tags")}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           />
         </div>
         <div className="flex gap-3">
@@ -188,7 +188,7 @@ export default function NewMeetingNotePage() {
             className="px-6 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
             {createMutation.isPending
-              ? "Creating\u2026"
+              ? "Creating…"
               : "Create Meeting Note"}
           </button>
           <button

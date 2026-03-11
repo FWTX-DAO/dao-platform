@@ -46,7 +46,7 @@ export default function AdminPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Roles</h2>
         {isLoading ? (
           <div className="py-4 text-center text-gray-500">
-            Loading roles{"\u2026"}
+            Loading roles{"…"}
           </div>
         ) : (
           <div className="space-y-2">

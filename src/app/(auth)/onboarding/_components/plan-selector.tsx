@@ -13,7 +13,7 @@ export function PlanSelector({ selectedTierId, onSelect }: PlanSelectorProps) {
   const [interval, setInterval] = useState<'month' | 'year'>('month');
 
   if (isLoading) {
-    return <div className="py-8 text-center text-dao-cool/40 text-sm">Loading plans{'\u2026'}</div>;
+    return <div className="py-8 text-center text-dao-cool/40 text-sm">Loading plans{'…'}</div>;
   }
 
   // Find the tier matching the selected billing interval

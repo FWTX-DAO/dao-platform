@@ -62,7 +62,7 @@ export default function EditBountyPage() {
 
   if (isLoading)
     return (
-      <div className="py-8 text-center text-gray-500">Loading{"\u2026"}</div>
+      <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
     );
   if (!bounty)
     return (
@@ -295,7 +295,7 @@ function Field({
         autoComplete="off"
         value={value}
         onChange={onChange}
-        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       />
     </div>
   );
@@ -325,7 +325,7 @@ function TextArea({
         value={value}
         onChange={onChange}
         rows={rows}
-        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
       />
     </div>
   );

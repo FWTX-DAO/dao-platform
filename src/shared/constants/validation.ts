@@ -76,6 +76,7 @@ export const PAYMENT_STATUSES = ['succeeded', 'failed', 'pending', 'refunded'] a
 // Activity tracking
 export const ACTIVITY_TYPES = [
   'forum_post',
+  'forum_reply',
   'forum_vote',
   'project_created',
   'project_joined',
@@ -94,11 +95,12 @@ export const ACTIVITY_TYPES = [
 
 // Points awarded per activity type
 export const ACTIVITY_POINTS: Record<(typeof ACTIVITY_TYPES)[number], number> = {
-  forum_post: 5,
-  forum_vote: 1,
-  project_created: 20,
+  forum_post: 10,
+  forum_reply: 5,
+  forum_vote: 2,
+  project_created: 25,
   project_joined: 10,
-  bounty_submitted: 15,
+  bounty_submitted: 20,
   bounty_proposal: 10,
   meeting_created: 15,
   document_uploaded: 10,
@@ -106,7 +108,7 @@ export const ACTIVITY_POINTS: Record<(typeof ACTIVITY_TYPES)[number], number> = 
   login: 0,
   profile_updated: 0,
   role_granted: 0,
-  subscription_created: 0,
+  subscription_created: 100,
   comment_posted: 2,
   event_attended: 5,
 } as const;
