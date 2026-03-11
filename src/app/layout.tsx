@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Providers } from './_providers/privy-provider';
 import './globals.css';
 
@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     apple: '/favicons/apple-touch-icon.png',
   },
   manifest: '/favicons/manifest.json',
+};
+
+export const viewport: Viewport = {
   themeColor: '#0a0a0a',
 };
 
