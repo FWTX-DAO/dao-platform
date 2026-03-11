@@ -20,11 +20,7 @@ import {
   screenBounty as screenBountyAction,
   updateBountyStatus as updateBountyStatusAction,
 } from "@/app/_actions/bounties";
-import {
-  queryKeys,
-  optimisticHelpers,
-  invalidationPatterns,
-} from "../utils/query-client";
+import { queryKeys } from "@shared/constants/query-keys";
 import { useAuthReady } from "./useAuthReady";
 
 export interface Bounty {
@@ -176,8 +172,10 @@ export const useBountiesInfinite = (filters?: {
   const authReady = useAuthReady();
   return useInfiniteQuery({
     queryKey: [...queryKeys.bounties.list(filters), "infinite"],
-    queryFn: () =>
-      getBountiesAction({ ...filters }) as unknown as Promise<Bounty[]>,
+    queryFn: ({ pageParam }) =>
+      getBountiesAction({ ...filters, offset: pageParam } as Parameters<
+        typeof getBountiesAction
+      >[0]) as unknown as Promise<Bounty[]>,
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * (filters?.limit || 20);
       return lastPage.length === (filters?.limit || 20)
@@ -206,7 +204,7 @@ export const useBountyDetails = (bountyId: string | null) => {
 export const useMyBounties = () => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: [...queryKeys.bounties.all, "my"],
+    queryKey: queryKeys.bounties.my(),
     queryFn: () => getMyBountiesAction() as unknown as Promise<Bounty[]>,
     enabled: authReady,
     staleTime: 30 * 1000,
@@ -226,7 +224,7 @@ export const useScreeningBounties = () => {
 export const useBountyComments = (bountyId: string | null) => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: [...queryKeys.bounties.detail(bountyId!), "comments"],
+    queryKey: queryKeys.bounties.comments(bountyId!),
     queryFn: () =>
       getBountyCommentsAction(bountyId!) as unknown as Promise<BountyComment[]>,
     enabled: authReady && !!bountyId,
@@ -245,7 +243,7 @@ export const useCreateBounty = () => {
     mutationFn: (bountyData: BountyInput) =>
       createBountyAction(bountyData as Record<string, any>),
     onSettled: () => {
-      invalidationPatterns.smartInvalidate(queryClient, "bounties", "create");
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all() });
     },
   });
 };
@@ -257,12 +255,10 @@ export const useUpdateBounty = () => {
     mutationFn: ({ id, ...updates }: BountyInput & { id: string }) =>
       updateBountyAction(id, updates as Record<string, any>),
     onSettled: (_data, _error, variables) => {
-      invalidationPatterns.smartInvalidate(
-        queryClient,
-        "bounties",
-        "update",
-        variables.id,
-      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bounties.detail(variables.id),
+      });
     },
   });
 };
@@ -273,15 +269,15 @@ export const useDeleteBounty = () => {
   return useMutation({
     mutationFn: (bountyId: string) => deleteBountyAction(bountyId),
     onMutate: async (bountyId) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.bounties.lists() });
+      await queryClient.cancelQueries({ queryKey: queryKeys.bounties.all() });
       const previousBounties = queryClient.getQueryData(
-        queryKeys.bounties.lists(),
+        queryKeys.bounties.list(),
       );
 
       queryClient.setQueryData(
-        queryKeys.bounties.lists(),
+        queryKeys.bounties.list(),
         (old: Bounty[] | undefined) =>
-          optimisticHelpers.removeFromList(old, bountyId),
+          old ? old.filter((item) => item.id !== bountyId) : [],
       );
 
       queryClient.removeQueries({
@@ -293,18 +289,16 @@ export const useDeleteBounty = () => {
     onError: (_err, _bountyId, context) => {
       if (context?.previousBounties) {
         queryClient.setQueryData(
-          queryKeys.bounties.lists(),
+          queryKeys.bounties.list(),
           context.previousBounties,
         );
       }
     },
     onSettled: (_data, _error, bountyId) => {
-      invalidationPatterns.smartInvalidate(
-        queryClient,
-        "bounties",
-        "delete",
-        bountyId,
-      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bounties.detail(bountyId),
+      });
     },
   });
 };
@@ -337,7 +331,7 @@ export const useReviewProposal = () => {
       notes?: string;
     }) => reviewProposalAction(proposalId, decision, notes),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all() });
     },
   });
 };
@@ -371,7 +365,7 @@ export const useDeleteBountyComment = () => {
   return useMutation({
     mutationFn: (commentId: string) => deleteBountyCommentAction(commentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all() });
     },
   });
 };
@@ -390,7 +384,7 @@ export const useScreenBounty = () => {
       notes?: string;
     }) => screenBountyAction(id, action, notes),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.all() });
     },
   });
 };
@@ -410,7 +404,7 @@ export const useUpdateBountyStatus = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.bounties.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bounties.list() });
     },
   });
 };

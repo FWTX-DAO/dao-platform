@@ -10,7 +10,7 @@ import {
   joinProject as joinProjectAction,
   leaveProject as leaveProjectAction,
 } from "@/app/_actions/projects";
-import { queryKeys } from "../utils/query-client";
+import { queryKeys } from "@shared/constants/query-keys";
 import { useAuthReady } from "./useAuthReady";
 
 export interface Project {
@@ -86,7 +86,7 @@ export interface ProjectUpdateData {
 export const useProjects = () => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: queryKeys.projects.lists(),
+    queryKey: queryKeys.projects.list(),
     queryFn: () => getProjectsAction() as unknown as Promise<Project[]>,
     enabled: authReady,
     staleTime: 1000 * 60,
@@ -138,7 +138,7 @@ export const useCreateProject = () => {
         status: projectData.status,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list() });
     },
   });
 };
@@ -160,7 +160,7 @@ export const useUpdateProject = () => {
         status: projectData.status,
       }),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.projects.detail(variables.id),
       });
@@ -174,7 +174,7 @@ export const useDeleteProject = () => {
   return useMutation({
     mutationFn: (projectId: string) => deleteProjectAction(projectId),
     onSuccess: (_, deletedProjectId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list() });
       queryClient.removeQueries({
         queryKey: queryKeys.projects.detail(deletedProjectId),
       });
@@ -211,7 +211,7 @@ export const useJoinProject = () => {
   return useMutation({
     mutationFn: (projectId: string) => joinProjectAction(projectId),
     onSuccess: (_result, projectId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.projects.detail(projectId),
       });
@@ -225,7 +225,7 @@ export const useLeaveProject = () => {
   return useMutation({
     mutationFn: (projectId: string) => leaveProjectAction(projectId),
     onSuccess: (_result, projectId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.projects.detail(projectId),
       });

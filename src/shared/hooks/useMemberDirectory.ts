@@ -1,6 +1,7 @@
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { searchMembers } from '@/app/_actions/members';
-import { queryKeys } from '@shared/constants/query-keys';
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { searchMembers } from "@/app/_actions/members";
+import { queryKeys } from "@shared/constants/query-keys";
+import { useAuthReady } from "./useAuthReady";
 
 export interface DirectoryMember {
   id: string;
@@ -27,9 +28,12 @@ export interface DirectoryFilters {
 }
 
 export const useMemberDirectory = (filters: DirectoryFilters) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.members.directory(filters as Record<string, unknown>),
-    queryFn: () => searchMembers(filters) as unknown as Promise<DirectoryMember[]>,
+    queryFn: () =>
+      searchMembers(filters) as unknown as Promise<DirectoryMember[]>,
+    enabled: authReady,
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });

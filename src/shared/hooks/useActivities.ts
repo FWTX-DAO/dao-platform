@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   getMyActivities as getMyActivitiesAction,
   getPlatformFeed as getPlatformFeedAction,
   getMemberActivities as getMemberActivitiesAction,
-} from '@/app/_actions/activities';
-import { queryKeys } from '@shared/constants/query-keys';
+} from "@/app/_actions/activities";
+import { queryKeys } from "@shared/constants/query-keys";
+import { useAuthReady } from "./useAuthReady";
 
 export interface Activity {
   id: string;
@@ -37,27 +38,35 @@ export interface ActivityFilters {
 }
 
 export const useMyActivities = (filters?: ActivityFilters) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: [...queryKeys.activities.all(), filters] as const,
-    queryFn: () => getMyActivitiesAction(filters) as unknown as Promise<Activity[]>,
+    queryFn: () =>
+      getMyActivitiesAction(filters) as unknown as Promise<Activity[]>,
+    enabled: authReady,
     staleTime: 60 * 1000,
   });
 };
 
 export const usePlatformFeed = (limit?: number) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.activities.feed(),
-    queryFn: () => getPlatformFeedAction(limit) as unknown as Promise<PlatformActivity[]>,
+    queryFn: () =>
+      getPlatformFeedAction(limit) as unknown as Promise<PlatformActivity[]>,
+    enabled: authReady,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });
 };
 
 export const useMemberActivities = (memberId: string | null) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.activities.member(memberId!),
-    queryFn: () => getMemberActivitiesAction(memberId!) as unknown as Promise<Activity[]>,
-    enabled: !!memberId,
+    queryFn: () =>
+      getMemberActivitiesAction(memberId!) as unknown as Promise<Activity[]>,
+    enabled: authReady && !!memberId,
     staleTime: 60 * 1000,
   });
 };

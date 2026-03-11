@@ -1,66 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
 
-// Query key factory for consistent key generation
-export const queryKeys = {
-  all: ["app"] as const,
-
-  // Bounties
-  bounties: {
-    all: ["bounties"] as const,
-    lists: () => [...queryKeys.bounties.all, "list"] as const,
-    list: (filters?: any) => [...queryKeys.bounties.lists(), filters] as const,
-    details: () => [...queryKeys.bounties.all, "detail"] as const,
-    detail: (id: string) => [...queryKeys.bounties.details(), id] as const,
-    screening: () => [...queryKeys.bounties.all, "screening"] as const,
-  },
-
-  // Projects
-  projects: {
-    all: ["projects"] as const,
-    lists: () => [...queryKeys.projects.all, "list"] as const,
-    list: (filters?: any) => [...queryKeys.projects.lists(), filters] as const,
-    details: () => [...queryKeys.projects.all, "detail"] as const,
-    detail: (id: string) => [...queryKeys.projects.details(), id] as const,
-    updates: (id: string) =>
-      [...queryKeys.projects.detail(id), "updates"] as const,
-  },
-
-  // Forums
-  forums: {
-    all: ["forums"] as const,
-    posts: () => [...queryKeys.forums.all, "posts"] as const,
-    post: (id: string) => [...queryKeys.forums.posts(), id] as const,
-    replies: (id: string) => [...queryKeys.forums.post(id), "replies"] as const,
-  },
-
-  // Members
-  members: {
-    all: ["members"] as const,
-    lists: () => [...queryKeys.members.all, "list"] as const,
-    stats: () => [...queryKeys.members.all, "stats"] as const,
-  },
-
-  // Meeting Notes
-  meetingNotes: {
-    all: ["meetingNotes"] as const,
-    lists: () => [...queryKeys.meetingNotes.all, "list"] as const,
-    detail: (id: string) => [...queryKeys.meetingNotes.all, id] as const,
-  },
-
-  // Documents
-  documents: {
-    all: ["documents"] as const,
-    lists: () => [...queryKeys.documents.all, "list"] as const,
-    detail: (id: string) => [...queryKeys.documents.all, id] as const,
-  },
-
-  // User
-  user: {
-    all: ["user"] as const,
-    profile: () => [...queryKeys.user.all, "profile"] as const,
-  },
-};
-
 // Create optimized query client
 export function createQueryClient() {
   return new QueryClient({
@@ -73,22 +12,13 @@ export function createQueryClient() {
         // Refetch on mount if data is stale
         refetchOnMount: true,
 
-        // OPTIMIZED: Selective window focus refetch
-        // Only refetch real-time data when user returns to tab
-        // Using Set for O(1) lookup instead of array.some()
+        // Selective window focus refetch — only real-time data
         refetchOnWindowFocus: (query) => {
-          const realtimeKeys = new Set([
-            'forum-posts',
-            'forum-replies',
-            'bounties',
-            'dashboard'
-          ]);
+          const realtimeKeys = new Set(["forum", "bounties", "dashboard"]);
 
           for (const k of query.queryKey) {
-            if (typeof k === 'string') {
-              for (const key of realtimeKeys) {
-                if (k.includes(key)) return true;
-              }
+            if (typeof k === "string" && realtimeKeys.has(k)) {
+              return true;
             }
           }
           return false;
@@ -97,24 +27,23 @@ export function createQueryClient() {
         // Refetch on reconnect
         refetchOnReconnect: "always",
 
-        // OPTIMIZED: Automatic polling for real-time data
-        // Poll specific queries when tab is active
+        // Automatic polling for real-time data
         refetchInterval: (query) => {
-          if (query.state.status === 'success') {
+          if (query.state.status === "success") {
             const queryKey = query.queryKey[0];
 
             // Poll bounties every minute when page is active
-            if (queryKey === 'bounties') {
-              return 60 * 1000; // 1 minute
+            if (queryKey === "bounties") {
+              return 60 * 1000;
             }
 
             // Poll forum posts every 2 minutes when page is active
-            if (queryKey === 'forum-posts') {
-              return 2 * 60 * 1000; // 2 minutes
+            if (queryKey === "forum") {
+              return 2 * 60 * 1000;
             }
           }
 
-          return false; // No polling for other queries
+          return false;
         },
 
         // Retry configuration
@@ -137,103 +66,3 @@ export function createQueryClient() {
     },
   });
 }
-
-// Optimistic update helpers
-export const optimisticHelpers = {
-  // Add item to list optimistically
-  addToList: <T extends { id: string }>(
-    oldData: T[] | undefined,
-    newItem: T,
-  ): T[] => {
-    return [newItem, ...(oldData || [])];
-  },
-
-  // Update item in list optimistically
-  updateInList: <T extends { id: string }>(
-    oldData: T[] | undefined,
-    updatedItem: T,
-  ): T[] => {
-    if (!oldData) return [updatedItem];
-    return oldData.map((item) =>
-      item.id === updatedItem.id ? updatedItem : item,
-    );
-  },
-
-  // Remove item from list optimistically
-  removeFromList: <T extends { id: string }>(
-    oldData: T[] | undefined,
-    itemId: string,
-  ): T[] => {
-    if (!oldData) return [];
-    return oldData.filter((item) => item.id !== itemId);
-  },
-};
-
-// Cache invalidation patterns
-export const invalidationPatterns = {
-  // Invalidate all queries for a resource
-  invalidateResource: (
-    queryClient: QueryClient,
-    resource:
-      | "bounties"
-      | "projects"
-      | "forums"
-      | "members"
-      | "meetingNotes"
-      | "documents"
-      | "user",
-  ) => {
-    return queryClient.invalidateQueries({
-      queryKey: queryKeys[resource].all,
-    });
-  },
-
-  // Invalidate specific query
-  invalidateSpecific: (
-    queryClient: QueryClient,
-    queryKey: readonly unknown[],
-  ) => {
-    return queryClient.invalidateQueries({ queryKey });
-  },
-
-  // Smart invalidation based on mutation type
-  smartInvalidate: async (
-    queryClient: QueryClient,
-    resource:
-      | "bounties"
-      | "projects"
-      | "forums"
-      | "members"
-      | "meetingNotes"
-      | "documents",
-    action: "create" | "update" | "delete",
-    id?: string,
-  ) => {
-    const promises = [];
-    const resourceKeys = queryKeys[resource];
-
-    // Always invalidate lists when creating or deleting
-    if (action === "create" || action === "delete") {
-      if ("lists" in resourceKeys) {
-        promises.push(
-          queryClient.invalidateQueries({
-            queryKey: resourceKeys.lists(),
-          }),
-        );
-      }
-    }
-
-    // Invalidate specific item on update or delete
-    if ((action === "update" || action === "delete") && id) {
-      if ("detail" in resourceKeys) {
-        promises.push(
-          queryClient.invalidateQueries({
-            queryKey: resourceKeys.detail(id),
-          }),
-        );
-      }
-    }
-
-    return Promise.all(promises);
-  },
-};

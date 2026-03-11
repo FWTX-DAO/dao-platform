@@ -20,9 +20,22 @@ function getPrivy() {
 
 export async function POST(request: Request) {
   try {
+    // Step 1: Validate env vars
+    const envCheck = {
+      STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+      NEXT_PUBLIC_PRIVY_APP_ID: !!process.env.NEXT_PUBLIC_PRIVY_APP_ID,
+      PRIVY_APP_SECRET: !!process.env.PRIVY_APP_SECRET,
+      STRIPE_PRICE_MONTHLY: !!process.env.STRIPE_PRICE_MONTHLY,
+      STRIPE_PRICE_ANNUAL: !!process.env.STRIPE_PRICE_ANNUAL,
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? 'NOT SET',
+      DATABASE_URL: !!process.env.DATABASE_URL,
+    };
+    console.log('[checkout] ENV check:', JSON.stringify(envCheck));
+
     const stripe = getStripe();
     const privy = getPrivy();
 
+    // Step 2: Auth
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json({ error: 'Missing auth token' }, { status: 401 });
@@ -32,28 +45,39 @@ export async function POST(request: Request) {
     let claims;
     try {
       claims = await privy.verifyAuthToken(authToken);
-    } catch {
+    } catch (authErr: any) {
+      console.error('[checkout] Privy auth failed:', authErr.message);
       return NextResponse.json({ error: 'Invalid auth token' }, { status: 401 });
     }
+    console.log('[checkout] Auth OK, userId:', claims.userId);
 
+    // Step 3: User resolution
     const user = await getOrCreateUser(claims.userId, (claims as any).email);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+    console.log('[checkout] User OK:', user.id);
 
+    // Step 4: Member resolution
     const member = await membersService.getOrCreateMember(user.id);
     if (!member) {
       return NextResponse.json({ error: 'Could not create member' }, { status: 500 });
     }
+    console.log('[checkout] Member OK:', member.id, 'stripeCustomerId:', member.stripeCustomerId ?? 'none');
 
+    // Step 5: Parse body
     const body = await request.json();
     const { tierId } = body;
 
     if (!tierId) {
       return NextResponse.json({ error: 'tierId is required' }, { status: 400 });
     }
+    console.log('[checkout] tierId:', tierId);
 
+    // Step 6: Tier lookup
     const tier = await db.select().from(membershipTiers).where(eq(membershipTiers.id, tierId)).limit(1);
+    console.log('[checkout] Tier found:', tier[0]?.name ?? 'NOT FOUND', 'stripePriceId:', tier[0]?.stripePriceId ?? 'null');
+
     const priceId = tier[0]?.stripePriceId
       || (tier[0]?.name === 'monthly' || tier[0]?.name === 'pro' ? process.env.STRIPE_PRICE_MONTHLY : null)
       || (tier[0]?.name === 'annual' ? process.env.STRIPE_PRICE_ANNUAL : null);
@@ -63,35 +87,56 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    console.log('[checkout] Resolved priceId:', priceId);
 
-    // Get or create Stripe customer
+    // Step 7: Resolve or create Stripe customer
+    // If the stored customer ID belongs to a different Stripe mode (test vs live),
+    // Stripe will reject it. In that case, create a fresh customer in the current mode.
     let stripeCustomerId = member.stripeCustomerId;
-    if (!stripeCustomerId) {
+
+    const ensureStripeCustomer = async (): Promise<string> => {
+      if (stripeCustomerId) {
+        try {
+          // Validate the stored customer still exists in the current Stripe mode
+          await stripe.customers.retrieve(stripeCustomerId);
+          return stripeCustomerId;
+        } catch {
+          console.warn('[checkout] Stored customer invalid, creating new one. Old:', stripeCustomerId);
+        }
+      }
+
       const customer = await stripe.customers.create({
         email: (claims as any).email || undefined,
         metadata: { userId: user.id, memberId: member.id },
       });
-      stripeCustomerId = customer.id;
+      console.log('[checkout] Stripe customer created:', customer.id);
 
-      // Persist stripeCustomerId to members table
       await db
         .update(members)
-        .set({ stripeCustomerId, updatedAt: new Date() })
+        .set({ stripeCustomerId: customer.id, updatedAt: new Date() })
         .where(eq(members.id, member.id));
-    }
 
+      return customer.id;
+    };
+
+    stripeCustomerId = await ensureStripeCustomer();
+
+    // Step 8: Create checkout session
+    console.log('[checkout] Creating checkout session for customer:', stripeCustomerId, 'price:', priceId);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/billing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/billing?canceled=true`,
+      success_url: `${appUrl}/billing?success=true`,
+      cancel_url: `${appUrl}/billing?canceled=true`,
       metadata: { memberId: member.id, tierId },
     });
 
+    console.log('[checkout] Session created, redirecting to:', session.url);
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    console.error('[checkout] Error creating Stripe checkout session:', err);
+    console.error('[checkout] FAILED at step - error:', err.message, 'stack:', err.stack);
     return NextResponse.json(
       { error: err.message || 'Internal server error' },
       { status: 500 },

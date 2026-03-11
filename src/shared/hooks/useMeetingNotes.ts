@@ -6,7 +6,7 @@ import {
   updateMeetingNote as updateMeetingNoteAction,
   deleteMeetingNote as deleteMeetingNoteAction,
 } from "@/app/_actions/meeting-notes";
-import { queryKeys } from "../utils/query-client";
+import { queryKeys } from "@shared/constants/query-keys";
 import { useAuthReady } from "./useAuthReady";
 
 export interface MeetingNote {
@@ -41,7 +41,7 @@ export interface MeetingNoteInput {
 export const useMeetingNotes = () => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: queryKeys.meetingNotes.lists(),
+    queryKey: queryKeys.meetingNotes.list(),
     queryFn: () => getMeetingNotesAction() as unknown as Promise<MeetingNote[]>,
     enabled: authReady,
     staleTime: 1000 * 60 * 3,
@@ -84,7 +84,7 @@ export const useCreateMeetingNote = () => {
           : noteData.tags,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meetingNotes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meetingNotes.all() });
     },
   });
 };
@@ -108,7 +108,7 @@ export const useUpdateMeetingNote = () => {
         tags: Array.isArray(data.tags) ? data.tags.join(", ") : data.tags,
       }),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meetingNotes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meetingNotes.all() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.meetingNotes.detail(variables.id),
       });
@@ -122,7 +122,7 @@ export const useDeleteMeetingNote = () => {
   return useMutation({
     mutationFn: (id: string) => deleteMeetingNoteAction(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meetingNotes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meetingNotes.all() });
     },
   });
 };

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getRoles as getRolesAction,
   getRolePermissions as getRolePermissionsAction,
@@ -6,8 +6,9 @@ import {
   getMemberRoles as getMemberRolesAction,
   assignRole as assignRoleAction,
   revokeRole as revokeRoleAction,
-} from '@/app/_actions/admin';
-import { queryKeys } from '@shared/constants/query-keys';
+} from "@/app/_actions/admin";
+import { queryKeys } from "@shared/constants/query-keys";
+import { useAuthReady } from "./useAuthReady";
 
 export interface Role {
   id: string;
@@ -38,18 +39,22 @@ export interface MemberRoleAssignment {
 }
 
 export const useRoles = () => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.roles.all(),
     queryFn: () => getRolesAction() as unknown as Promise<Role[]>,
+    enabled: authReady,
     staleTime: 5 * 60 * 1000,
   });
 };
 
 export const useRolePermissions = (roleId: string | null) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.roles.permissions(roleId!),
-    queryFn: () => getRolePermissionsAction(roleId!) as unknown as Promise<Permission[]>,
-    enabled: !!roleId,
+    queryFn: () =>
+      getRolePermissionsAction(roleId!) as unknown as Promise<Permission[]>,
+    enabled: authReady && !!roleId,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -57,19 +62,30 @@ export const useRolePermissions = (roleId: string | null) => {
 export const useUpdateRolePermissions = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) =>
-      setRolePermissionsAction(roleId, permissionIds),
+    mutationFn: ({
+      roleId,
+      permissionIds,
+    }: {
+      roleId: string;
+      permissionIds: string[];
+    }) => setRolePermissionsAction(roleId, permissionIds),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.roles.permissions(variables.roleId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.roles.permissions(variables.roleId),
+      });
     },
   });
 };
 
 export const useMemberRoles = (memberId: string | null) => {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.roles.memberRoles(memberId!),
-    queryFn: () => getMemberRolesAction(memberId!) as unknown as Promise<MemberRoleAssignment[]>,
-    enabled: !!memberId,
+    queryFn: () =>
+      getMemberRolesAction(memberId!) as unknown as Promise<
+        MemberRoleAssignment[]
+      >,
+    enabled: authReady && !!memberId,
     staleTime: 60 * 1000,
   });
 };
@@ -77,10 +93,17 @@ export const useMemberRoles = (memberId: string | null) => {
 export const useAssignRole = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ memberId, roleName }: { memberId: string; roleName: string }) =>
-      assignRoleAction(memberId, roleName),
+    mutationFn: ({
+      memberId,
+      roleName,
+    }: {
+      memberId: string;
+      roleName: string;
+    }) => assignRoleAction(memberId, roleName),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.roles.memberRoles(variables.memberId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.roles.memberRoles(variables.memberId),
+      });
     },
   });
 };
@@ -88,10 +111,17 @@ export const useAssignRole = () => {
 export const useRevokeRole = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ memberId, roleName }: { memberId: string; roleName: string }) =>
-      revokeRoleAction(memberId, roleName),
+    mutationFn: ({
+      memberId,
+      roleName,
+    }: {
+      memberId: string;
+      roleName: string;
+    }) => revokeRoleAction(memberId, roleName),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.roles.memberRoles(variables.memberId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.roles.memberRoles(variables.memberId),
+      });
     },
   });
 };

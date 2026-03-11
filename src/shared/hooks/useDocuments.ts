@@ -11,7 +11,7 @@ import {
   getDownloadUrl as getDownloadUrlAction,
 } from "@/app/_actions/documents";
 import { getAccessToken } from "@privy-io/react-auth";
-import { queryKeys } from "../utils/query-client";
+import { queryKeys } from "@shared/constants/query-keys";
 import { useAuthReady } from "./useAuthReady";
 
 export interface DocumentListItem {
@@ -79,7 +79,7 @@ export const useDocuments = (params?: {
 }) => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: [...queryKeys.documents.lists(), params],
+    queryKey: queryKeys.documents.list(params),
     queryFn: () =>
       getDocumentsAction({
         search: params?.search,
@@ -104,7 +104,7 @@ export const useDocument = (id: string | null) => {
 export const useDocumentAuditTrail = (documentId: string | null) => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: [...queryKeys.documents.detail(documentId!), "audit"],
+    queryKey: queryKeys.documents.audit(documentId!),
     queryFn: () =>
       getDocumentAuditTrailAction(documentId!) as unknown as Promise<
         DocumentAuditEntry[]
@@ -117,7 +117,7 @@ export const useDocumentAuditTrail = (documentId: string | null) => {
 export const useDocumentShares = (documentId: string | null) => {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: [...queryKeys.documents.detail(documentId!), "shares"],
+    queryKey: queryKeys.documents.shares(documentId!),
     queryFn: () =>
       getDocumentSharesAction(documentId!) as unknown as Promise<
         DocumentShareEntry[]
@@ -164,7 +164,7 @@ export const useUploadDocument = () => {
   return useMutation({
     mutationFn: (file: File) => uploadFileToServer(file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
     },
   });
 };
@@ -176,7 +176,7 @@ export const useUpdateDocument = () => {
     mutationFn: (documentData: DocumentUpdate) =>
       updateDocumentAction(documentData.id, documentData),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.documents.detail(variables.id),
       });
@@ -190,7 +190,7 @@ export const useDeleteDocument = () => {
   return useMutation({
     mutationFn: (documentId: string) => deleteDocumentAction(documentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
     },
   });
 };
@@ -210,16 +210,10 @@ export const useShareDocument = () => {
     }) => shareDocumentAction(documentId, sharedWithId, shareType),
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [
-          ...queryKeys.documents.detail(variables.documentId),
-          "shares",
-        ],
+        queryKey: queryKeys.documents.shares(variables.documentId),
       });
       queryClient.invalidateQueries({
-        queryKey: [
-          ...queryKeys.documents.detail(variables.documentId),
-          "audit",
-        ],
+        queryKey: queryKeys.documents.audit(variables.documentId),
       });
     },
   });
@@ -231,7 +225,7 @@ export const useRevokeShare = () => {
   return useMutation({
     mutationFn: (shareId: string) => revokeShareAction(shareId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
     },
   });
 };

@@ -47,6 +47,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No Stripe customer found. Subscribe to a plan first.' }, { status: 400 });
   }
 
+  // Validate the stored customer exists in the current Stripe mode
+  try {
+    await stripe.customers.retrieve(member.stripeCustomerId);
+  } catch {
+    console.warn('[portal] Stored customer invalid (mode mismatch?):', member.stripeCustomerId);
+    return NextResponse.json(
+      { error: 'Your Stripe customer record is invalid. Please subscribe again to refresh it.' },
+      { status: 400 },
+    );
+  }
+
   const session = await stripe.billingPortal.sessions.create({
     customer: member.stripeCustomerId,
     return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/billing`,
