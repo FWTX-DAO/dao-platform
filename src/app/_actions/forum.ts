@@ -1,14 +1,20 @@
-'use server';
+"use server";
 
-import { requireAuth } from '@/app/_lib/auth';
-import { forumService } from '@services/forum';
-import { db, forumVotes } from '@core/database';
-import { eq, and } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { requireAuth } from "@/app/_lib/auth";
+import { forumService } from "@services/forum";
+import { db, forumVotes } from "@core/database";
+import { eq, and } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
-export async function getPosts(filters?: { category?: string; projectId?: string }) {
+export async function getPosts(filters?: {
+  category?: string;
+  projectId?: string;
+}) {
   const { user } = await requireAuth();
-  return forumService.getPostsWithMetadata(user.id, filters);
+  return forumService.getPostsWithMetadata(user.id, {
+    ...filters,
+    rootOnly: true,
+  });
 }
 
 export async function getPostById(postId: string) {
@@ -26,24 +32,36 @@ export async function getThread(postId: string) {
   return forumService.getThread(postId, user.id);
 }
 
-export async function createPost(data: { title: string; content: string; category?: string; parentId?: string; projectId?: string }) {
+export async function createPost(data: {
+  title: string;
+  content: string;
+  category?: string;
+  parentId?: string;
+  projectId?: string;
+}) {
   const { user } = await requireAuth();
-  const result = await forumService.createPost({ ...data, category: data.category || 'General' }, user.id);
-  revalidatePath('/forums');
+  const result = await forumService.createPost(
+    { ...data, category: data.category || "General" },
+    user.id,
+  );
+  revalidatePath("/forums");
   return result;
 }
 
-export async function updatePost(id: string, data: { title?: string; content?: string; category?: string }) {
+export async function updatePost(
+  id: string,
+  data: { title?: string; content?: string; category?: string },
+) {
   const { user } = await requireAuth();
   const result = await forumService.updatePost(id, data, user.id);
-  revalidatePath('/forums');
+  revalidatePath("/forums");
   return result;
 }
 
 export async function deletePost(id: string) {
   const { user } = await requireAuth();
   await forumService.deletePost(id, user.id);
-  revalidatePath('/forums');
+  revalidatePath("/forums");
   return { success: true };
 }
 
@@ -52,7 +70,7 @@ export async function vote(postId: string, voteType: number) {
 
   // Validate voteType is one of the allowed values
   if (![1, -1, 0].includes(voteType)) {
-    return { success: false, error: 'Invalid vote type' };
+    return { success: false, error: "Invalid vote type" };
   }
 
   // Check for existing vote
@@ -67,14 +85,18 @@ export async function vote(postId: string, voteType: number) {
     if (existing.length > 0) {
       await db
         .delete(forumVotes)
-        .where(and(eq(forumVotes.postId, postId), eq(forumVotes.userId, user.id)));
+        .where(
+          and(eq(forumVotes.postId, postId), eq(forumVotes.userId, user.id)),
+        );
     }
   } else if (existing.length > 0) {
     // Update existing vote
     await db
       .update(forumVotes)
       .set({ voteType })
-      .where(and(eq(forumVotes.postId, postId), eq(forumVotes.userId, user.id)));
+      .where(
+        and(eq(forumVotes.postId, postId), eq(forumVotes.userId, user.id)),
+      );
   } else {
     // Create new vote
     await db.insert(forumVotes).values({
@@ -84,6 +106,6 @@ export async function vote(postId: string, voteType: number) {
     });
   }
 
-  revalidatePath('/forums');
+  revalidatePath("/forums");
   return { success: true };
 }
