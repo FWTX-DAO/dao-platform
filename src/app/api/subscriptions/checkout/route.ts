@@ -78,9 +78,14 @@ export async function POST(request: Request) {
     const tier = await db.select().from(membershipTiers).where(eq(membershipTiers.id, tierId)).limit(1);
     console.log('[checkout] Tier found:', tier[0]?.name ?? 'NOT FOUND', 'stripePriceId:', tier[0]?.stripePriceId ?? 'null');
 
-    const priceId = tier[0]?.stripePriceId
-      || (tier[0]?.name === 'monthly' || tier[0]?.name === 'pro' ? process.env.STRIPE_PRICE_MONTHLY : null)
-      || (tier[0]?.name === 'annual' ? process.env.STRIPE_PRICE_ANNUAL : null);
+    // Env vars take priority so the same DB works across test/live Stripe modes
+    const tierName = tier[0]?.name;
+    const envPrice = tierName === 'monthly' || tierName === 'pro'
+      ? process.env.STRIPE_PRICE_MONTHLY
+      : tierName === 'annual'
+        ? process.env.STRIPE_PRICE_ANNUAL
+        : null;
+    const priceId = envPrice || tier[0]?.stripePriceId;
     if (!tier[0] || !priceId) {
       return NextResponse.json(
         { error: `Invalid tier or missing Stripe price. Tier: ${tier[0]?.name ?? 'not found'}, priceId: ${priceId ?? 'null'}` },
