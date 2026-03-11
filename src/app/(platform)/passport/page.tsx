@@ -1,10 +1,14 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useProfile } from '@shared/hooks/useProfile';
 import { usePrivy } from '@privy-io/react-auth';
 import { PassportFull } from '@components/passport';
 import type { PassportData, PassportStamp } from '@components/passport';
 import { useMyStamps } from '@shared/hooks/usePassportStamps';
+import { queryKeys } from '@shared/constants/query-keys';
 import { Calendar, Award } from 'lucide-react';
 import ActivityFeed from '@components/ActivityFeed';
 import { StatCard } from '@components/ui/stat-card';
@@ -13,9 +17,28 @@ import { EmptyState } from '@components/ui/empty-state';
 import { Skeleton } from '@components/ui/skeleton';
 
 export default function PassportPage() {
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { data: profile, isLoading, isError, refetch } = useProfile();
   const { data: stamps } = useMyStamps();
   const { user } = usePrivy();
+
+  const success = searchParams.get('success') === 'true';
+
+  // Invalidate + poll caches when returning from Stripe checkout
+  useEffect(() => {
+    if (!success) return;
+
+    const invalidateAll = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.active() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.membership() });
+    };
+
+    invalidateAll();
+    const timers = [2000, 5000, 10000].map((ms) => setTimeout(invalidateAll, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [success, queryClient]);
 
   if (isLoading) {
     return (
@@ -82,6 +105,14 @@ export default function PassportPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-4">
+      {success && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-6">
+          <p className="text-sm font-medium text-green-800">
+            Welcome aboard! Your membership is being activated. It may take a moment to reflect on your passport.
+          </p>
+        </div>
+      )}
+
       <h1 className="font-display text-3xl text-gray-900 mb-2">Your Passport</h1>
       <p className="text-gray-500 text-sm mb-8">
         Your Fort Worth DAO identity document

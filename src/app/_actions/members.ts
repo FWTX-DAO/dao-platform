@@ -6,7 +6,7 @@ import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action
 import { membersService } from '@services/members';
 import { rbacService } from '@services/rbac';
 import { getOrCreateUser } from '@core/database/queries/users';
-import { db, members, users } from '@core/database';
+import { db, members, users, membershipTiers } from '@core/database';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -55,15 +55,25 @@ export async function getMemberStats() {
   // Ensure member exists
   await membersService.getOrCreateMember(user.id);
 
-  const [member, forumPosts, projects, meetingNotes, votesReceived] = await Promise.all([
-    db.select().from(members).where(eq(members.userId, user.id)).limit(1),
+  const [memberWithTier, forumPosts, projects, meetingNotes, votesReceived] = await Promise.all([
+    db
+      .select({
+        member: members,
+        tierDisplayName: membershipTiers.displayName,
+        tierName: membershipTiers.name,
+      })
+      .from(members)
+      .leftJoin(membershipTiers, eq(members.currentTierId, membershipTiers.id))
+      .where(eq(members.userId, user.id))
+      .limit(1),
     db.execute(sql`SELECT COUNT(*) as count FROM forum_posts WHERE author_id = ${user.id} AND parent_id IS NULL`),
     db.execute(sql`SELECT COUNT(*) as count FROM projects WHERE creator_id = ${user.id}`),
     db.execute(sql`SELECT COUNT(*) as count FROM meeting_notes WHERE author_id = ${user.id}`),
     db.execute(sql`SELECT COUNT(*) as count FROM forum_votes fv INNER JOIN forum_posts fp ON fv.post_id = fp.id WHERE fp.author_id = ${user.id} AND fv.vote_type = 1`),
   ]);
 
-  const memberData = member[0];
+  const row = memberWithTier[0];
+  const memberData = row?.member;
   return {
     user: {
       id: user.id,
@@ -71,7 +81,7 @@ export async function getMemberStats() {
       createdAt: user.createdAt,
     },
     membership: {
-      type: memberData?.membershipType ?? 'basic',
+      type: row?.tierDisplayName ?? row?.tierName ?? memberData?.membershipType ?? 'Free',
       contributionPoints: memberData?.contributionPoints ?? 0,
       votingPower: memberData?.votingPower ?? 1,
     },

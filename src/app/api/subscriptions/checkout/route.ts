@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       customer: stripeCustomerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/billing?success=true`,
+      success_url: `${appUrl}/passport?success=true`,
       cancel_url: `${appUrl}/billing?canceled=true`,
       metadata: { memberId: member.id, tierId },
     });
