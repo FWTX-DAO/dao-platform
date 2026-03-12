@@ -55,7 +55,14 @@ export class ActivitiesRepository {
   async findRecent(limit = 20) {
     return db
       .select({
-        activity: memberActivities,
+        id: memberActivities.id,
+        memberId: memberActivities.memberId,
+        activityType: memberActivities.activityType,
+        resourceType: memberActivities.resourceType,
+        resourceId: memberActivities.resourceId,
+        metadata: memberActivities.metadata,
+        pointsAwarded: memberActivities.pointsAwarded,
+        createdAt: memberActivities.createdAt,
         username: users.username,
         avatarUrl: users.avatarUrl,
       })

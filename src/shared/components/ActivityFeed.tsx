@@ -98,7 +98,7 @@ function PlatformFeedContent({ limit }: { limit?: number }) {
       <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" aria-hidden="true" />
       <ul className="space-y-4">
         {feed.map((item: PlatformActivity) => {
-          const meta = ACTIVITY_META[item.activityType] || { label: item.activityType, icon: ActivityIcon };
+          const meta = ACTIVITY_META[item.activityType] || { label: item.activityType || 'performed an action', icon: ActivityIcon };
           const Icon = meta.icon;
           return (
             <li key={item.id} className="relative flex items-start gap-3 pl-2">
@@ -146,7 +146,7 @@ function PersonalFeedContent({ limit }: { limit?: number }) {
       <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" aria-hidden="true" />
       <ul className="space-y-4">
         {activities.map((item: Activity) => {
-          const meta = ACTIVITY_META[item.activityType] || { label: item.activityType, icon: ActivityIcon };
+          const meta = ACTIVITY_META[item.activityType] || { label: item.activityType || 'performed an action', icon: ActivityIcon };
           const Icon = meta.icon;
           return (
             <li key={item.id} className="relative flex items-start gap-3 pl-2">
