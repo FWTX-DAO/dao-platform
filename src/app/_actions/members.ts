@@ -1,39 +1,94 @@
 'use server';
 
-import Stripe from 'stripe';
 import { requireAuth } from '@/app/_lib/auth';
 import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
 import { membersService } from '@services/members';
 import { rbacService } from '@services/rbac';
-import { getOrCreateUser } from '@core/database/queries/users';
-import { db, members, users, membershipTiers } from '@core/database';
-import { eq, sql } from 'drizzle-orm';
+import { getOrCreateUser, syncWalletAddress } from '@core/database/queries/users';
+import { db, members, users, membershipTiers, memberRoles, roles } from '@core/database';
+import { eq, and, sql, desc, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-
-let _stripe: Stripe | null = null;
-function getStripe() {
-  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
-  return _stripe;
-}
 
 export async function listMembers() {
   await requireAuth();
-  const result = await db
+
+  // Main member data with tier
+  const rows = await db
     .select({
       id: members.id,
       userId: members.userId,
       username: users.username,
       avatarUrl: users.avatarUrl,
+      walletAddress: users.walletAddress,
       membershipType: members.membershipType,
       contributionPoints: members.contributionPoints,
       votingPower: members.votingPower,
       status: members.status,
       joinedAt: members.joinedAt,
+      firstName: members.firstName,
+      lastName: members.lastName,
+      jobTitle: members.jobTitle,
+      employer: members.employer,
+      city: members.city,
+      state: members.state,
+      industry: members.industry,
+      skills: members.skills,
+      bio: users.bio,
+      linkedinUrl: members.linkedinUrl,
+      twitterUrl: members.twitterUrl,
+      githubUrl: members.githubUrl,
+      websiteUrl: members.websiteUrl,
+      civicInterests: members.civicInterests,
+      availability: members.availability,
+      tierName: membershipTiers.name,
+      tierDisplayName: membershipTiers.displayName,
     })
     .from(members)
     .innerJoin(users, eq(members.userId, users.id))
-    .where(eq(members.status, 'active'));
-  return result;
+    .leftJoin(membershipTiers, eq(members.currentTierId, membershipTiers.id))
+    .where(eq(members.status, 'active'))
+    .orderBy(desc(members.contributionPoints));
+
+  // Batch-fetch roles for all members in one query
+  const memberIds = rows.map((r) => r.id);
+  const allRoles = memberIds.length > 0
+    ? await db
+        .select({
+          memberId: memberRoles.memberId,
+          roleName: roles.name,
+          roleDisplayName: roles.displayName,
+          roleLevel: roles.level,
+        })
+        .from(memberRoles)
+        .innerJoin(roles, eq(memberRoles.roleId, roles.id))
+        .where(and(
+          eq(memberRoles.isActive, true),
+          inArray(memberRoles.memberId, memberIds)
+        ))
+    : [];
+
+  // Group roles by member
+  const rolesByMember = new Map<string, { name: string; displayName: string | null; level: number }[]>();
+  for (const r of allRoles) {
+    const list = rolesByMember.get(r.memberId) || [];
+    list.push({ name: r.roleName, displayName: r.roleDisplayName, level: r.roleLevel });
+    rolesByMember.set(r.memberId, list);
+  }
+
+  return rows.map((row) => {
+    const memberRoleList = rolesByMember.get(row.id) || [];
+    const highestRole = memberRoleList.sort((a, b) => b.level - a.level)[0] || null;
+
+    const isPaid = row.tierName === 'monthly' || row.tierName === 'annual';
+
+    return {
+      ...row,
+      standingLabel: isPaid ? 'Member' : 'Observer',
+      standingTier: row.tierName || 'free',
+      highestRole: highestRole?.name || 'guest',
+      roleNames: memberRoleList.map((r) => r.displayName || r.name),
+    };
+  });
 }
 
 export async function getMemberProfile() {
@@ -109,6 +164,7 @@ export async function completeOnboarding(data: {
   city?: string;
   state?: string;
   zip?: string;
+  walletAddress?: string;
 }): Promise<ActionResult<any>> {
   try {
     const { claims, user } = await requireAuth();
@@ -123,25 +179,14 @@ export async function completeOnboarding(data: {
       if (existingRoles.length === 0) {
         await rbacService.assignRole(member.id, 'guest');
       }
+      // Stripe customer creation is handled in the checkout route (single owner)
+    }
 
-      // Create Stripe customer for all users (pre-registers for future upgrades)
-      if (!member.stripeCustomerId) {
-        try {
-          const stripe = getStripe();
-          const customer = await stripe.customers.create({
-            email: data.email,
-            name: `${data.firstName} ${data.lastName}`,
-            metadata: { userId: user.id, memberId: member.id },
-          });
-          await db
-            .update(members)
-            .set({ stripeCustomerId: customer.id, updatedAt: new Date() })
-            .where(eq(members.id, member.id));
-        } catch (err) {
-          // Non-blocking — don't fail onboarding if Stripe is down
-          console.error('Failed to create Stripe customer during onboarding:', err);
-        }
-      }
+    // Sync wallet address from Privy to users table
+    if (data.walletAddress) {
+      await syncWalletAddress(user.id, data.walletAddress).catch((err) => {
+        console.error('[onboarding] Failed to sync wallet address:', err);
+      });
     }
 
     const result = await membersService.completeOnboarding(user.id, data);

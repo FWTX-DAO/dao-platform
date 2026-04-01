@@ -3,10 +3,10 @@
 import { requireAuth } from '@/app/_lib/auth';
 import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
 import { updateUserProfile } from '@core/database/queries/users';
-import { db, users, members } from '@core/database';
+import { db, users } from '@core/database';
 import { eq } from 'drizzle-orm';
 import { validateUsernameFormat } from '@utils/onboarding';
-import { generateId } from '@utils/id-generator';
+import { membersService } from '@services/members';
 import { revalidatePath } from 'next/cache';
 
 export async function onboardUser(
@@ -39,33 +39,10 @@ export async function onboardUser(
       bio: data.bio?.trim() || undefined,
     });
 
-    // Get or create member record
-    const memberRecord = await db
-      .select()
-      .from(members)
-      .where(eq(members.userId, user.id))
-      .limit(1);
+    // Get or create member record (single path via service)
+    const member = await membersService.getOrCreateMember(user.id);
 
-    let memberId: string;
-    if (memberRecord.length === 0) {
-      memberId = generateId();
-      const now = new Date();
-      await db.insert(members).values({
-        id: memberId,
-        userId: user.id,
-        membershipType: 'basic',
-        contributionPoints: 0,
-        votingPower: 1,
-        status: 'active',
-        joinedAt: now,
-        createdAt: now,
-        updatedAt: now,
-      });
-    } else {
-      memberId = memberRecord[0]!.id;
-    }
-
-    return actionSuccess({ user: updatedUser, memberId });
+    return actionSuccess({ user: updatedUser, memberId: member!.id });
   } catch (err) {
     return actionError(err);
   }

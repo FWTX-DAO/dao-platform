@@ -6,11 +6,36 @@ import { useAuthReady } from "./useAuthReady";
 export interface Member {
   id: string;
   userId: string;
-  username: string;
+  username: string | null;
+  avatarUrl: string | null;
+  walletAddress: string | null;
   membershipType: string;
+  contributionPoints: number;
+  votingPower: number;
   status: string;
-  avatarUrl?: string;
   joinedAt: string;
+  firstName: string | null;
+  lastName: string | null;
+  jobTitle: string | null;
+  employer: string | null;
+  city: string | null;
+  state: string | null;
+  industry: string | null;
+  skills: unknown;
+  bio: string | null;
+  linkedinUrl: string | null;
+  twitterUrl: string | null;
+  githubUrl: string | null;
+  websiteUrl: string | null;
+  civicInterests: unknown;
+  availability: string | null;
+  // Accurate standing from tier + roles
+  tierName: string | null;
+  tierDisplayName: string | null;
+  standingLabel: string;
+  standingTier: string;
+  highestRole: string;
+  roleNames: string[];
 }
 
 export const useMembers = () => {

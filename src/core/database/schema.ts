@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   username: text("username").unique(),
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
+  walletAddress: text("wallet_address"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

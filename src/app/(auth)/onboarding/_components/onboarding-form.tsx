@@ -183,6 +183,11 @@ export function OnboardingForm() {
         return;
       }
 
+      // Get wallet address from Privy to sync to DB
+      const walletForSync = user?.linkedAccounts?.find(
+        (a: any) => a.type === 'wallet' && a.chainType === 'ethereum'
+      ) as any;
+
       // Step 2: Complete onboarding profile
       const onboardingResult = await completeOnboarding({
         firstName: formData.firstName.trim(),
@@ -199,6 +204,7 @@ export function OnboardingForm() {
         city: formData.city.trim() || undefined,
         state: formData.state.trim() || undefined,
         zip: formData.zip.trim() || undefined,
+        walletAddress: walletForSync?.address || undefined,
       });
 
       if (!onboardingResult.success) {

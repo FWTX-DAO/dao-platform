@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PrivyClient } from '@privy-io/server-auth';
-import { getOrCreateUser } from '@core/database/queries/users';
+import { getOrCreateUser, syncWalletAddress } from '@core/database/queries/users';
 import { db } from '@core/database';
 import { members, memberRoles, roles } from '@core/database/schema';
 import { eq, and, or } from 'drizzle-orm';
@@ -17,8 +17,26 @@ export async function getAuthUser() {
   try {
     const claims = await privy.verifyAuthToken(token);
     const user = await getOrCreateUser(claims.userId, (claims as any).email);
+
+    // Sync wallet address from Privy (non-blocking)
+    privy.getUser(claims.userId).then((privyUser) => {
+      const wallet = privyUser?.linkedAccounts?.find(
+        (a: any) => a.type === 'wallet' && a.chainType === 'ethereum'
+      ) as any;
+      if (wallet?.address && user) {
+        syncWalletAddress(user.id, wallet.address).catch(() => {});
+      }
+    }).catch(() => {});
+
     return { claims, user: user! };
-  } catch {
+  } catch (err) {
+    // Log non-token errors (token expiry is expected, DB errors are not)
+    const isTokenError = err instanceof Error && (
+      err.message.includes('jwt') || err.message.includes('token') || err.message.includes('expired')
+    );
+    if (!isTokenError) {
+      console.error('[auth] getAuthUser failed:', err);
+    }
     return null;
   }
 }

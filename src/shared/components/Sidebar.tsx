@@ -20,7 +20,6 @@ import {
   Trophy,
   Users,
   Send,
-  Search,
   Activity,
   CreditCard,
   ShieldCheck,
@@ -188,13 +187,6 @@ function Sidebar() {
           >
             <Users className="mr-3 h-4 w-4" />
             Members
-          </Link>
-          <Link
-            href="/directory"
-            className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
-          >
-            <Search className="mr-3 h-4 w-4" />
-            Directory
           </Link>
           <Link
             href="/activity"

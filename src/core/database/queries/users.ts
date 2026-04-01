@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db, users, type NewUser, type User } from '../index';
+import { db, users, members, type NewUser, type User } from '../index';
 import { generateId } from '../../../shared/utils/id-generator';
 
 /**
@@ -71,7 +71,34 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
     return user;
   }
 
-  // Create new user if doesn't exist
+  // Email-based dedup: if a member with this email already exists,
+  // link the new Privy DID to the existing user instead of creating a duplicate.
+  if (email) {
+    const existingMember = await db
+      .select({ userId: members.userId })
+      .from(members)
+      .where(eq(members.email, email))
+      .limit(1);
+
+    if (existingMember.length > 0) {
+      const existingUserId = existingMember[0]!.userId;
+      // Update the existing user's privy_did to the new one
+      const updated = await db
+        .update(users)
+        .set({ privyDid, updatedAt: new Date() })
+        .where(eq(users.id, existingUserId))
+        .returning();
+
+      if (updated.length > 0) {
+        const user = updated[0]!;
+        console.log(`[auth] Email dedup: linked new Privy DID to existing user ${user.id} via email ${email}`);
+        setCachedUser(privyDid, user);
+        return user;
+      }
+    }
+  }
+
+  // Create new user if no match by DID or email
   const newUser: NewUser = {
     id: generateId(),
     privyDid,
@@ -84,6 +111,18 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
   const user = createdUser[0]!;
   setCachedUser(privyDid, user);
   return user;
+}
+
+/**
+ * Sync wallet address from Privy to the users table.
+ * Called during auth when a wallet address is available.
+ */
+export async function syncWalletAddress(userId: string, walletAddress: string) {
+  const existing = await db.select({ walletAddress: users.walletAddress }).from(users).where(eq(users.id, userId)).limit(1);
+  if (existing[0]?.walletAddress === walletAddress) return;
+
+  invalidateUserCache(''); // Clear all since we're looking up by id, not privyDid
+  await db.update(users).set({ walletAddress, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
 /**
