@@ -115,6 +115,14 @@ export function HeroSection() {
 
   return (
     <main className="relative min-h-screen bg-dao-charcoal overflow-hidden selection:bg-dao-gold/30 selection:text-dao-warm">
+      {/* Skip to content — keyboard accessibility */}
+      <a
+        href="#hero-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-dao-gold focus:text-dao-charcoal focus:text-sm focus:font-semibold focus:rounded-md"
+      >
+        Skip to content
+      </a>
+
       {/* Background image + overlay */}
       <div className="absolute inset-0">
         <div
@@ -132,28 +140,56 @@ export function HeroSection() {
       <canvas
         ref={canvasRef}
         className="absolute inset-0 z-10 pointer-events-none opacity-35"
+        aria-hidden="true"
       />
 
       {/* Content */}
       <div className="relative z-20 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 md:px-12 lg:px-16 pt-6 md:pt-8">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Fort Worth DAO" width={32} height={32} className="h-7 w-7 md:h-8 md:w-8 opacity-70" />
-            <span className="text-dao-warm/50 text-[11px] md:text-xs tracking-[0.25em] uppercase font-semibold">
+        <header role="banner" className="flex items-center justify-between px-6 md:px-12 lg:px-16 py-4 md:py-5">
+          <a href="/" className="flex items-center gap-3 group" aria-label="Fort Worth DAO — Home">
+            <img
+              src="/logo.svg"
+              alt=""
+              width={32}
+              height={32}
+              className="h-7 w-7 md:h-8 md:w-8 opacity-80 group-hover:opacity-100 transition-opacity"
+            />
+            <span className="text-dao-warm/60 text-[11px] md:text-xs tracking-[0.25em] uppercase font-semibold group-hover:text-dao-warm/80 transition-colors">
               Fort Worth DAO
             </span>
-          </div>
-          <button
-            onClick={login}
-            className="text-xs md:text-sm text-dao-gold/80 hover:text-dao-gold transition-colors tracking-wide uppercase focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
-          >
-            Sign In
-          </button>
+          </a>
+
+          <nav aria-label="Primary">
+            <button
+              onClick={login}
+              className="inline-flex items-center gap-2 px-5 py-2 md:px-6 md:py-2.5 border border-dao-gold/60 text-dao-gold text-xs md:text-sm font-semibold tracking-wide uppercase rounded-sm hover:bg-dao-gold hover:text-dao-charcoal transition-all duration-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dao-charcoal focus-visible:outline-hidden active:scale-[0.97]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-4 h-4"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25Z"
+                  clipRule="evenodd"
+                />
+                <path
+                  fillRule="evenodd"
+                  d="M19 10a.75.75 0 0 0-.75-.75H8.704l1.048-.943a.75.75 0 1 0-1.004-1.114l-2.5 2.25a.75.75 0 0 0 0 1.114l2.5 2.25a.75.75 0 1 0 1.004-1.114l-1.048-.943h9.546A.75.75 0 0 0 19 10Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Sign In
+            </button>
+          </nav>
         </header>
 
         {/* Hero */}
-        <div className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-16 py-12">
+        <div id="hero-content" className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-16 py-12">
           <div className="max-w-5xl">
             <div
               className="transition-[opacity,transform] duration-1000 ease-out"
@@ -238,7 +274,7 @@ export function HeroSection() {
         </div>
 
         {/* Footer */}
-        <footer className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
+        <footer role="contentinfo" className="px-6 md:px-12 lg:px-16 pb-6 md:pb-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-dao-warm/6 pt-5">
             <p className="text-[11px] text-dao-cool/30">
               Governed by{' '}
