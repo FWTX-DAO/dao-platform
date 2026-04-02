@@ -126,6 +126,28 @@ export async function syncWalletAddress(userId: string, walletAddress: string) {
 }
 
 /**
+ * Save a verified wallet address (after signature verification).
+ */
+export async function saveVerifiedWallet(userId: string, walletAddress: string) {
+  invalidateUserCache('');
+  await db
+    .update(users)
+    .set({ walletAddress, walletVerifiedAt: new Date(), updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
+/**
+ * Remove wallet address from a user.
+ */
+export async function removeWalletAddress(userId: string) {
+  invalidateUserCache('');
+  await db
+    .update(users)
+    .set({ walletAddress: null, walletVerifiedAt: null, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
+/**
  * Update user profile
  */
 export async function updateUserProfile(

@@ -4,10 +4,11 @@ import { requireAuth } from '@/app/_lib/auth';
 import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
 import { membersService } from '@services/members';
 import { rbacService } from '@services/rbac';
-import { getOrCreateUser, syncWalletAddress } from '@core/database/queries/users';
+import { getOrCreateUser, syncWalletAddress, saveVerifiedWallet, removeWalletAddress } from '@core/database/queries/users';
 import { db, members, users, membershipTiers, memberRoles, roles } from '@core/database';
 import { eq, and, sql, desc, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { verifyMessage } from 'viem';
 
 export async function listMembers() {
   await requireAuth();
@@ -207,4 +208,80 @@ export async function searchMembers(filters: {
 }) {
   await requireAuth();
   return membersService.searchMembers(filters);
+}
+
+// ── Wallet verification ──
+
+const WALLET_VERIFY_PREFIX = 'FWTX DAO Wallet Verification\n\nI am verifying ownership of this wallet for my FWTX DAO account.\n\nWallet: ';
+
+export async function verifyWallet(data: {
+  walletAddress: string;
+  signature: string;
+  message: string;
+}): Promise<ActionResult<{ walletAddress: string }>> {
+  try {
+    const { user } = await requireAuth();
+
+    // Validate message format to prevent replay attacks
+    if (!data.message.startsWith(WALLET_VERIFY_PREFIX)) {
+      return actionError('Invalid verification message format');
+    }
+
+    // Extract address from message and ensure it matches
+    const messageAddress = data.message.slice(WALLET_VERIFY_PREFIX.length).trim().toLowerCase();
+    if (messageAddress !== data.walletAddress.toLowerCase()) {
+      return actionError('Wallet address mismatch');
+    }
+
+    // Verify the signature using viem
+    const valid = await verifyMessage({
+      address: data.walletAddress as `0x${string}`,
+      message: data.message,
+      signature: data.signature as `0x${string}`,
+    });
+
+    if (!valid) {
+      return actionError('Invalid signature — wallet ownership could not be verified');
+    }
+
+    // Save verified wallet
+    await saveVerifiedWallet(user.id, data.walletAddress);
+    revalidatePath('/settings');
+    revalidatePath('/passport');
+
+    return actionSuccess({ walletAddress: data.walletAddress });
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function disconnectWallet(): Promise<ActionResult<null>> {
+  try {
+    const { user } = await requireAuth();
+    await removeWalletAddress(user.id);
+    revalidatePath('/settings');
+    revalidatePath('/passport');
+    return actionSuccess(null);
+  } catch (err) {
+    return actionError(err);
+  }
+}
+
+export async function getWalletStatus() {
+  const { user } = await requireAuth();
+  const result = await db
+    .select({ walletAddress: users.walletAddress, walletVerifiedAt: users.walletVerifiedAt })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+
+  const row = result[0];
+  return {
+    walletAddress: row?.walletAddress ?? null,
+    walletVerifiedAt: row?.walletVerifiedAt?.toISOString() ?? null,
+  };
+}
+
+export async function getWalletVerifyMessage(walletAddress: string) {
+  return `${WALLET_VERIFY_PREFIX}${walletAddress}`;
 }

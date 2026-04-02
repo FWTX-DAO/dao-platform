@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
   walletAddress: text("wallet_address"),
+  walletVerifiedAt: timestamp("wallet_verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

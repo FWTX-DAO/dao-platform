@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useSignMessage, useCreateWallet } from '@privy-io/react-auth';
 import { AnimatePresence } from 'framer-motion';
 import { getAccessToken } from '@privy-io/react-auth';
 import { onboardUser } from '@/app/_actions/users';
-import { completeOnboarding } from '@/app/_actions/members';
+import { completeOnboarding, verifyWallet, getWalletVerifyMessage } from '@/app/_actions/members';
 import IndustrySelect from '@components/IndustrySelect';
 import { PassportCreationReveal } from '@components/passport';
 import type { PassportData } from '@components/passport';
@@ -77,7 +77,9 @@ function validateUsernameFormat(username: string) {
 
 export function OnboardingForm() {
   const router = useRouter();
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated, user, linkWallet } = usePrivy();
+  const { createWallet } = useCreateWallet();
+  const { signMessage } = useSignMessage();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -88,6 +90,13 @@ export function OnboardingForm() {
   const [passportData, setPassportData] = useState<PassportData | null>(null);
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const { data: tiers = [] } = useSubscriptionTiers();
+
+  // Wallet verification state
+  const [walletVerified, setWalletVerified] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletCreating, setWalletCreating] = useState(false);
+  const [walletVerifying, setWalletVerifying] = useState(false);
+  const [walletError, setWalletError] = useState('');
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -138,6 +147,57 @@ export function OnboardingForm() {
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
+  // Get current Privy ETH wallet (may update after create/link)
+  const privyEthWallet = user?.linkedAccounts?.find(
+    (a: any) => a.type === 'wallet' && a.chainType === 'ethereum'
+  ) as any;
+
+  const handleCreateWallet = async () => {
+    setWalletCreating(true);
+    setWalletError('');
+    try {
+      await createWallet();
+    } catch (err: any) {
+      setWalletError(err?.message || 'Failed to create wallet');
+    } finally {
+      setWalletCreating(false);
+    }
+  };
+
+  const handleLinkWallet = () => {
+    setWalletError('');
+    linkWallet();
+  };
+
+  const handleVerifyWallet = async () => {
+    const address = privyEthWallet?.address;
+    if (!address) {
+      setWalletError('No wallet found. Create or link one first.');
+      return;
+    }
+    setWalletVerifying(true);
+    setWalletError('');
+    try {
+      const message = await getWalletVerifyMessage(address);
+      const { signature } = await signMessage({ message });
+      const result = await verifyWallet({ walletAddress: address, signature, message });
+      if (!result.success) {
+        setWalletError(result.error || 'Verification failed');
+      } else {
+        setWalletVerified(true);
+        setWalletAddress(result.data.walletAddress);
+      }
+    } catch (err: any) {
+      if (err?.message?.includes('rejected') || err?.message?.includes('denied')) {
+        setWalletError('Signature cancelled');
+      } else {
+        setWalletError('Verification failed. Try again.');
+      }
+    } finally {
+      setWalletVerifying(false);
+    }
+  };
+
   const handlePostOnboarding = async () => {
     if (selectedTierId) {
       // Paid tier selected — redirect to Stripe Checkout
@@ -183,12 +243,8 @@ export function OnboardingForm() {
         return;
       }
 
-      // Get wallet address from Privy to sync to DB
-      const walletForSync = user?.linkedAccounts?.find(
-        (a: any) => a.type === 'wallet' && a.chainType === 'ethereum'
-      ) as any;
-
       // Step 2: Complete onboarding profile
+      // Wallet address is already verified & saved via the inline sign flow (if used)
       const onboardingResult = await completeOnboarding({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
@@ -204,7 +260,6 @@ export function OnboardingForm() {
         city: formData.city.trim() || undefined,
         state: formData.state.trim() || undefined,
         zip: formData.zip.trim() || undefined,
-        walletAddress: walletForSync?.address || undefined,
       });
 
       if (!onboardingResult.success) {
@@ -212,11 +267,6 @@ export function OnboardingForm() {
         setIsSubmitting(false);
         return;
       }
-
-      // Build passport data and show reveal
-      const walletAccount = user?.linkedAccounts?.find(
-        (a: any) => a.type === 'wallet'
-      ) as any;
 
       setPassportData({
         avatarUrl: null,
@@ -232,7 +282,7 @@ export function OnboardingForm() {
         civicInterests: formData.civicInterests || null,
         city: formData.city || null,
         state: formData.state || null,
-        walletAddress: walletAccount?.address || null,
+        walletAddress: walletAddress || privyEthWallet?.address || null,
         tierDisplayName: selectedTierId
           ? tiers.find((t) => t.id === selectedTierId)?.displayName || 'Member'
           : 'Observer',
@@ -515,6 +565,72 @@ export function OnboardingForm() {
                       <label htmlFor="zip" className={labelBase}>ZIP</label>
                       <input type="text" id="zip" name="zip" autoComplete="postal-code" value={formData.zip} onChange={(e) => updateField('zip', e.target.value)} maxLength={10} className={inputBase} />
                     </div>
+                  </div>
+
+                  {/* Wallet Connect & Verify */}
+                  <div className="pt-4 border-t border-dao-border/30">
+                    <label className={labelBase}>ETH Wallet (optional)</label>
+                    <p className="text-[11px] text-dao-cool/40 mb-3">
+                      Connect and verify your wallet with a signature. No gas fees. You can also do this later in Settings.
+                    </p>
+
+                    {walletVerified && walletAddress ? (
+                      <div className="flex items-center gap-2 px-3 py-2.5 bg-green-500/10 border border-green-500/20 rounded-sm">
+                        <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-green-400">Wallet verified</p>
+                          <p className="text-xs font-mono text-green-400/70 truncate">{walletAddress}</p>
+                        </div>
+                      </div>
+                    ) : privyEthWallet?.address ? (
+                      <div className="space-y-2.5">
+                        <div className="flex items-center gap-2 px-3 py-2.5 bg-dao-surface border border-dao-border rounded-sm">
+                          <span className="text-xs font-mono text-dao-cool/60 truncate">{privyEthWallet.address}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleVerifyWallet}
+                          disabled={walletVerifying}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded-sm transition-colors disabled:opacity-50"
+                        >
+                          {walletVerifying ? (
+                            <>
+                              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Signing...
+                            </>
+                          ) : (
+                            'Sign & verify wallet'
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCreateWallet}
+                          disabled={walletCreating}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded-sm transition-colors disabled:opacity-50"
+                        >
+                          {walletCreating ? 'Creating...' : 'Create embedded wallet'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleLinkWallet}
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-dao-border text-dao-cool hover:text-dao-warm text-sm font-medium rounded-sm transition-colors"
+                        >
+                          Link external wallet
+                        </button>
+                      </div>
+                    )}
+
+                    {walletError && (
+                      <p className="mt-2 text-xs text-red-400">{walletError}</p>
+                    )}
                   </div>
                 </div>
               )}
