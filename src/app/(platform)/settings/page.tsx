@@ -97,10 +97,14 @@ function WalletSection() {
       .catch(() => {});
   }, []);
 
-  // Find the user's ETH wallet from Privy linked accounts
-  const privyWallet = privyUser?.linkedAccounts?.find(
+  // Find the user's ETH wallet — prefer external (MetaMask, etc.) over embedded
+  const ethWallets = (privyUser?.linkedAccounts?.filter(
     (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-  ) as any;
+  ) ?? []) as any[];
+  const privyWallet =
+    ethWallets.find((w: any) => w.walletClientType !== "privy") ??
+    ethWallets[0] ??
+    null;
 
   const handleCreateWallet = useCallback(async () => {
     setIsCreating(true);

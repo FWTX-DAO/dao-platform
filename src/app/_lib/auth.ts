@@ -22,12 +22,17 @@ export async function getAuthUser() {
     const user = await getOrCreateUser(claims.userId, (claims as any).email);
 
     // Sync wallet address from Privy (non-blocking)
+    // Prefer external wallets (MetaMask, etc.) over embedded ones
     privy
       .getUser(claims.userId)
       .then((privyUser) => {
-        const wallet = privyUser?.linkedAccounts?.find(
+        const ethWallets = (privyUser?.linkedAccounts?.filter(
           (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-        ) as any;
+        ) ?? []) as any[];
+        // Prefer external wallet; fall back to embedded
+        const wallet =
+          ethWallets.find((w: any) => w.walletClientType !== "privy") ??
+          ethWallets[0];
         if (wallet?.address && user) {
           syncWalletAddress(user.id, wallet.address).catch((err) => {
             console.error("[auth] wallet sync DB write failed:", err);

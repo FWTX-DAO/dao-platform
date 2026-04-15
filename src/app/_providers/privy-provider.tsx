@@ -2,11 +2,16 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
+import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { createQueryClient } from "@utils/query-client";
 import { SidebarProvider } from "@shared/contexts/SidebarContext";
+
+const solanaConnectors = toSolanaWalletConnectors({
+  shouldAutoConnect: true,
+});
 
 const ReactQueryDevtools = dynamic(
   () =>
@@ -53,6 +58,21 @@ export function Providers({ children }: { children: ReactNode }) {
           embeddedWallets: {
             ethereum: { createOnLogin: "all-users" },
             solana: { createOnLogin: "all-users" },
+          },
+          appearance: {
+            walletList: [
+              "metamask",
+              "phantom",
+              "coinbase_wallet",
+              "rainbow",
+              "detected_ethereum_wallets",
+              "detected_solana_wallets",
+              "wallet_connect",
+            ],
+            walletChainType: "ethereum-and-solana",
+          },
+          externalWallets: {
+            solana: { connectors: solanaConnectors },
           },
         }}
       >

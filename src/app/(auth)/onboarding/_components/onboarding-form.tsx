@@ -165,10 +165,14 @@ export function OnboardingForm() {
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
-  // Get current Privy ETH wallet (may update after create/link)
-  const privyEthWallet = user?.linkedAccounts?.find(
+  // Get current Privy ETH wallet — prefer external (MetaMask, etc.) over embedded
+  const ethWallets = (user?.linkedAccounts?.filter(
     (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-  ) as any;
+  ) ?? []) as any[];
+  const privyEthWallet =
+    ethWallets.find((w: any) => w.walletClientType !== "privy") ??
+    ethWallets[0] ??
+    null;
 
   const handleCreateWallet = async () => {
     setWalletCreating(true);
