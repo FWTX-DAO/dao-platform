@@ -249,19 +249,29 @@ function WalletSection() {
                     </p>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={handleVerify}
-                  disabled={isVerifying}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-medium transition-colors disabled:opacity-50 min-h-[44px]"
-                >
-                  {isVerifying ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Pen className="w-4 h-4" />
-                  )}
-                  {isVerifying ? "Sign to verify..." : "Sign & verify wallet"}
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={handleVerify}
+                    disabled={isVerifying}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-medium transition-colors disabled:opacity-50 min-h-[44px]"
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Pen className="w-4 h-4" />
+                    )}
+                    {isVerifying ? "Sign to verify..." : "Sign & verify wallet"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLinkWallet}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors min-h-[44px]"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Link different wallet
+                  </button>
+                </div>
               </div>
             ) : (
               /* State 3: No Privy wallet at all → create or link */
