@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAuth, requireAdmin } from "@/app/_lib/auth";
+import { getPreferredEthWalletFromAccounts } from "@utils/wallet";
 import {
   type ActionResult,
   actionSuccess,
@@ -366,9 +367,7 @@ export async function backfillWallets(): Promise<
     for (const u of usersWithoutWallet) {
       try {
         const privyUser = await privy.getUser(u.privyDid);
-        const wallet = privyUser?.linkedAccounts?.find(
-          (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-        ) as any;
+        const wallet = getPreferredEthWalletFromAccounts(privyUser?.linkedAccounts);
 
         if (wallet?.address) {
           await syncWalletAddress(u.id, wallet.address);

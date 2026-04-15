@@ -89,13 +89,15 @@ import { getAuthUser, requireAuth, requireAdmin, isUserAdmin } from '@/app/_lib/
 // getAuthUser()    — returns { claims, user } or null (never throws)
 // requireAuth()    — redirects to '/' if not authenticated
 // isUserAdmin(id)  — returns boolean, checks admin/council_member/screener roles
-// requireAdmin()   — requireAuth + isUserAdmin, returns { ...auth, isAdmin: boolean }
+// requireAdmin()   — redirects to '/' if not admin, returns { ...auth, isAdmin: true }
+// checkAdmin()     — soft check, returns { ...auth, isAdmin: boolean } (no redirect)
 ```
 
 **Rules:**
 - Server components/layouts: use `getAuthUser()` + manual redirect
 - Server actions: use `requireAuth()` (auto-redirects on auth failure, never 500s)
-- Admin-only actions: use `requireAdmin()`, check `isAdmin` before proceeding
+- Admin-only hard gates: use `requireAdmin()` (auto-redirects non-admins)
+- Admin soft checks: use `checkAdmin()`, check `isAdmin` before proceeding
 
 ### ActionResult Pattern (`src/app/_lib/action-utils.ts`)
 
@@ -131,11 +133,20 @@ if (!result.success) {
 
 Admin routes are guarded at two levels:
 1. **Layout level** (`(platform)/admin/layout.tsx`): server-side redirect for non-admins
-2. **Action level**: each admin action checks `requireAdmin()` + `isAdmin`
+2. **Action level**: each admin action checks access before proceeding
 
+For hard gates (redirect non-admins):
+```typescript
+export async function deleteUser(id: string) {
+  await requireAdmin(); // redirects if not admin — no further check needed
+  return membersService.deleteUser(id);
+}
+```
+
+For soft checks (return empty/filtered data):
 ```typescript
 export async function getRoles() {
-  const { isAdmin } = await requireAdmin();
+  const { isAdmin } = await checkAdmin();
   if (!isAdmin) return [];
   return rbacService.getAllRoles();
 }

@@ -10,6 +10,7 @@ import type { PassportData, PassportStamp } from "@components/passport";
 import { useMyStamps } from "@shared/hooks/usePassportStamps";
 import { queryKeys } from "@shared/constants/query-keys";
 import { Calendar, Award } from "lucide-react";
+import { getPreferredEthWallet } from "@utils/wallet";
 import ActivityFeed from "@components/ActivityFeed";
 import { StatCard } from "@components/ui/stat-card";
 import { ErrorState } from "@components/ui/error-state";
@@ -80,9 +81,7 @@ export default function PassportPage() {
     );
   }
 
-  const walletAccount = user?.linkedAccounts?.find(
-    (a: any) => a.type === "wallet",
-  ) as any;
+  const walletAccount = getPreferredEthWallet(user?.linkedAccounts);
 
   const passportStamps: PassportStamp[] = (stamps || []).map((s: any) => ({
     id: s.id,

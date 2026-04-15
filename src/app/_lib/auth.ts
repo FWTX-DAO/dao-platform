@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PrivyClient } from "@privy-io/server-auth";
+import { getPreferredEthWalletFromAccounts } from "@utils/wallet";
 import {
   getOrCreateUser,
   syncWalletAddress,
@@ -26,13 +27,7 @@ export async function getAuthUser() {
     privy
       .getUser(claims.userId)
       .then((privyUser) => {
-        const ethWallets = (privyUser?.linkedAccounts?.filter(
-          (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-        ) ?? []) as any[];
-        // Prefer external wallet; fall back to embedded
-        const wallet =
-          ethWallets.find((w: any) => w.walletClientType !== "privy") ??
-          ethWallets[0];
+        const wallet = getPreferredEthWalletFromAccounts(privyUser?.linkedAccounts);
         if (wallet?.address && user) {
           syncWalletAddress(user.id, wallet.address).catch((err) => {
             console.error("[auth] wallet sync DB write failed:", err);

@@ -15,6 +15,7 @@ import {
   verifyWallet,
   getWalletVerifyMessage,
 } from "@/app/_actions/members";
+import { getPreferredEthWallet } from "@utils/wallet";
 import IndustrySelect from "@components/IndustrySelect";
 import { PassportCreationReveal } from "@components/passport";
 import type { PassportData } from "@components/passport";
@@ -166,13 +167,7 @@ export function OnboardingForm() {
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
   // Get current Privy ETH wallet — prefer external (MetaMask, etc.) over embedded
-  const ethWallets = (user?.linkedAccounts?.filter(
-    (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-  ) ?? []) as any[];
-  const privyEthWallet =
-    ethWallets.find((w: any) => w.walletClientType !== "privy") ??
-    ethWallets[0] ??
-    null;
+  const privyEthWallet = getPreferredEthWallet(user?.linkedAccounts);
 
   const handleCreateWallet = async () => {
     setWalletCreating(true);

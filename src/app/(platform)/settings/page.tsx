@@ -17,6 +17,7 @@ import {
   getWalletStatus,
   getWalletVerifyMessage,
 } from "@/app/_actions/members";
+import { getPreferredEthWallet } from "@utils/wallet";
 import { updateProfile } from "@/app/_actions/users";
 import { PageHeader } from "@components/ui/page-header";
 import IndustrySelect from "@components/IndustrySelect";
@@ -98,13 +99,7 @@ function WalletSection() {
   }, []);
 
   // Find the user's ETH wallet — prefer external (MetaMask, etc.) over embedded
-  const ethWallets = (privyUser?.linkedAccounts?.filter(
-    (a: any) => a.type === "wallet" && a.chainType === "ethereum",
-  ) ?? []) as any[];
-  const privyWallet =
-    ethWallets.find((w: any) => w.walletClientType !== "privy") ??
-    ethWallets[0] ??
-    null;
+  const privyWallet = getPreferredEthWallet(privyUser?.linkedAccounts);
 
   const handleCreateWallet = useCallback(async () => {
     setIsCreating(true);
@@ -237,7 +232,9 @@ function WalletSection() {
                   <Wallet className="w-4 h-4 text-gray-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-400">
-                      Privy wallet detected
+                      {privyWallet?.walletClientType === "privy"
+                        ? "Embedded wallet"
+                        : "External wallet"} detected
                     </p>
                     <p className="text-sm font-mono text-gray-600 truncate">
                       {privyWallet.address}
@@ -345,7 +342,6 @@ export default function SettingsPage() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
 
-  const [profileSaving, setProfileSaving] = useState(false);
   const [userSaving, setUserSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
   const [userMsg, setUserMsg] = useState("");
@@ -374,34 +370,29 @@ export default function SettingsPage() {
     setBio(profile.bio || "");
   }, [profile]);
 
-  const handleSaveProfile = useCallback(async () => {
-    setProfileSaving(true);
+  const handleSaveProfile = useCallback(() => {
     setProfileMsg("");
-    try {
-      const data: UpdateProfileInput = {
-        firstName: firstName.trim() || undefined,
-        lastName: lastName.trim() || undefined,
-        employer: employer.trim() || undefined,
-        jobTitle: jobTitle.trim() || undefined,
-        industry: industry.trim() || undefined,
-        availability: availability || undefined,
-        city: city.trim() || undefined,
-        state: state.trim() || undefined,
-        zip: zip.trim() || undefined,
-        civicInterests: civicInterests.trim() || undefined,
-        skills: skills.trim() || undefined,
-        linkedinUrl: linkedinUrl.trim() || undefined,
-        twitterUrl: twitterUrl.trim() || undefined,
-        githubUrl: githubUrl.trim() || undefined,
-        websiteUrl: websiteUrl.trim() || undefined,
-      };
-      updateMemberProfile.mutate(data, {
-        onSuccess: () => setProfileMsg("Profile updated!"),
-        onError: () => setProfileMsg("Failed to update profile"),
-      });
-    } finally {
-      setProfileSaving(false);
-    }
+    const data: UpdateProfileInput = {
+      firstName: firstName.trim() || undefined,
+      lastName: lastName.trim() || undefined,
+      employer: employer.trim() || undefined,
+      jobTitle: jobTitle.trim() || undefined,
+      industry: industry.trim() || undefined,
+      availability: availability || undefined,
+      city: city.trim() || undefined,
+      state: state.trim() || undefined,
+      zip: zip.trim() || undefined,
+      civicInterests: civicInterests.trim() || undefined,
+      skills: skills.trim() || undefined,
+      linkedinUrl: linkedinUrl.trim() || undefined,
+      twitterUrl: twitterUrl.trim() || undefined,
+      githubUrl: githubUrl.trim() || undefined,
+      websiteUrl: websiteUrl.trim() || undefined,
+    };
+    updateMemberProfile.mutate(data, {
+      onSuccess: () => setProfileMsg("Profile updated!"),
+      onError: () => setProfileMsg("Failed to update profile"),
+    });
   }, [
     firstName,
     lastName,
@@ -742,12 +733,10 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleSaveProfile}
-          disabled={profileSaving || updateMemberProfile.isPending}
+          disabled={updateMemberProfile.isPending}
           className="px-6 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 font-medium text-sm transition-colors disabled:opacity-50 min-h-[44px]"
         >
-          {profileSaving || updateMemberProfile.isPending
-            ? "Saving..."
-            : "Save Profile"}
+          {updateMemberProfile.isPending ? "Saving..." : "Save Profile"}
         </button>
         {profileMsg && (
           <span className="text-sm text-green-600">{profileMsg}</span>

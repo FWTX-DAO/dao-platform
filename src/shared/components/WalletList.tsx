@@ -7,29 +7,16 @@ import {
 import { useCreateWallet as useCreateSolanaWallet } from "@privy-io/react-auth/solana";
 import { useCallback, useMemo, useState } from "react";
 import WalletCard from "./WalletCard";
-
-const WALLET_CLIENT_LABELS: Record<string, string> = {
-  privy: "Embedded",
-  metamask: "MetaMask",
-  coinbase_wallet: "Coinbase",
-  rainbow: "Rainbow",
-  phantom: "Phantom",
-  wallet_connect: "WalletConnect",
-  solflare: "Solflare",
-};
-
-function walletLabel(wallet: WalletWithMetadata): string {
-  const clientType = wallet.walletClientType;
-  if (!clientType) return "External";
-  return WALLET_CLIENT_LABELS[clientType] ?? "External";
-}
+import { walletLabel } from "@utils/wallet";
 
 export default function WalletList() {
   const { user } = useUser();
   const { createWallet: createEthereumWallet } = useCreateWallet();
   const { createWallet: createSolanaWallet } = useCreateSolanaWallet();
   const { connectWallet } = useConnectWallet();
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingEth, setIsCreatingEth] = useState(false);
+  const [isCreatingSol, setIsCreatingSol] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   // All Ethereum wallets (embedded + external)
   const ethereumWallets = useMemo<WalletWithMetadata[]>(
@@ -53,17 +40,20 @@ export default function WalletList() {
 
   const handleCreateWallet = useCallback(
     async (type: "ethereum" | "solana") => {
-      setIsCreating(true);
+      const setCreating = type === "ethereum" ? setIsCreatingEth : setIsCreatingSol;
+      setCreating(true);
+      setCreateError("");
       try {
         if (type === "ethereum") {
           await createEthereumWallet();
         } else if (type === "solana") {
           await createSolanaWallet();
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error creating wallet:", error);
+        setCreateError(error?.message || "Failed to create wallet. Please try again.");
       } finally {
-        setIsCreating(false);
+        setCreating(false);
       }
     },
     [createEthereumWallet, createSolanaWallet],
@@ -84,10 +74,10 @@ export default function WalletList() {
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={() => handleCreateWallet("ethereum")}
-                disabled={isCreating}
+                disabled={isCreatingEth}
                 className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
               >
-                {isCreating ? "Creating\u2026" : "Create Embedded Wallet"}
+                {isCreatingEth ? "Creating\u2026" : "Create Embedded Wallet"}
               </button>
               <button
                 onClick={handleConnectExternal}
@@ -126,10 +116,10 @@ export default function WalletList() {
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={() => handleCreateWallet("solana")}
-                disabled={isCreating}
+                disabled={isCreatingSol}
                 className="text-sm bg-violet-600 hover:bg-violet-700 py-2 px-4 rounded-md text-white disabled:bg-violet-400 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
               >
-                {isCreating ? "Creating\u2026" : "Create Embedded Wallet"}
+                {isCreatingSol ? "Creating\u2026" : "Create Embedded Wallet"}
               </button>
               <button
                 onClick={handleConnectExternal}
@@ -158,6 +148,11 @@ export default function WalletList() {
           </div>
         )}
       </div>
+      {createError && (
+        <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-xs text-red-700">{createError}</p>
+        </div>
+      )}
     </div>
   );
 }

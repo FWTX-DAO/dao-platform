@@ -118,6 +118,9 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
 /**
  * Sync wallet address from Privy to the users table.
  * Called during auth when a wallet address is available.
+ * Populates empty slots (null → address) but does NOT overwrite an
+ * existing non-null address with a different one — use saveVerifiedWallet
+ * for intentional wallet changes.
  */
 export async function syncWalletAddress(userId: string, walletAddress: string) {
   const existing = await db
@@ -125,9 +128,16 @@ export async function syncWalletAddress(userId: string, walletAddress: string) {
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
-  if (existing[0]?.walletAddress === walletAddress) return;
 
-  invalidateUserCache(""); // Clear all since we're looking up by id, not privyDid
+  const storedAddress = existing[0]?.walletAddress;
+
+  // Already current — nothing to do
+  if (storedAddress === walletAddress) return;
+
+  // Don't overwrite an existing different wallet address
+  if (storedAddress !== null) return;
+
+  invalidateUserCache("");
   await db
     .update(users)
     .set({ walletAddress, updatedAt: new Date() })

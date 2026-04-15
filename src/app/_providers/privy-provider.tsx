@@ -10,7 +10,7 @@ import { createQueryClient } from "@utils/query-client";
 import { SidebarProvider } from "@shared/contexts/SidebarContext";
 
 const solanaConnectors = toSolanaWalletConnectors({
-  shouldAutoConnect: true,
+  shouldAutoConnect: false,
 });
 
 const ReactQueryDevtools = dynamic(
