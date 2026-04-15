@@ -123,7 +123,12 @@ export async function getDocumentById(id: string) {
   if (!doc[0] || doc[0].status !== "active") return null;
 
   // Authorization: check user can access this document
-  const hasAccess = await canAccessDocument(id, user.id, doc[0].uploaderId, doc[0].isPublic);
+  const hasAccess = await canAccessDocument(
+    id,
+    user.id,
+    doc[0].uploaderId,
+    doc[0].isPublic,
+  );
   if (!hasAccess) return null;
 
   // Increment access count and log audit trail (non-blocking)
@@ -165,7 +170,12 @@ export async function getDocumentAuditTrail(documentId: string) {
     .where(eq(documents.id, documentId))
     .limit(1);
   if (!doc[0]) return [];
-  const hasAccess = await canAccessDocument(documentId, user.id, doc[0].uploaderId, doc[0].isPublic);
+  const hasAccess = await canAccessDocument(
+    documentId,
+    user.id,
+    doc[0].uploaderId,
+    doc[0].isPublic,
+  );
   if (!hasAccess) return [];
 
   return db
@@ -491,7 +501,12 @@ export async function getDownloadUrl(
     if (!doc[0]) return actionError(new Error("Document not found"));
 
     // Authorization: verify access to this document
-    const hasAccess = await canAccessDocument(documentId, user.id, doc[0].uploaderId, doc[0].isPublic);
+    const hasAccess = await canAccessDocument(
+      documentId,
+      user.id,
+      doc[0].uploaderId,
+      doc[0].isPublic,
+    );
     if (!hasAccess) return actionError(new Error("Not authorized"));
 
     const downloadLink = await pinataHelpers.createDownloadLink(doc[0].cid, {

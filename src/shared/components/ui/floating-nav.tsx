@@ -22,13 +22,48 @@ export interface FloatingNavItem {
 }
 
 const defaultItems: FloatingNavItem[] = [
-  { id: "dashboard", icon: <Home size={22} />, label: "Home", href: "/dashboard" },
-  { id: "forums", icon: <MessageSquare size={22} />, label: "Forums", href: "/forums" },
-  { id: "bounties", icon: <Trophy size={22} />, label: "Bounties", href: "/bounties" },
-  { id: "innovation-lab", icon: <Lightbulb size={22} />, label: "Lab", href: "/innovation-lab" },
-  { id: "meeting-notes", icon: <FileText size={22} />, label: "Notes", href: "/meeting-notes" },
-  { id: "documents", icon: <FolderOpen size={22} />, label: "Docs", href: "/documents" },
-  { id: "profile", icon: <User size={22} />, label: "Profile", href: "/settings" },
+  {
+    id: "dashboard",
+    icon: <Home size={22} />,
+    label: "Home",
+    href: "/dashboard",
+  },
+  {
+    id: "forums",
+    icon: <MessageSquare size={22} />,
+    label: "Forums",
+    href: "/forums",
+  },
+  {
+    id: "bounties",
+    icon: <Trophy size={22} />,
+    label: "Bounties",
+    href: "/bounties",
+  },
+  {
+    id: "innovation-lab",
+    icon: <Lightbulb size={22} />,
+    label: "Lab",
+    href: "/innovation-lab",
+  },
+  {
+    id: "meeting-notes",
+    icon: <FileText size={22} />,
+    label: "Notes",
+    href: "/meeting-notes",
+  },
+  {
+    id: "documents",
+    icon: <FolderOpen size={22} />,
+    label: "Docs",
+    href: "/documents",
+  },
+  {
+    id: "profile",
+    icon: <User size={22} />,
+    label: "Profile",
+    href: "/settings",
+  },
 ];
 
 interface FloatingNavProps {
@@ -84,20 +119,31 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
           <Link
             key={item.id}
             href={item.href}
-            ref={(el) => { btnRefs.current[index] = el; }}
+            ref={(el) => {
+              btnRefs.current[index] = el;
+            }}
             className={`relative flex flex-col items-center justify-center flex-1 px-1.5 py-2 text-sm font-medium transition-colors duration-200 rounded-xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${
-              active === index ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+              active === index
+                ? "text-white"
+                : "text-gray-400 hover:text-gray-200"
             }`}
             aria-label={item.label}
-            aria-current={active === index ? 'page' : undefined}
+            aria-current={active === index ? "page" : undefined}
           >
-            <div className="z-10 transition-transform duration-200" style={{ transform: active === index ? 'scale(1.1)' : 'scale(1)' }}>
+            <div
+              className="z-10 transition-transform duration-200"
+              style={{
+                transform: active === index ? "scale(1.1)" : "scale(1)",
+              }}
+            >
               {item.icon}
             </div>
             {/* hide labels on very small screens */}
-            <span className={`text-[9px] mt-1 hidden xs:block truncate max-w-[50px] transition-opacity duration-200 ${
-              active === index ? 'opacity-100 font-semibold' : 'opacity-70'
-            }`}>
+            <span
+              className={`text-[9px] mt-1 hidden xs:block truncate max-w-[50px] transition-opacity duration-200 ${
+                active === index ? "opacity-100 font-semibold" : "opacity-70"
+              }`}
+            >
               {item.label}
             </span>
           </Link>
@@ -106,7 +152,11 @@ const FloatingNav = ({ items = defaultItems }: FloatingNavProps) => {
         {/* Sliding Active Indicator */}
         <motion.div
           animate={indicatorStyle}
-          transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 450, damping: 35 }}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 450, damping: 35 }
+          }
           className="absolute top-2.5 bottom-2.5 rounded-xl bg-linear-to-br from-violet-600 to-violet-700 shadow-lg shadow-violet-500/50"
         />
       </nav>

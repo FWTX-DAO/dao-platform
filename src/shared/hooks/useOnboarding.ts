@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { completeOnboarding as completeOnboardingAction } from '@/app/_actions/members';
-import { queryKeys } from '@shared/constants/query-keys';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { completeOnboarding as completeOnboardingAction } from "@/app/_actions/members";
+import { queryKeys } from "@shared/constants/query-keys";
 
 export interface CompleteOnboardingInput {
   firstName: string;
@@ -23,7 +23,8 @@ export const useCompleteOnboarding = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CompleteOnboardingInput) => completeOnboardingAction(data),
+    mutationFn: (data: CompleteOnboardingInput) =>
+      completeOnboardingAction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.stats() });

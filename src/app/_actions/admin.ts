@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import { requireAdmin } from '@/app/_lib/auth';
-import { rbacService } from '@services/rbac';
-import { revalidatePath } from 'next/cache';
+import { requireAdmin } from "@/app/_lib/auth";
+import { rbacService } from "@services/rbac";
+import { revalidatePath } from "next/cache";
 
 export async function getRoles() {
   await requireAdmin();
@@ -14,10 +14,13 @@ export async function getRolePermissions(roleId: string) {
   return rbacService.getRolePermissions(roleId);
 }
 
-export async function setRolePermissions(roleId: string, permissionIds: string[]) {
+export async function setRolePermissions(
+  roleId: string,
+  permissionIds: string[],
+) {
   await requireAdmin();
   const result = await rbacService.setRolePermissions(roleId, permissionIds);
-  revalidatePath('/admin');
+  revalidatePath("/admin");
   return result;
 }
 
@@ -29,13 +32,13 @@ export async function getMemberRoles(memberId: string) {
 export async function assignRole(memberId: string, roleId: string) {
   await requireAdmin();
   const result = await rbacService.assignRole(memberId, roleId);
-  revalidatePath('/admin');
+  revalidatePath("/admin");
   return result;
 }
 
 export async function revokeRole(memberId: string, roleId: string) {
   await requireAdmin();
   const result = await rbacService.revokeRole(memberId, roleId);
-  revalidatePath('/admin');
+  revalidatePath("/admin");
   return result;
 }

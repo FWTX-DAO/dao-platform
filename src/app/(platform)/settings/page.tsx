@@ -1,12 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { usePrivy, useSignMessage, useCreateWallet } from '@privy-io/react-auth';
-import { useProfile, useUpdateProfile, type UpdateProfileInput } from '@hooks/useProfile';
-import { verifyWallet, disconnectWallet, getWalletStatus, getWalletVerifyMessage } from '@/app/_actions/members';
-import { updateProfile } from '@/app/_actions/users';
-import { PageHeader } from '@components/ui/page-header';
-import IndustrySelect from '@components/IndustrySelect';
+import { useState, useEffect, useCallback } from "react";
+import {
+  usePrivy,
+  useSignMessage,
+  useCreateWallet,
+} from "@privy-io/react-auth";
+import {
+  useProfile,
+  useUpdateProfile,
+  type UpdateProfileInput,
+} from "@hooks/useProfile";
+import {
+  verifyWallet,
+  disconnectWallet,
+  getWalletStatus,
+  getWalletVerifyMessage,
+} from "@/app/_actions/members";
+import { updateProfile } from "@/app/_actions/users";
+import { PageHeader } from "@components/ui/page-header";
+import IndustrySelect from "@components/IndustrySelect";
 import {
   User,
   Briefcase,
@@ -19,25 +32,33 @@ import {
   Loader2,
   AlertCircle,
   Pen,
-} from 'lucide-react';
+} from "lucide-react";
 
 // ── Shared styles ──
 const inputClass =
-  'w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition';
-const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
+  "w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition";
+const labelClass = "block text-sm font-medium text-gray-700 mb-1.5";
 const selectClass =
-  'w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition';
+  "w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition";
 
 const AVAILABILITY_OPTIONS = [
-  { value: '', label: 'Select availability...' },
-  { value: 'full-time', label: 'Full-time' },
-  { value: 'part-time', label: 'Part-time' },
-  { value: 'volunteer', label: 'Volunteer' },
-  { value: 'occasional', label: 'Occasional' },
+  { value: "", label: "Select availability..." },
+  { value: "full-time", label: "Full-time" },
+  { value: "part-time", label: "Part-time" },
+  { value: "volunteer", label: "Volunteer" },
+  { value: "occasional", label: "Occasional" },
 ];
 
 // ── Section wrapper ──
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-xs">
       <div className="flex items-center gap-2 px-6 pt-5 pb-4 border-b border-gray-100">
@@ -63,49 +84,51 @@ function WalletSection() {
   const [isCreating, setIsCreating] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // Load wallet status from our DB
   useEffect(() => {
-    getWalletStatus().then((status) => {
-      setWalletAddress(status.walletAddress);
-      setWalletVerifiedAt(status.walletVerifiedAt);
-    }).catch(() => {});
+    getWalletStatus()
+      .then((status) => {
+        setWalletAddress(status.walletAddress);
+        setWalletVerifiedAt(status.walletVerifiedAt);
+      })
+      .catch(() => {});
   }, []);
 
   // Find the user's ETH wallet from Privy linked accounts
   const privyWallet = privyUser?.linkedAccounts?.find(
-    (a: any) => a.type === 'wallet' && a.chainType === 'ethereum'
+    (a: any) => a.type === "wallet" && a.chainType === "ethereum",
   ) as any;
 
   const handleCreateWallet = useCallback(async () => {
     setIsCreating(true);
-    setError('');
+    setError("");
     try {
       await createWallet();
     } catch (err: any) {
-      setError(err?.message || 'Failed to create wallet');
+      setError(err?.message || "Failed to create wallet");
     } finally {
       setIsCreating(false);
     }
   }, [createWallet]);
 
   const handleLinkWallet = useCallback(() => {
-    setError('');
+    setError("");
     linkWallet();
   }, [linkWallet]);
 
   const handleVerify = useCallback(async () => {
     const address = privyWallet?.address;
     if (!address) {
-      setError('No Ethereum wallet found. Create or link one first.');
+      setError("No Ethereum wallet found. Create or link one first.");
       return;
     }
 
     setIsVerifying(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       const message = await getWalletVerifyMessage(address);
@@ -118,17 +141,20 @@ function WalletSection() {
       });
 
       if (!result.success) {
-        setError(result.error || 'Verification failed');
+        setError(result.error || "Verification failed");
       } else {
         setWalletAddress(result.data.walletAddress);
         setWalletVerifiedAt(new Date().toISOString());
-        setSuccess('Wallet verified and connected!');
+        setSuccess("Wallet verified and connected!");
       }
     } catch (err: any) {
-      if (err?.message?.includes('rejected') || err?.message?.includes('denied')) {
-        setError('Signature request was cancelled');
+      if (
+        err?.message?.includes("rejected") ||
+        err?.message?.includes("denied")
+      ) {
+        setError("Signature request was cancelled");
       } else {
-        setError('Failed to verify wallet. Please try again.');
+        setError("Failed to verify wallet. Please try again.");
       }
     } finally {
       setIsVerifying(false);
@@ -137,19 +163,19 @@ function WalletSection() {
 
   const handleDisconnect = useCallback(async () => {
     setIsDisconnecting(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     try {
       const result = await disconnectWallet();
       if (!result.success) {
-        setError(result.error || 'Failed to disconnect wallet');
+        setError(result.error || "Failed to disconnect wallet");
       } else {
         setWalletAddress(null);
         setWalletVerifiedAt(null);
-        setSuccess('Wallet disconnected');
+        setSuccess("Wallet disconnected");
       }
     } catch {
-      setError('Failed to disconnect wallet');
+      setError("Failed to disconnect wallet");
     } finally {
       setIsDisconnecting(false);
     }
@@ -167,13 +193,22 @@ function WalletSection() {
             <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
               <Shield className="w-4 h-4 text-green-600 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-green-800">Verified Wallet</p>
-                <p className="text-xs font-mono text-green-600 truncate">{walletAddress}</p>
+                <p className="text-sm font-medium text-green-800">
+                  Verified Wallet
+                </p>
+                <p className="text-xs font-mono text-green-600 truncate">
+                  {walletAddress}
+                </p>
               </div>
               <Check className="w-4 h-4 text-green-600 shrink-0" />
             </div>
             <p className="text-xs text-gray-400" suppressHydrationWarning>
-              Verified {new Date(walletVerifiedAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              Verified{" "}
+              {new Date(walletVerifiedAt!).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
             </p>
             <button
               type="button"
@@ -181,13 +216,14 @@ function WalletSection() {
               disabled={isDisconnecting}
               className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
             >
-              {isDisconnecting ? 'Disconnecting...' : 'Disconnect wallet'}
+              {isDisconnecting ? "Disconnecting..." : "Disconnect wallet"}
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-gray-500">
-              Connect your Ethereum wallet and sign a message to verify ownership. No gas fees required.
+              Connect your Ethereum wallet and sign a message to verify
+              ownership. No gas fees required.
             </p>
 
             {/* State 2: Has Privy wallet but not verified yet → show address + verify button */}
@@ -196,14 +232,20 @@ function WalletSection() {
                 <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <Wallet className="w-4 h-4 text-gray-400 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-400">Privy wallet detected</p>
-                    <p className="text-sm font-mono text-gray-600 truncate">{privyWallet.address}</p>
+                    <p className="text-xs text-gray-400">
+                      Privy wallet detected
+                    </p>
+                    <p className="text-sm font-mono text-gray-600 truncate">
+                      {privyWallet.address}
+                    </p>
                   </div>
                 </div>
                 {walletAddress && !walletVerifiedAt && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                     <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <p className="text-xs text-amber-700">Wallet synced but not verified. Sign to prove ownership.</p>
+                    <p className="text-xs text-amber-700">
+                      Wallet synced but not verified. Sign to prove ownership.
+                    </p>
                   </div>
                 )}
                 <button
@@ -212,15 +254,20 @@ function WalletSection() {
                   disabled={isVerifying}
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-medium transition-colors disabled:opacity-50 min-h-[44px]"
                 >
-                  {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pen className="w-4 h-4" />}
-                  {isVerifying ? 'Sign to verify...' : 'Sign & verify wallet'}
+                  {isVerifying ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Pen className="w-4 h-4" />
+                  )}
+                  {isVerifying ? "Sign to verify..." : "Sign & verify wallet"}
                 </button>
               </div>
             ) : (
               /* State 3: No Privy wallet at all → create or link */
               <div className="space-y-3">
                 <p className="text-sm text-gray-400">
-                  No Ethereum wallet found in your account. You can create an embedded wallet or link an existing one.
+                  No Ethereum wallet found in your account. You can create an
+                  embedded wallet or link an existing one.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -229,8 +276,12 @@ function WalletSection() {
                     disabled={isCreating}
                     className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-medium transition-colors disabled:opacity-50 min-h-[44px]"
                   >
-                    {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-                    {isCreating ? 'Creating...' : 'Create embedded wallet'}
+                    {isCreating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Wallet className="w-4 h-4" />
+                    )}
+                    {isCreating ? "Creating..." : "Create embedded wallet"}
                   </button>
                   <button
                     type="button"
@@ -270,56 +321,58 @@ export default function SettingsPage() {
   const updateMemberProfile = useUpdateProfile();
 
   // Profile fields (from members table)
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [employer, setEmployer] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [availability, setAvailability] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zip, setZip] = useState('');
-  const [civicInterests, setCivicInterests] = useState('');
-  const [skills, setSkills] = useState('');
-  const [linkedinUrl, setLinkedinUrl] = useState('');
-  const [twitterUrl, setTwitterUrl] = useState('');
-  const [githubUrl, setGithubUrl] = useState('');
-  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [employer, setEmployer] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zip, setZip] = useState("");
+  const [civicInterests, setCivicInterests] = useState("");
+  const [skills, setSkills] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
 
   // User fields (from users table)
-  const [username, setUsername] = useState('');
-  const [bio, setBio] = useState('');
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
 
   const [profileSaving, setProfileSaving] = useState(false);
   const [userSaving, setUserSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState('');
-  const [userMsg, setUserMsg] = useState('');
+  const [profileMsg, setProfileMsg] = useState("");
+  const [userMsg, setUserMsg] = useState("");
 
   // Populate form when profile loads
   useEffect(() => {
     if (!profile) return;
-    setFirstName(profile.firstName || '');
-    setLastName(profile.lastName || '');
-    setEmployer(profile.employer || '');
-    setJobTitle(profile.jobTitle || '');
-    setIndustry(profile.industry || '');
-    setAvailability(profile.availability || '');
-    setCity(profile.city || '');
-    setState(profile.state || '');
-    setZip(profile.zip || '');
-    setCivicInterests(typeof profile.civicInterests === 'string' ? profile.civicInterests : '');
-    setSkills(typeof profile.skills === 'string' ? profile.skills : '');
-    setLinkedinUrl(profile.linkedinUrl || '');
-    setTwitterUrl(profile.twitterUrl || '');
-    setGithubUrl(profile.githubUrl || '');
-    setWebsiteUrl(profile.websiteUrl || '');
-    setUsername(profile.username || '');
-    setBio(profile.bio || '');
+    setFirstName(profile.firstName || "");
+    setLastName(profile.lastName || "");
+    setEmployer(profile.employer || "");
+    setJobTitle(profile.jobTitle || "");
+    setIndustry(profile.industry || "");
+    setAvailability(profile.availability || "");
+    setCity(profile.city || "");
+    setState(profile.state || "");
+    setZip(profile.zip || "");
+    setCivicInterests(
+      typeof profile.civicInterests === "string" ? profile.civicInterests : "",
+    );
+    setSkills(typeof profile.skills === "string" ? profile.skills : "");
+    setLinkedinUrl(profile.linkedinUrl || "");
+    setTwitterUrl(profile.twitterUrl || "");
+    setGithubUrl(profile.githubUrl || "");
+    setWebsiteUrl(profile.websiteUrl || "");
+    setUsername(profile.username || "");
+    setBio(profile.bio || "");
   }, [profile]);
 
   const handleSaveProfile = useCallback(async () => {
     setProfileSaving(true);
-    setProfileMsg('');
+    setProfileMsg("");
     try {
       const data: UpdateProfileInput = {
         firstName: firstName.trim() || undefined,
@@ -339,22 +392,42 @@ export default function SettingsPage() {
         websiteUrl: websiteUrl.trim() || undefined,
       };
       updateMemberProfile.mutate(data, {
-        onSuccess: () => setProfileMsg('Profile updated!'),
-        onError: () => setProfileMsg('Failed to update profile'),
+        onSuccess: () => setProfileMsg("Profile updated!"),
+        onError: () => setProfileMsg("Failed to update profile"),
       });
     } finally {
       setProfileSaving(false);
     }
-  }, [firstName, lastName, employer, jobTitle, industry, availability, city, state, zip, civicInterests, skills, linkedinUrl, twitterUrl, githubUrl, websiteUrl, updateMemberProfile]);
+  }, [
+    firstName,
+    lastName,
+    employer,
+    jobTitle,
+    industry,
+    availability,
+    city,
+    state,
+    zip,
+    civicInterests,
+    skills,
+    linkedinUrl,
+    twitterUrl,
+    githubUrl,
+    websiteUrl,
+    updateMemberProfile,
+  ]);
 
   const handleSaveUser = useCallback(async () => {
     setUserSaving(true);
-    setUserMsg('');
+    setUserMsg("");
     try {
-      await updateProfile({ username: username.trim(), bio: bio.trim() || undefined });
-      setUserMsg('Saved!');
+      await updateProfile({
+        username: username.trim(),
+        bio: bio.trim() || undefined,
+      });
+      setUserMsg("Saved!");
     } catch {
-      setUserMsg('Failed to save');
+      setUserMsg("Failed to save");
     } finally {
       setUserSaving(false);
     }
@@ -363,7 +436,10 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-3xl">
-        <PageHeader title="Settings" subtitle="Manage your account and profile" />
+        <PageHeader
+          title="Settings"
+          subtitle="Manage your account and profile"
+        />
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-48 bg-gray-100 rounded-xl" />
@@ -381,7 +457,9 @@ export default function SettingsPage() {
       <Section title="Account" icon={<User className="w-5 h-5" />}>
         <div className="space-y-4">
           <div>
-            <label htmlFor="s-username" className={labelClass}>Username</label>
+            <label htmlFor="s-username" className={labelClass}>
+              Username
+            </label>
             <input
               id="s-username"
               type="text"
@@ -393,7 +471,9 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label htmlFor="s-bio" className={labelClass}>Bio</label>
+            <label htmlFor="s-bio" className={labelClass}>
+              Bio
+            </label>
             <textarea
               id="s-bio"
               value={bio}
@@ -410,9 +490,11 @@ export default function SettingsPage() {
               disabled={userSaving}
               className="px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 font-medium text-sm transition-colors disabled:opacity-50 min-h-[44px]"
             >
-              {userSaving ? 'Saving...' : 'Save Account'}
+              {userSaving ? "Saving..." : "Save Account"}
             </button>
-            {userMsg && <span className="text-sm text-green-600">{userMsg}</span>}
+            {userMsg && (
+              <span className="text-sm text-green-600">{userMsg}</span>
+            )}
           </div>
         </div>
       </Section>
@@ -422,12 +504,30 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="s-firstName" className={labelClass}>First Name</label>
-              <input id="s-firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} autoComplete="given-name" />
+              <label htmlFor="s-firstName" className={labelClass}>
+                First Name
+              </label>
+              <input
+                id="s-firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className={inputClass}
+                autoComplete="given-name"
+              />
             </div>
             <div>
-              <label htmlFor="s-lastName" className={labelClass}>Last Name</label>
-              <input id="s-lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} autoComplete="family-name" />
+              <label htmlFor="s-lastName" className={labelClass}>
+                Last Name
+              </label>
+              <input
+                id="s-lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className={inputClass}
+                autoComplete="family-name"
+              />
             </div>
           </div>
         </div>
@@ -438,23 +538,52 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="s-employer" className={labelClass}>Employer</label>
-              <input id="s-employer" type="text" value={employer} onChange={(e) => setEmployer(e.target.value)} className={inputClass} autoComplete="organization" />
+              <label htmlFor="s-employer" className={labelClass}>
+                Employer
+              </label>
+              <input
+                id="s-employer"
+                type="text"
+                value={employer}
+                onChange={(e) => setEmployer(e.target.value)}
+                className={inputClass}
+                autoComplete="organization"
+              />
             </div>
             <div>
-              <label htmlFor="s-jobTitle" className={labelClass}>Job Title</label>
-              <input id="s-jobTitle" type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={inputClass} autoComplete="organization-title" />
+              <label htmlFor="s-jobTitle" className={labelClass}>
+                Job Title
+              </label>
+              <input
+                id="s-jobTitle"
+                type="text"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className={inputClass}
+                autoComplete="organization-title"
+              />
             </div>
           </div>
           <div>
-            <label htmlFor="s-industry" className={labelClass}>Industry</label>
+            <label htmlFor="s-industry" className={labelClass}>
+              Industry
+            </label>
             <IndustrySelect value={industry} onChange={setIndustry} />
           </div>
           <div>
-            <label htmlFor="s-availability" className={labelClass}>Availability</label>
-            <select id="s-availability" value={availability} onChange={(e) => setAvailability(e.target.value)} className={selectClass}>
+            <label htmlFor="s-availability" className={labelClass}>
+              Availability
+            </label>
+            <select
+              id="s-availability"
+              value={availability}
+              onChange={(e) => setAvailability(e.target.value)}
+              className={selectClass}
+            >
               {AVAILABILITY_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -465,16 +594,45 @@ export default function SettingsPage() {
       <Section title="Location" icon={<MapPin className="w-5 h-5" />}>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label htmlFor="s-city" className={labelClass}>City</label>
-            <input id="s-city" type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} autoComplete="address-level2" />
+            <label htmlFor="s-city" className={labelClass}>
+              City
+            </label>
+            <input
+              id="s-city"
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              className={inputClass}
+              autoComplete="address-level2"
+            />
           </div>
           <div>
-            <label htmlFor="s-state" className={labelClass}>State</label>
-            <input id="s-state" type="text" value={state} onChange={(e) => setState(e.target.value)} className={inputClass} maxLength={2} autoComplete="address-level1" />
+            <label htmlFor="s-state" className={labelClass}>
+              State
+            </label>
+            <input
+              id="s-state"
+              type="text"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              className={inputClass}
+              maxLength={2}
+              autoComplete="address-level1"
+            />
           </div>
           <div>
-            <label htmlFor="s-zip" className={labelClass}>ZIP</label>
-            <input id="s-zip" type="text" value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} maxLength={10} autoComplete="postal-code" />
+            <label htmlFor="s-zip" className={labelClass}>
+              ZIP
+            </label>
+            <input
+              id="s-zip"
+              type="text"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              className={inputClass}
+              maxLength={10}
+              autoComplete="postal-code"
+            />
           </div>
         </div>
       </Section>
@@ -483,7 +641,9 @@ export default function SettingsPage() {
       <Section title="Community" icon={<User className="w-5 h-5" />}>
         <div className="space-y-4">
           <div>
-            <label htmlFor="s-civicInterests" className={labelClass}>Civic Interests</label>
+            <label htmlFor="s-civicInterests" className={labelClass}>
+              Civic Interests
+            </label>
             <textarea
               id="s-civicInterests"
               value={civicInterests}
@@ -495,7 +655,9 @@ export default function SettingsPage() {
             <p className="text-xs text-gray-400 mt-1">Comma-separated</p>
           </div>
           <div>
-            <label htmlFor="s-skills" className={labelClass}>Skills</label>
+            <label htmlFor="s-skills" className={labelClass}>
+              Skills
+            </label>
             <textarea
               id="s-skills"
               value={skills}
@@ -514,22 +676,58 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="s-linkedin" className={labelClass}>LinkedIn</label>
-              <input id="s-linkedin" type="url" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} className={inputClass} placeholder="https://linkedin.com/in/..." />
+              <label htmlFor="s-linkedin" className={labelClass}>
+                LinkedIn
+              </label>
+              <input
+                id="s-linkedin"
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                className={inputClass}
+                placeholder="https://linkedin.com/in/..."
+              />
             </div>
             <div>
-              <label htmlFor="s-twitter" className={labelClass}>Twitter / X</label>
-              <input id="s-twitter" type="url" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} className={inputClass} placeholder="https://x.com/..." />
+              <label htmlFor="s-twitter" className={labelClass}>
+                Twitter / X
+              </label>
+              <input
+                id="s-twitter"
+                type="url"
+                value={twitterUrl}
+                onChange={(e) => setTwitterUrl(e.target.value)}
+                className={inputClass}
+                placeholder="https://x.com/..."
+              />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="s-github" className={labelClass}>GitHub</label>
-              <input id="s-github" type="url" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} className={inputClass} placeholder="https://github.com/..." />
+              <label htmlFor="s-github" className={labelClass}>
+                GitHub
+              </label>
+              <input
+                id="s-github"
+                type="url"
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                className={inputClass}
+                placeholder="https://github.com/..."
+              />
             </div>
             <div>
-              <label htmlFor="s-website" className={labelClass}>Website</label>
-              <input id="s-website" type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className={inputClass} placeholder="https://..." />
+              <label htmlFor="s-website" className={labelClass}>
+                Website
+              </label>
+              <input
+                id="s-website"
+                type="url"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className={inputClass}
+                placeholder="https://..."
+              />
             </div>
           </div>
         </div>
@@ -543,9 +741,13 @@ export default function SettingsPage() {
           disabled={profileSaving || updateMemberProfile.isPending}
           className="px-6 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 font-medium text-sm transition-colors disabled:opacity-50 min-h-[44px]"
         >
-          {profileSaving || updateMemberProfile.isPending ? 'Saving...' : 'Save Profile'}
+          {profileSaving || updateMemberProfile.isPending
+            ? "Saving..."
+            : "Save Profile"}
         </button>
-        {profileMsg && <span className="text-sm text-green-600">{profileMsg}</span>}
+        {profileMsg && (
+          <span className="text-sm text-green-600">{profileMsg}</span>
+        )}
       </div>
 
       {/* Connected Accounts */}
@@ -553,7 +755,9 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
           <div>
             <p className="text-sm font-medium text-gray-700">Email</p>
-            <p className="text-xs text-gray-500">{privyUser?.email?.address || 'Not connected'}</p>
+            <p className="text-xs text-gray-500">
+              {privyUser?.email?.address || "Not connected"}
+            </p>
           </div>
           {!privyUser?.email && (
             <button

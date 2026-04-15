@@ -1,12 +1,12 @@
-import { db } from '@core/database';
+import { db } from "@core/database";
 import {
   roles,
   permissions,
   rolePermissions,
   memberRoles,
-} from '@core/database/schema';
-import { eq, and } from 'drizzle-orm';
-import { generateId } from '@shared/utils';
+} from "@core/database/schema";
+import { eq, and } from "drizzle-orm";
+import { generateId } from "@shared/utils";
 
 export class RbacRepository {
   async findAllRoles() {
@@ -32,7 +32,10 @@ export class RbacRepository {
   }
 
   async findAllPermissions() {
-    return db.select().from(permissions).orderBy(permissions.resource, permissions.action);
+    return db
+      .select()
+      .from(permissions)
+      .orderBy(permissions.resource, permissions.action);
   }
 
   async findPermissionsByResource(resource: string) {
@@ -70,14 +73,23 @@ export class RbacRepository {
       })
       .from(memberRoles)
       .innerJoin(roles, eq(memberRoles.roleId, roles.id))
-      .where(and(eq(memberRoles.memberId, memberId), eq(memberRoles.isActive, true)));
+      .where(
+        and(eq(memberRoles.memberId, memberId), eq(memberRoles.isActive, true)),
+      );
   }
 
-  async hasMemberPermission(memberId: string, resource: string, action: string): Promise<boolean> {
+  async hasMemberPermission(
+    memberId: string,
+    resource: string,
+    action: string,
+  ): Promise<boolean> {
     const result = await db
       .select({ permissionId: permissions.id })
       .from(memberRoles)
-      .innerJoin(rolePermissions, eq(memberRoles.roleId, rolePermissions.roleId))
+      .innerJoin(
+        rolePermissions,
+        eq(memberRoles.roleId, rolePermissions.roleId),
+      )
       .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
       .where(
         and(

@@ -1,6 +1,6 @@
-import React, { memo, useMemo } from 'react';
-import { CheckCircle } from 'lucide-react';
-import type { SubscriptionTier } from '@shared/hooks/useSubscriptions';
+import React, { memo, useMemo } from "react";
+import { CheckCircle } from "lucide-react";
+import type { SubscriptionTier } from "@shared/hooks/useSubscriptions";
 
 interface SubscriptionCardProps {
   tier: SubscriptionTier;
@@ -9,16 +9,21 @@ interface SubscriptionCardProps {
   isLoading?: boolean;
 }
 
-function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: SubscriptionCardProps) {
-  const priceDisplay = tier.priceCents === 0
-    ? 'Free'
-    : `$${(tier.priceCents / 100).toFixed(0)}`;
+function SubscriptionCard({
+  tier,
+  isCurrentTier,
+  onSelect,
+  isLoading,
+}: SubscriptionCardProps) {
+  const priceDisplay =
+    tier.priceCents === 0 ? "Free" : `$${(tier.priceCents / 100).toFixed(0)}`;
 
-  const intervalDisplay = tier.billingInterval === 'lifetime'
-    ? 'forever'
-    : tier.billingInterval === 'month'
-      ? '/mo'
-      : '/yr';
+  const intervalDisplay =
+    tier.billingInterval === "lifetime"
+      ? "forever"
+      : tier.billingInterval === "month"
+        ? "/mo"
+        : "/yr";
 
   const features = useMemo(() => {
     if (!tier.features) return [];
@@ -34,8 +39,8 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
     <div
       className={`bg-white rounded-lg p-6 flex flex-col ${
         isCurrentTier
-          ? 'border-2 border-violet-500 shadow-md'
-          : 'border border-gray-200 shadow-xs hover:shadow-md transition-shadow'
+          ? "border-2 border-violet-500 shadow-md"
+          : "border border-gray-200 shadow-xs hover:shadow-md transition-shadow"
       }`}
     >
       {isCurrentTier && (
@@ -64,7 +69,10 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
       {features.length > 0 && (
         <ul className="space-y-2 mb-6 flex-1">
           {features.map((feature, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+            <li
+              key={i}
+              className="flex items-start gap-2 text-sm text-gray-700"
+            >
               <CheckCircle className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
               {feature}
             </li>
@@ -78,7 +86,7 @@ function SubscriptionCard({ tier, isCurrentTier, onSelect, isLoading }: Subscrip
           disabled={isLoading}
           className="mt-auto w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
         >
-          {isLoading ? 'Processing…' : `Upgrade to ${tier.displayName}`}
+          {isLoading ? "Processing…" : `Upgrade to ${tier.displayName}`}
         </button>
       )}
 

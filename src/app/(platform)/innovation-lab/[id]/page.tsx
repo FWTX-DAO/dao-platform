@@ -28,9 +28,7 @@ export default function ProjectDetailPage() {
 
   if (isLoading)
     return (
-      <div className="py-8 text-center text-gray-500">
-        Loading project{"…"}
-      </div>
+      <div className="py-8 text-center text-gray-500">Loading project{"…"}</div>
     );
   if (!project)
     return (

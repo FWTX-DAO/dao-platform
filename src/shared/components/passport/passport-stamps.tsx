@@ -1,31 +1,64 @@
-'use client';
+"use client";
 
-import type { PassportStamp } from './types';
+import type { PassportStamp } from "./types";
 
-const EVENT_TYPE_STYLES: Record<string, { color: string; border: string; bg: string; label: string }> = {
-  townhall:   { color: 'text-amber-700',   border: 'border-amber-600/40',   bg: 'bg-amber-50',    label: 'Town Hall' },
-  workshop:   { color: 'text-blue-700',    border: 'border-blue-600/40',    bg: 'bg-blue-50',     label: 'Workshop' },
-  meetup:     { color: 'text-emerald-700', border: 'border-emerald-600/40', bg: 'bg-emerald-50',  label: 'Meetup' },
-  hackathon:  { color: 'text-purple-700',  border: 'border-purple-600/40',  bg: 'bg-purple-50',   label: 'Hackathon' },
-  conference: { color: 'text-rose-700',    border: 'border-rose-600/40',    bg: 'bg-rose-50',     label: 'Conference' },
-  social:     { color: 'text-cyan-700',    border: 'border-cyan-600/40',    bg: 'bg-cyan-50',     label: 'Social' },
+const EVENT_TYPE_STYLES: Record<
+  string,
+  { color: string; border: string; bg: string; label: string }
+> = {
+  townhall: {
+    color: "text-amber-700",
+    border: "border-amber-600/40",
+    bg: "bg-amber-50",
+    label: "Town Hall",
+  },
+  workshop: {
+    color: "text-blue-700",
+    border: "border-blue-600/40",
+    bg: "bg-blue-50",
+    label: "Workshop",
+  },
+  meetup: {
+    color: "text-emerald-700",
+    border: "border-emerald-600/40",
+    bg: "bg-emerald-50",
+    label: "Meetup",
+  },
+  hackathon: {
+    color: "text-purple-700",
+    border: "border-purple-600/40",
+    bg: "bg-purple-50",
+    label: "Hackathon",
+  },
+  conference: {
+    color: "text-rose-700",
+    border: "border-rose-600/40",
+    bg: "bg-rose-50",
+    label: "Conference",
+  },
+  social: {
+    color: "text-cyan-700",
+    border: "border-cyan-600/40",
+    bg: "bg-cyan-50",
+    label: "Social",
+  },
 };
 
 function seededRandom(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     const char = seed.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
-  return ((hash % 17) - 8); // -8 to +8
+  return (hash % 17) - 8; // -8 to +8
 }
 
 function formatStampDate(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    year: 'numeric',
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
   });
 }
 
@@ -34,7 +67,10 @@ interface PassportStampsProps {
   compact?: boolean;
 }
 
-export function PassportStamps({ stamps, compact = false }: PassportStampsProps) {
+export function PassportStamps({
+  stamps,
+  compact = false,
+}: PassportStampsProps) {
   if (stamps.length === 0) {
     return (
       <div className="flex items-center justify-center py-4">
@@ -45,16 +81,19 @@ export function PassportStamps({ stamps, compact = false }: PassportStampsProps)
     );
   }
 
-  const size = compact ? 'w-[48px] h-[48px]' : 'w-[72px] h-[72px]';
+  const size = compact ? "w-[48px] h-[48px]" : "w-[72px] h-[72px]";
   const maxStamps = compact ? 4 : 8;
-  const labelSize = compact ? 'text-[5px]' : 'text-[7px]';
-  const nameSize = compact ? 'text-[5px]' : 'text-[6px]';
-  const dateSize = compact ? 'text-[4px]' : 'text-[6px]';
+  const labelSize = compact ? "text-[5px]" : "text-[7px]";
+  const nameSize = compact ? "text-[5px]" : "text-[6px]";
+  const dateSize = compact ? "text-[4px]" : "text-[6px]";
 
   return (
-    <div className={`flex flex-wrap gap-1.5 ${compact ? '' : 'gap-2 justify-center py-2'}`}>
+    <div
+      className={`flex flex-wrap gap-1.5 ${compact ? "" : "gap-2 justify-center py-2"}`}
+    >
       {stamps.slice(0, maxStamps).map((stamp) => {
-        const style = EVENT_TYPE_STYLES[stamp.eventType] ?? EVENT_TYPE_STYLES['meetup']!;
+        const style =
+          EVENT_TYPE_STYLES[stamp.eventType] ?? EVENT_TYPE_STYLES["meetup"]!;
         const rotation = seededRandom(stamp.id);
 
         return (
@@ -69,16 +108,25 @@ export function PassportStamps({ stamps, compact = false }: PassportStampsProps)
             style={{ transform: `rotate(${rotation}deg)` }}
             title={`${stamp.eventName} - ${formatStampDate(stamp.eventDate)}`}
           >
-            <span className={`${labelSize} font-bold uppercase tracking-wide ${style.color} text-center leading-tight px-0.5`}>
+            <span
+              className={`${labelSize} font-bold uppercase tracking-wide ${style.color} text-center leading-tight px-0.5`}
+            >
               {style.label}
             </span>
             {!compact && (
-              <span className={`${nameSize} ${style.color}/70 text-center leading-tight px-1 mt-0.5 line-clamp-2`}>
-                {stamp.eventName.length > 18 ? stamp.eventName.slice(0, 16) + '…' : stamp.eventName}
+              <span
+                className={`${nameSize} ${style.color}/70 text-center leading-tight px-1 mt-0.5 line-clamp-2`}
+              >
+                {stamp.eventName.length > 18
+                  ? stamp.eventName.slice(0, 16) + "…"
+                  : stamp.eventName}
               </span>
             )}
             {stamp.eventDate && (
-              <span suppressHydrationWarning className={`${dateSize} ${style.color}/50 mt-0.5`}>
+              <span
+                suppressHydrationWarning
+                className={`${dateSize} ${style.color}/50 mt-0.5`}
+              >
                 {formatStampDate(stamp.eventDate)}
               </span>
             )}

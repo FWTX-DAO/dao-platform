@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { AlertTriangle } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { AlertTriangle } from "lucide-react";
+import { cn } from "../../utils/cn";
 
 interface ErrorStateProps {
   title?: string;
@@ -11,13 +11,13 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Something went wrong',
-  message = 'We couldn\u2019t load this content. Please try again.',
+  title = "Something went wrong",
+  message = "We couldn\u2019t load this content. Please try again.",
   onRetry,
   className,
 }: ErrorStateProps) {
   return (
-    <div role="alert" className={cn('py-12 text-center', className)}>
+    <div role="alert" className={cn("py-12 text-center", className)}>
       <AlertTriangle className="h-10 w-10 text-gray-400 mx-auto mb-3" />
       <p className="text-gray-900 font-medium">{title}</p>
       <p className="text-gray-500 text-sm mt-1">{message}</p>

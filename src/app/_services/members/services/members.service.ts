@@ -1,7 +1,12 @@
-import { MembersRepository } from './members.repository';
-import { NotFoundError } from '@core/errors';
-import type { UpdateMembershipInput, UpdateProfileInput, CompleteOnboardingInput, MemberProfileFilters } from '../types';
-import { UpdateProfileSchema, CompleteOnboardingSchema } from '../types';
+import { MembersRepository } from "./members.repository";
+import { NotFoundError } from "@core/errors";
+import type {
+  UpdateMembershipInput,
+  UpdateProfileInput,
+  CompleteOnboardingInput,
+  MemberProfileFilters,
+} from "../types";
+import { UpdateProfileSchema, CompleteOnboardingSchema } from "../types";
 
 export class MembersService {
   constructor(private repository: MembersRepository) {}
@@ -14,13 +19,13 @@ export class MembersService {
     const member = await this.repository.findByUserId(userId);
 
     if (!member) {
-      throw new NotFoundError('Member');
+      throw new NotFoundError("Member");
     }
 
     return member;
   }
 
-  async getOrCreateMember(userId: string, membershipType: string = 'basic') {
+  async getOrCreateMember(userId: string, membershipType: string = "basic") {
     let member = await this.repository.findByUserId(userId);
 
     if (!member) {
@@ -34,7 +39,7 @@ export class MembersService {
     const member = await this.repository.findByUserId(userId);
 
     if (!member) {
-      throw new NotFoundError('Member');
+      throw new NotFoundError("Member");
     }
 
     return this.repository.update(userId, data);
@@ -54,7 +59,7 @@ export class MembersService {
   async updateMemberProfile(userId: string, data: UpdateProfileInput) {
     const validated = UpdateProfileSchema.parse(data);
     const member = await this.repository.findByUserId(userId);
-    if (!member) throw new NotFoundError('Member');
+    if (!member) throw new NotFoundError("Member");
 
     return this.repository.updateProfile(userId, validated);
   }
@@ -62,15 +67,18 @@ export class MembersService {
   async completeOnboarding(userId: string, data: CompleteOnboardingInput) {
     const validated = CompleteOnboardingSchema.parse(data);
     const member = await this.repository.findByUserId(userId);
-    if (!member) throw new NotFoundError('Member');
+    if (!member) throw new NotFoundError("Member");
 
     const { termsAccepted, ...profileData } = validated;
-    return this.repository.completeOnboarding(userId, { ...profileData, termsAccepted } as any);
+    return this.repository.completeOnboarding(userId, {
+      ...profileData,
+      termsAccepted,
+    } as any);
   }
 
   async getMemberWithProfile(userId: string) {
     const profile = await this.repository.findWithProfile(userId);
-    if (!profile) throw new NotFoundError('Member');
+    if (!profile) throw new NotFoundError("Member");
     return profile;
   }
 

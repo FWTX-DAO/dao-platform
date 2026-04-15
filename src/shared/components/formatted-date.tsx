@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 type Props = {
   secsSinceEpoch: number;
 };
 
 export default function FormattedDate({ secsSinceEpoch }: Props) {
-  const [formattedDate, setFormattedDate] = useState<string>('');
+  const [formattedDate, setFormattedDate] = useState<string>("");
 
   useEffect(() => {
     setFormattedDate(

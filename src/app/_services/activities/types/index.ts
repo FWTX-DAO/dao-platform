@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { ACTIVITY_TYPES } from '@shared/constants';
+import { z } from "zod";
+import { ACTIVITY_TYPES } from "@shared/constants";
 
 export const TrackActivitySchema = z.object({
   activityType: z.enum(ACTIVITY_TYPES as unknown as [string, ...string[]]),

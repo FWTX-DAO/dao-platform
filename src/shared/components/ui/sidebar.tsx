@@ -9,7 +9,10 @@ interface AnimatedMenuToggleProps {
   isOpen: boolean;
 }
 
-export const AnimatedMenuToggle = ({ toggle, isOpen }: AnimatedMenuToggleProps) => (
+export const AnimatedMenuToggle = ({
+  toggle,
+  isOpen,
+}: AnimatedMenuToggleProps) => (
   <button
     onClick={toggle}
     aria-label="Toggle menu"
@@ -170,9 +173,12 @@ export const AnimatedSidebar = ({
               animate="visible"
               exit="hidden"
               variants={mobileSidebarVariants}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeInOut" }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.3,
+                ease: "easeInOut",
+              }}
               className="md:hidden fixed top-0 left-0 h-screen w-64 z-40 bg-dao-dark text-white shadow-xl"
-              style={{ overscrollBehavior: 'contain' }}
+              style={{ overscrollBehavior: "contain" }}
             >
               <div className="flex flex-col h-full">
                 {/* Top section with logo/branding space */}
@@ -195,9 +201,7 @@ export const AnimatedSidebar = ({
                 )}
 
                 {/* Navigation Section */}
-                <nav className="flex-1 p-4 overflow-y-auto">
-                  {children}
-                </nav>
+                <nav className="flex-1 p-4 overflow-y-auto">{children}</nav>
 
                 {/* Footer / Action Button */}
                 {footerSection && (
@@ -215,28 +219,25 @@ export const AnimatedSidebar = ({
       <motion.div
         initial={false}
         animate={{ x: isOpen ? 0 : -280 }}
-        transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeInOut" }}
+        transition={{
+          duration: shouldReduceMotion ? 0 : 0.3,
+          ease: "easeInOut",
+        }}
         className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-64 bg-dao-dark text-white shadow-xl border-r border-dao-border z-40"
       >
         {/* Top spacer to account for navbar */}
         <div className="h-16 border-b border-dao-border" />
         {/* Profile Section */}
         {profileSection && (
-          <div className="p-4 border-b border-dao-border">
-            {profileSection}
-          </div>
+          <div className="p-4 border-b border-dao-border">{profileSection}</div>
         )}
 
         {/* Navigation Section */}
-        <nav className="flex-1 p-4 overflow-y-auto">
-          {children}
-        </nav>
+        <nav className="flex-1 p-4 overflow-y-auto">{children}</nav>
 
         {/* Footer / Action Button */}
         {footerSection && (
-          <div className="p-4 border-t border-dao-border">
-            {footerSection}
-          </div>
+          <div className="p-4 border-t border-dao-border">{footerSection}</div>
         )}
       </motion.div>
     </>

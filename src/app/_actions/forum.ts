@@ -48,7 +48,12 @@ export async function createPost(data: {
 
   if (result) {
     const activityType = data.parentId ? "forum_reply" : "forum_post";
-    await activitiesService.trackActivity(user.id, activityType, "forum_post", result.id);
+    await activitiesService.trackActivity(
+      user.id,
+      activityType,
+      "forum_post",
+      result.id,
+    );
   }
 
   revalidatePath("/forums");
@@ -111,7 +116,12 @@ export async function vote(postId: string, voteType: number) {
       userId: user.id,
       voteType,
     });
-    await activitiesService.trackActivity(user.id, "forum_vote", "forum_post", postId);
+    await activitiesService.trackActivity(
+      user.id,
+      "forum_vote",
+      "forum_post",
+      postId,
+    );
   }
 
   revalidatePath("/forums");

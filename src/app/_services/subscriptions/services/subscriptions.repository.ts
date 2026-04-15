@@ -1,11 +1,11 @@
-import { db } from '@core/database';
+import { db } from "@core/database";
 import {
   membershipTiers,
   subscriptions,
   paymentHistory,
-} from '@core/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { generateId } from '@shared/utils';
+} from "@core/database/schema";
+import { eq, and, desc } from "drizzle-orm";
+import { generateId } from "@shared/utils";
 
 export class SubscriptionsRepository {
   // --- Tiers ---
@@ -50,7 +50,12 @@ export class SubscriptionsRepository {
     const results = await db
       .select()
       .from(subscriptions)
-      .where(and(eq(subscriptions.memberId, memberId), eq(subscriptions.status, 'active')))
+      .where(
+        and(
+          eq(subscriptions.memberId, memberId),
+          eq(subscriptions.status, "active"),
+        ),
+      )
       .limit(1);
     return results[0] ?? null;
   }
@@ -90,9 +95,13 @@ export class SubscriptionsRepository {
       tierId: data.tierId,
       stripeSubscriptionId: data.stripeSubscriptionId ?? null,
       stripeCustomerId: data.stripeCustomerId,
-      status: data.status ?? 'active',
-      currentPeriodStart: data.currentPeriodStart ? new Date(data.currentPeriodStart) : null,
-      currentPeriodEnd: data.currentPeriodEnd ? new Date(data.currentPeriodEnd) : null,
+      status: data.status ?? "active",
+      currentPeriodStart: data.currentPeriodStart
+        ? new Date(data.currentPeriodStart)
+        : null,
+      currentPeriodEnd: data.currentPeriodEnd
+        ? new Date(data.currentPeriodEnd)
+        : null,
       createdAt: now,
       updatedAt: now,
     });
@@ -116,13 +125,23 @@ export class SubscriptionsRepository {
       trialEnd: Date | string;
     }>,
   ) {
-    const { currentPeriodStart, currentPeriodEnd, canceledAt, trialEnd, ...rest } = data;
+    const {
+      currentPeriodStart,
+      currentPeriodEnd,
+      canceledAt,
+      trialEnd,
+      ...rest
+    } = data;
     await db
       .update(subscriptions)
       .set({
         ...rest,
-        ...(currentPeriodStart !== undefined && { currentPeriodStart: new Date(currentPeriodStart) }),
-        ...(currentPeriodEnd !== undefined && { currentPeriodEnd: new Date(currentPeriodEnd) }),
+        ...(currentPeriodStart !== undefined && {
+          currentPeriodStart: new Date(currentPeriodStart),
+        }),
+        ...(currentPeriodEnd !== undefined && {
+          currentPeriodEnd: new Date(currentPeriodEnd),
+        }),
         ...(canceledAt !== undefined && { canceledAt: new Date(canceledAt) }),
         ...(trialEnd !== undefined && { trialEnd: new Date(trialEnd) }),
         updatedAt: new Date(),
@@ -150,7 +169,7 @@ export class SubscriptionsRepository {
       subscriptionId: data.subscriptionId,
       stripePaymentIntentId: data.stripePaymentIntentId ?? null,
       amountCents: data.amountCents,
-      currency: data.currency ?? 'usd',
+      currency: data.currency ?? "usd",
       status: data.status,
       paidAt: data.paidAt ? new Date(data.paidAt) : null,
       failureReason: data.failureReason ?? null,

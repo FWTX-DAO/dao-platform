@@ -43,9 +43,7 @@ export default function EditMeetingNotePage() {
   }, [note]);
 
   if (isLoading)
-    return (
-      <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
-    );
+    return <div className="py-8 text-center text-gray-500">Loading{"…"}</div>;
   if (!note)
     return (
       <div className="py-8 text-center text-gray-500">

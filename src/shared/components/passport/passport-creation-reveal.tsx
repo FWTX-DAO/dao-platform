@@ -1,17 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import Image from 'next/image';
-import type { PassportData } from './types';
-import { PassportInside } from './passport-inside';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import Image from "next/image";
+import type { PassportData } from "./types";
+import { PassportInside } from "./passport-inside";
 
 interface PassportCreationRevealProps {
   data: PassportData;
   onComplete: () => void;
 }
 
-export function PassportCreationReveal({ data, onComplete }: PassportCreationRevealProps) {
+export function PassportCreationReveal({
+  data,
+  onComplete,
+}: PassportCreationRevealProps) {
   const [phase, setPhase] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   // 0 = typing text, 1 = cover materializes, 2 = cover opens + data, 3 = seal, 4 = welcome
@@ -37,7 +40,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-100 overflow-y-auto"
-      style={{ background: '#0f1b33', overscrollBehavior: 'contain' }}
+      style={{ background: "#0f1b33", overscrollBehavior: "contain" }}
       role="dialog"
       aria-modal="true"
       aria-label="Passport creation"
@@ -47,7 +50,7 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
         className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundSize: '200px',
+          backgroundSize: "200px",
         }}
       />
 
@@ -63,7 +66,10 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               className="text-center"
             >
               <div aria-live="polite">
-                <TypingText text={`Issuing your Fort Worth DAO Passport…`} shouldReduceMotion={!!shouldReduceMotion} />
+                <TypingText
+                  text={`Issuing your Fort Worth DAO Passport…`}
+                  shouldReduceMotion={!!shouldReduceMotion}
+                />
               </div>
             </motion.div>
           )}
@@ -81,34 +87,45 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
                 ease: [0.4, 0, 0.2, 1],
               }}
               className="relative"
-              style={{ perspective: '1200px' }}
+              style={{ perspective: "1200px" }}
             >
               {/* Passport cover */}
               <div
                 className="relative w-56 h-72 sm:w-64 sm:h-80 rounded-md overflow-hidden flex flex-col items-center justify-center"
                 style={{
-                  background: 'linear-gradient(145deg, #1a2744 0%, #0f1b33 50%, #1a2744 100%)',
-                  boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+                  background:
+                    "linear-gradient(145deg, #1a2744 0%, #0f1b33 50%, #1a2744 100%)",
+                  boxShadow: "0 12px 48px rgba(0,0,0,0.5)",
                 }}
               >
                 <div className="absolute inset-0 border border-dao-gold/15 rounded-md" />
                 <span className="text-dao-gold tracking-[0.3em] uppercase font-display text-xs mb-6">
                   Passport
                 </span>
-                <Image src="/logo.svg" alt="" width={64} height={64} className="opacity-80 mb-5" />
+                <Image
+                  src="/logo.svg"
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="opacity-80 mb-5"
+                />
                 <span className="text-dao-gold/90 tracking-[0.15em] uppercase text-[10px] font-semibold">
                   Fort Worth DAO
                 </span>
 
                 {/* Gold shimmer sweep */}
                 <motion.div
-                  initial={{ x: '-100%' }}
-                  animate={{ x: '200%' }}
-                  transition={{ duration: shouldReduceMotion ? 0 : 1.2, delay: shouldReduceMotion ? 0 : 0.3, ease: 'easeInOut' }}
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "200%" }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 1.2,
+                    delay: shouldReduceMotion ? 0 : 0.3,
+                    ease: "easeInOut",
+                  }}
                   className="absolute inset-0 pointer-events-none"
                   style={{
                     background:
-                      'linear-gradient(105deg, transparent 40%, rgba(196,150,58,0.15) 50%, transparent 60%)',
+                      "linear-gradient(105deg, transparent 40%, rgba(196,150,58,0.15) 50%, transparent 60%)",
                   }}
                 />
               </div>
@@ -122,28 +139,52 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: [0.4, 0, 0.2, 1] }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.6,
+                ease: [0.4, 0, 0.2, 1],
+              }}
               className="flex flex-col items-center"
             >
               <div className="relative">
-                <PassportInside data={data} className="w-[340px] sm:w-[480px]" />
+                <PassportInside
+                  data={data}
+                  className="w-[340px] sm:w-[480px]"
+                />
 
                 {/* Gold seal stamp */}
                 {phase >= 3 && (
                   <motion.div
                     initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: shouldReduceMotion ? 1 : [0, 1.1, 1], opacity: 1 }}
-                    transition={shouldReduceMotion ? { duration: 0 } : {
-                      type: 'spring',
-                      stiffness: 260,
-                      damping: 15,
-                      duration: 0.5,
+                    animate={{
+                      scale: shouldReduceMotion ? 1 : [0, 1.1, 1],
+                      opacity: 1,
                     }}
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : {
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 15,
+                            duration: 0.5,
+                          }
+                    }
                     className="absolute -bottom-3 -right-3 w-16 h-16 flex items-center justify-center"
                   >
                     <div className="w-14 h-14 rounded-full bg-dao-gold/90 flex items-center justify-center shadow-lg">
-                      <svg aria-hidden="true" viewBox="0 0 24 24" className="w-7 h-7 text-dao-charcoal" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="w-7 h-7 text-dao-charcoal"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
                   </motion.div>
@@ -154,7 +195,10 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: shouldReduceMotion ? 0 : 0.5, delay: shouldReduceMotion ? 0 : 1.0 }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.5,
+                  delay: shouldReduceMotion ? 0 : 1.0,
+                }}
                 className="mt-8 text-center"
               >
                 <h2 className="font-display text-2xl sm:text-3xl text-dao-warm mb-2">
@@ -178,8 +222,14 @@ export function PassportCreationReveal({ data, onComplete }: PassportCreationRev
   );
 }
 
-function TypingText({ text, shouldReduceMotion }: { text: string; shouldReduceMotion: boolean }) {
-  const [displayed, setDisplayed] = useState(shouldReduceMotion ? text : '');
+function TypingText({
+  text,
+  shouldReduceMotion,
+}: {
+  text: string;
+  shouldReduceMotion: boolean;
+}) {
+  const [displayed, setDisplayed] = useState(shouldReduceMotion ? text : "");
 
   useEffect(() => {
     if (shouldReduceMotion) {
@@ -209,7 +259,11 @@ function TypingText({ text, shouldReduceMotion }: { text: string; shouldReduceMo
       ) : (
         <motion.span
           animate={{ opacity: [1, 0] }}
-          transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+          transition={{
+            duration: 0.5,
+            repeat: Infinity,
+            repeatType: "reverse",
+          }}
           className="inline-block w-0.5 h-5 bg-dao-gold ml-0.5 align-middle"
           aria-hidden="true"
         />

@@ -1,8 +1,12 @@
-import { db } from '@core/database';
-import { forumPosts, users, forumVotes } from '@core/database/schema';
-import { eq, sql, isNull, and, desc } from 'drizzle-orm';
-import { generateId } from '@shared/utils';
-import type { CreatePostInput, PostFilters, ForumPostWithMetadata } from '../types';
+import { db } from "@core/database";
+import { forumPosts, users, forumVotes } from "@core/database/schema";
+import { eq, sql, isNull, and, desc } from "drizzle-orm";
+import { generateId } from "@shared/utils";
+import type {
+  CreatePostInput,
+  PostFilters,
+  ForumPostWithMetadata,
+} from "../types";
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
@@ -12,7 +16,10 @@ export class ForumRepository {
    * Optimized query that fetches posts with all metadata in a single query
    * Eliminates N+1 problem by using SQL subqueries
    */
-  async findAllWithMetadata(userId: string, filters?: PostFilters): Promise<ForumPostWithMetadata[]> {
+  async findAllWithMetadata(
+    userId: string,
+    filters?: PostFilters,
+  ): Promise<ForumPostWithMetadata[]> {
     const conditions = [];
 
     if (filters?.category) {
@@ -151,7 +158,7 @@ export class ForumRepository {
       .from(forumPosts)
       .where(eq(forumPosts.id, id))
       .limit(1);
-    
+
     return results[0] ?? null;
   }
 
@@ -173,17 +180,19 @@ export class ForumRepository {
 
         // Parallelize parent and root post updates for better performance
         const updatePromises = [
-          db.update(forumPosts)
+          db
+            .update(forumPosts)
             .set({ lastActivityAt: now })
-            .where(eq(forumPosts.id, data.parentId))
+            .where(eq(forumPosts.id, data.parentId)),
         ];
 
         // Also update the root post's lastActivityAt if different from parent
         if (rootPostId && rootPostId !== data.parentId) {
           updatePromises.push(
-            db.update(forumPosts)
+            db
+              .update(forumPosts)
               .set({ lastActivityAt: now })
-              .where(eq(forumPosts.id, rootPostId))
+              .where(eq(forumPosts.id, rootPostId)),
           );
         }
 
@@ -210,10 +219,11 @@ export class ForumRepository {
   }
 
   async update(id: string, data: Partial<CreatePostInput>) {
-    await db.update(forumPosts)
+    await db
+      .update(forumPosts)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(forumPosts.id, id));
-    
+
     return this.findById(id);
   }
 
@@ -228,7 +238,7 @@ export class ForumRepository {
       })
       .from(forumVotes)
       .where(eq(forumVotes.postId, postId));
-    
+
     return result[0]?.count ?? 0;
   }
 
@@ -236,14 +246,9 @@ export class ForumRepository {
     const result = await db
       .select()
       .from(forumVotes)
-      .where(
-        and(
-          eq(forumVotes.postId, postId),
-          eq(forumVotes.userId, userId)
-        )
-      )
+      .where(and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)))
       .limit(1);
-    
+
     return result[0]?.voteType ?? 0;
   }
 
@@ -260,41 +265,33 @@ export class ForumRepository {
     const existingVote = await db
       .select()
       .from(forumVotes)
-      .where(
-        and(
-          eq(forumVotes.postId, postId),
-          eq(forumVotes.userId, userId)
-        )
-      )
+      .where(and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)))
       .limit(1);
 
     if (existingVote.length > 0 && existingVote[0]) {
       if (existingVote[0].voteType === voteType) {
         // Same vote type - toggle off (delete)
-        await db.delete(forumVotes)
+        await db
+          .delete(forumVotes)
           .where(
-            and(
-              eq(forumVotes.postId, postId),
-              eq(forumVotes.userId, userId)
-            )
+            and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)),
           );
-        return { action: 'removed', voteType: 0 };
+        return { action: "removed", voteType: 0 };
       } else {
         // Different vote type - update using atomic operation
-        await db.update(forumVotes)
+        await db
+          .update(forumVotes)
           .set({ voteType })
           .where(
-            and(
-              eq(forumVotes.postId, postId),
-              eq(forumVotes.userId, userId)
-            )
+            and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)),
           );
-        return { action: 'updated', voteType };
+        return { action: "updated", voteType };
       }
     } else {
       // No existing vote - use INSERT with ON CONFLICT to handle race condition
       // If another request inserts between our check and insert, this will update instead
-      await db.insert(forumVotes)
+      await db
+        .insert(forumVotes)
         .values({
           postId,
           userId,
@@ -305,7 +302,7 @@ export class ForumRepository {
           target: [forumVotes.postId, forumVotes.userId],
           set: { voteType },
         });
-      return { action: 'created', voteType };
+      return { action: "created", voteType };
     }
   }
 
@@ -324,7 +321,10 @@ export class ForumRepository {
    * Get all posts in a thread (root post + all nested replies)
    * Returns flat list ordered for tree construction
    */
-  async getThreadPosts(rootPostId: string, userId: string): Promise<ForumPostWithMetadata[]> {
+  async getThreadPosts(
+    rootPostId: string,
+    userId: string,
+  ): Promise<ForumPostWithMetadata[]> {
     return db
       .select({
         id: forumPosts.id,
@@ -361,7 +361,7 @@ export class ForumRepository {
       .from(forumPosts)
       .leftJoin(users, eq(forumPosts.authorId, users.id))
       .where(
-        sql`${forumPosts.id} = ${rootPostId} OR ${forumPosts.rootPostId} = ${rootPostId}`
+        sql`${forumPosts.id} = ${rootPostId} OR ${forumPosts.rootPostId} = ${rootPostId}`,
       )
       .orderBy(forumPosts.threadDepth, forumPosts.createdAt);
   }
@@ -384,7 +384,8 @@ export class ForumRepository {
    * Lock or unlock a thread (only the root post)
    */
   async setThreadLocked(postId: string, locked: boolean) {
-    await db.update(forumPosts)
+    await db
+      .update(forumPosts)
       .set({ isLocked: locked, updatedAt: new Date() })
       .where(eq(forumPosts.id, postId));
   }
@@ -393,7 +394,8 @@ export class ForumRepository {
    * Pin or unpin a post
    */
   async setPostPinned(postId: string, pinned: boolean) {
-    await db.update(forumPosts)
+    await db
+      .update(forumPosts)
       .set({ isPinned: pinned, updatedAt: new Date() })
       .where(eq(forumPosts.id, postId));
   }

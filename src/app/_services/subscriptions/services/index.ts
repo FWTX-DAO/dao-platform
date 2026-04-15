@@ -1,2 +1,2 @@
-export * from './subscriptions.repository';
-export * from './subscriptions.service';
+export * from "./subscriptions.repository";
+export * from "./subscriptions.service";

@@ -1,15 +1,33 @@
-import { db } from '@core/database';
-import { members, users, membershipTiers, memberRoles, roles } from '@core/database/schema';
-import { eq, and, desc, sql, like, or } from 'drizzle-orm';
-import { generateId } from '@shared/utils';
-import type { UpdateMembershipInput, UpdateProfileInput, MemberProfileFilters } from '../types';
+import { db } from "@core/database";
+import {
+  members,
+  users,
+  membershipTiers,
+  memberRoles,
+  roles,
+} from "@core/database/schema";
+import { eq, and, desc, sql, like, or } from "drizzle-orm";
+import { generateId } from "@shared/utils";
+import type {
+  UpdateMembershipInput,
+  UpdateProfileInput,
+  MemberProfileFilters,
+} from "../types";
 
 const PROFILE_FIELDS = [
-  'firstName', 'lastName', 'email', 'phone',
-  'employer', 'jobTitle', 'industry',
-  'civicInterests', 'skills',
-  'city', 'state', 'zip',
-  'linkedinUrl',
+  "firstName",
+  "lastName",
+  "email",
+  "phone",
+  "employer",
+  "jobTitle",
+  "industry",
+  "civicInterests",
+  "skills",
+  "city",
+  "state",
+  "zip",
+  "linkedinUrl",
 ] as const;
 
 export class MembersRepository {
@@ -46,7 +64,7 @@ export class MembersRepository {
     return results[0] ?? null;
   }
 
-  async create(userId: string, membershipType: string = 'basic') {
+  async create(userId: string, membershipType: string = "basic") {
     const id = generateId();
     await db.insert(members).values({
       id,
@@ -54,7 +72,7 @@ export class MembersRepository {
       membershipType,
       contributionPoints: 0,
       votingPower: 1,
-      status: 'active',
+      status: "active",
       joinedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -64,7 +82,8 @@ export class MembersRepository {
   }
 
   async update(userId: string, data: UpdateMembershipInput) {
-    await db.update(members)
+    await db
+      .update(members)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(members.userId, userId));
 
@@ -78,7 +97,8 @@ export class MembersRepository {
       return null;
     }
 
-    await db.update(members)
+    await db
+      .update(members)
       .set({
         contributionPoints: member.contributionPoints + points,
         updatedAt: new Date(),
@@ -92,7 +112,7 @@ export class MembersRepository {
     const totalMembers = await db
       .select({ count: sql<number>`COUNT(*)` })
       .from(members)
-      .where(eq(members.status, 'active'));
+      .where(eq(members.status, "active"));
 
     const activeMembers = totalMembers[0]?.count ?? 0;
 
@@ -108,7 +128,10 @@ export class MembersRepository {
     const member = await this.findByUserId(userId);
     if (!member) return null;
 
-    const completeness = this.calculateProfileCompleteness({ ...member, ...profileData });
+    const completeness = this.calculateProfileCompleteness({
+      ...member,
+      ...profileData,
+    });
 
     await db
       .update(members)
@@ -126,26 +149,32 @@ export class MembersRepository {
     let filled = 0;
     for (const field of PROFILE_FIELDS) {
       const val = member[field];
-      if (val !== null && val !== undefined && val !== '') {
+      if (val !== null && val !== undefined && val !== "") {
         filled++;
       }
     }
     return Math.round((filled / PROFILE_FIELDS.length) * 100);
   }
 
-  async completeOnboarding(userId: string, data: UpdateProfileInput & { termsAccepted?: boolean }) {
+  async completeOnboarding(
+    userId: string,
+    data: UpdateProfileInput & { termsAccepted?: boolean },
+  ) {
     const member = await this.findByUserId(userId);
     if (!member) return null;
 
     const { termsAccepted, ...profileData } = data as any;
-    const completeness = this.calculateProfileCompleteness({ ...member, ...profileData });
+    const completeness = this.calculateProfileCompleteness({
+      ...member,
+      ...profileData,
+    });
 
     await db
       .update(members)
       .set({
         ...profileData,
         profileCompleteness: completeness,
-        onboardingStatus: 'completed',
+        onboardingStatus: "completed",
         termsAcceptedAt: termsAccepted ? new Date() : member.termsAcceptedAt,
         updatedAt: new Date(),
       })
@@ -179,7 +208,12 @@ export class MembersRepository {
       .select({ roleName: roles.name })
       .from(memberRoles)
       .innerJoin(roles, eq(memberRoles.roleId, roles.id))
-      .where(and(eq(memberRoles.memberId, member.id), eq(memberRoles.isActive, true)));
+      .where(
+        and(
+          eq(memberRoles.memberId, member.id),
+          eq(memberRoles.isActive, true),
+        ),
+      );
 
     return {
       ...member,
@@ -189,7 +223,7 @@ export class MembersRepository {
   }
 
   async findByFilters(filters: MemberProfileFilters) {
-    const conditions = [eq(members.status, 'active')];
+    const conditions = [eq(members.status, "active")];
 
     if (filters.city) {
       conditions.push(eq(members.city, filters.city));

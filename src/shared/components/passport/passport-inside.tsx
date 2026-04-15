@@ -1,23 +1,27 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { User } from 'lucide-react';
-import type { PassportData } from './types';
-import { generateMRZ } from './mrz-generator';
-import { GuillochePattern, PassportWatermark, SecurityBorder } from './passport-patterns';
-import { PassportStamps } from './passport-stamps';
+import Image from "next/image";
+import { User } from "lucide-react";
+import type { PassportData } from "./types";
+import { generateMRZ } from "./mrz-generator";
+import {
+  GuillochePattern,
+  PassportWatermark,
+  SecurityBorder,
+} from "./passport-patterns";
+import { PassportStamps } from "./passport-stamps";
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+  return new Date(iso).toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
 }
 
 /** Format UUIDv7 as a passport-style document number: uppercase, no dashes */
 function formatPassportNo(memberId: string): string {
-  return memberId.replace(/-/g, '').toUpperCase();
+  return memberId.replace(/-/g, "").toUpperCase();
 }
 
 interface PassportInsideProps {
@@ -25,16 +29,26 @@ interface PassportInsideProps {
   className?: string;
 }
 
-export function PassportInside({ data, className = '' }: PassportInsideProps) {
+export function PassportInside({ data, className = "" }: PassportInsideProps) {
   const [mrz1, mrz2] = generateMRZ(data);
-  const skills = data.skills?.split(',').map((s) => s.trim()).filter(Boolean) || [];
-  const interests = data.civicInterests?.split(',').map((s) => s.trim()).filter(Boolean) || [];
+  const skills =
+    data.skills
+      ?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) || [];
+  const interests =
+    data.civicInterests
+      ?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) || [];
   const badges = [...skills, ...interests].slice(0, 6);
 
   const joinDate = new Date(data.joinedAt);
-  const joinDay = joinDate.toLocaleDateString('en-US', { day: '2-digit' });
-  const joinMonth = joinDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-  const joinYear = joinDate.toLocaleDateString('en-US', { year: 'numeric' });
+  const joinDay = joinDate.toLocaleDateString("en-US", { day: "2-digit" });
+  const joinMonth = joinDate
+    .toLocaleDateString("en-US", { month: "short" })
+    .toUpperCase();
+  const joinYear = joinDate.toLocaleDateString("en-US", { year: "numeric" });
 
   const passportNo = formatPassportNo(data.memberId);
 
@@ -42,8 +56,9 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
     <div
       className={`relative rounded-md overflow-hidden ${className}`}
       style={{
-        aspectRatio: '3/2',
-        background: 'linear-gradient(135deg, #faf8f5 0%, #f4efe8 50%, #f0ebe2 100%)',
+        aspectRatio: "3/2",
+        background:
+          "linear-gradient(135deg, #faf8f5 0%, #f4efe8 50%, #f0ebe2 100%)",
       }}
     >
       <GuillochePattern />
@@ -67,7 +82,7 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
           <div className="w-[28%] sm:w-[25%] shrink-0 flex flex-col">
             <div
               className="w-full bg-dao-surface/10 border border-dao-border/30 rounded-sm overflow-hidden flex items-center justify-center"
-              style={{ aspectRatio: '3/4' }}
+              style={{ aspectRatio: "3/4" }}
             >
               {data.avatarUrl ? (
                 <Image
@@ -79,7 +94,10 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
                 />
               ) : (
                 <div className="flex items-center justify-center w-full h-full bg-dao-surface/5">
-                  <User aria-hidden="true" className="w-8 h-8 sm:w-10 sm:h-10 text-dao-cool/30" />
+                  <User
+                    aria-hidden="true"
+                    className="w-8 h-8 sm:w-10 sm:h-10 text-dao-cool/30"
+                  />
                 </div>
               )}
             </div>
@@ -114,19 +132,42 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
             </div>
 
             {/* Surname */}
-            <FieldRow label="Surname" value={(data.lastName || '---').toUpperCase()} className="mb-1" />
+            <FieldRow
+              label="Surname"
+              value={(data.lastName || "---").toUpperCase()}
+              className="mb-1"
+            />
 
             {/* Given Names */}
-            <FieldRow label="Given Names" value={(data.firstName || '---').toUpperCase()} className="mb-1.5" />
+            <FieldRow
+              label="Given Names"
+              value={(data.firstName || "---").toUpperCase()}
+              className="mb-1.5"
+            />
 
             {/* Row: Membership + Date of Issue */}
             <div className="flex gap-3 sm:gap-6 mb-1">
-              <FieldRow label="Membership" value={(data.tierDisplayName || data.membershipType || 'Member').toUpperCase()} />
-              <FieldRow label="Date of Issue" value={formatDate(data.joinedAt)} suppressHydrationWarning />
+              <FieldRow
+                label="Membership"
+                value={(
+                  data.tierDisplayName ||
+                  data.membershipType ||
+                  "Member"
+                ).toUpperCase()}
+              />
+              <FieldRow
+                label="Date of Issue"
+                value={formatDate(data.joinedAt)}
+                suppressHydrationWarning
+              />
             </div>
 
             {/* Authority */}
-            <FieldRow label="Authority" value="FORT WORTH DAO" className="mb-1.5" />
+            <FieldRow
+              label="Authority"
+              value="FORT WORTH DAO"
+              className="mb-1.5"
+            />
 
             {/* Bottom area: event stamps + JOINED stamp */}
             <div className="flex items-end justify-between mt-auto">
@@ -140,26 +181,38 @@ export function PassportInside({ data, className = '' }: PassportInsideProps) {
               <div
                 className="shrink-0 ml-auto"
                 suppressHydrationWarning
-                style={{ transform: 'rotate(-8deg)' }}
+                style={{ transform: "rotate(-8deg)" }}
               >
                 <div
                   className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] rounded-full border-2 border-dashed flex flex-col items-center justify-center"
-                  style={{ borderColor: 'rgba(196, 150, 58, 0.5)' }}
+                  style={{ borderColor: "rgba(196, 150, 58, 0.5)" }}
                 >
                   <div
                     className="absolute inset-0 rounded-full"
-                    style={{ background: 'rgba(196, 150, 58, 0.04)' }}
+                    style={{ background: "rgba(196, 150, 58, 0.04)" }}
                   />
-                  <span className="relative text-[6px] sm:text-[7px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(196, 150, 58, 0.7)' }}>
+                  <span
+                    className="relative text-[6px] sm:text-[7px] font-bold tracking-[0.2em] uppercase"
+                    style={{ color: "rgba(196, 150, 58, 0.7)" }}
+                  >
                     Joined
                   </span>
-                  <span className="relative text-[11px] sm:text-[13px] font-bold leading-none mt-px" style={{ color: 'rgba(196, 150, 58, 0.8)' }}>
+                  <span
+                    className="relative text-[11px] sm:text-[13px] font-bold leading-none mt-px"
+                    style={{ color: "rgba(196, 150, 58, 0.8)" }}
+                  >
                     {joinDay}
                   </span>
-                  <span className="relative text-[7px] sm:text-[8px] font-semibold tracking-wider uppercase leading-none mt-0.5" style={{ color: 'rgba(196, 150, 58, 0.65)' }}>
+                  <span
+                    className="relative text-[7px] sm:text-[8px] font-semibold tracking-wider uppercase leading-none mt-0.5"
+                    style={{ color: "rgba(196, 150, 58, 0.65)" }}
+                  >
                     {joinMonth} {joinYear}
                   </span>
-                  <span className="relative text-[4px] sm:text-[5px] tracking-[0.15em] uppercase mt-0.5 leading-none" style={{ color: 'rgba(196, 150, 58, 0.45)' }}>
+                  <span
+                    className="relative text-[4px] sm:text-[5px] tracking-[0.15em] uppercase mt-0.5 leading-none"
+                    style={{ color: "rgba(196, 150, 58, 0.45)" }}
+                  >
                     FWTX DAO
                   </span>
                 </div>
@@ -193,7 +246,7 @@ function FieldRow({
   value,
   mono = false,
   suppressHydrationWarning = false,
-  className = '',
+  className = "",
 }: {
   label: string;
   value: string;
@@ -209,7 +262,7 @@ function FieldRow({
       <div
         suppressHydrationWarning={suppressHydrationWarning}
         className={`text-[10px] sm:text-[11px] text-dao-charcoal/80 leading-tight font-semibold ${
-          mono ? 'font-mono text-[9px] sm:text-[10px]' : ''
+          mono ? "font-mono text-[9px] sm:text-[10px]" : ""
         }`}
       >
         {value}

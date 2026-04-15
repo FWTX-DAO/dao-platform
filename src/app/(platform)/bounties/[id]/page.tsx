@@ -28,9 +28,7 @@ export default function BountyDetailPage() {
 
   if (isLoading)
     return (
-      <div className="py-8 text-center text-gray-500">
-        Loading bounty{"…"}
-      </div>
+      <div className="py-8 text-center text-gray-500">Loading bounty{"…"}</div>
     );
   if (!bounty)
     return (

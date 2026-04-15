@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { cn } from '../../utils/cn';
+import * as React from "react";
+import { cn } from "../../utils/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        'bg-white shadow-xs rounded-lg border border-gray-100 transition-shadow',
+        "bg-white shadow-xs rounded-lg border border-gray-100 transition-shadow",
         className,
       )}
       {...props}
@@ -19,7 +19,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     </div>
   ),
 );
-Card.displayName = 'Card';
+Card.displayName = "Card";
 
 interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -27,9 +27,18 @@ interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   action?: React.ReactNode;
 }
 
-function CardHeader({ title, icon, action, className, ...props }: CardHeaderProps) {
+function CardHeader({
+  title,
+  icon,
+  action,
+  className,
+  ...props
+}: CardHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between p-6 pb-0', className)} {...props}>
+    <div
+      className={cn("flex items-center justify-between p-6 pb-0", className)}
+      {...props}
+    >
       <h2 className="text-lg font-semibold flex items-center text-gray-900">
         {icon && <span className="mr-2 text-violet-600">{icon}</span>}
         {title}
@@ -39,9 +48,13 @@ function CardHeader({ title, icon, action, className, ...props }: CardHeaderProp
   );
 }
 
-function CardContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function CardContent({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6', className)} {...props}>
+    <div className={cn("p-6", className)} {...props}>
       {children}
     </div>
   );

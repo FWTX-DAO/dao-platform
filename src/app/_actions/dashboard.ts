@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { requireAuth } from '@/app/_lib/auth';
+import { requireAuth } from "@/app/_lib/auth";
 import {
   db,
   users,
@@ -10,8 +10,8 @@ import {
   innovationBounties,
   documents,
   projectCollaborators,
-} from '@core/database';
-import { sql, eq, desc, isNull, or } from 'drizzle-orm';
+} from "@core/database";
+import { sql, eq, desc, isNull, or } from "drizzle-orm";
 
 export async function getDashboardStats() {
   const { user } = await requireAuth();
@@ -28,7 +28,10 @@ export async function getDashboardStats() {
   ] = await Promise.all([
     db.select({ count: sql<number>`COUNT(*)` }).from(users),
     db.select({ count: sql<number>`COUNT(*)` }).from(projects),
-    db.select({ count: sql<number>`COUNT(*)` }).from(documents).where(eq(documents.status, 'active')),
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(documents)
+      .where(eq(documents.status, "active")),
 
     db
       .select({
@@ -54,7 +57,7 @@ export async function getDashboardStats() {
       })
       .from(projects)
       .leftJoin(users, eq(projects.creatorId, users.id))
-      .where(eq(projects.status, 'active'))
+      .where(eq(projects.status, "active"))
       .orderBy(desc(projects.updatedAt))
       .limit(10),
 
@@ -82,8 +85,16 @@ export async function getDashboardStats() {
       })
       .from(projects)
       .leftJoin(users, eq(projects.creatorId, users.id))
-      .leftJoin(projectCollaborators, eq(projectCollaborators.projectId, projects.id))
-      .where(or(eq(projects.creatorId, user.id), eq(projectCollaborators.userId, user.id)))
+      .leftJoin(
+        projectCollaborators,
+        eq(projectCollaborators.projectId, projects.id),
+      )
+      .where(
+        or(
+          eq(projects.creatorId, user.id),
+          eq(projectCollaborators.userId, user.id),
+        ),
+      )
       .orderBy(desc(projects.updatedAt))
       .limit(10),
 
@@ -119,7 +130,7 @@ export async function getDashboardStats() {
         category: innovationBounties.category,
       })
       .from(innovationBounties)
-      .where(eq(innovationBounties.status, 'published'))
+      .where(eq(innovationBounties.status, "published"))
       .orderBy(desc(innovationBounties.bountyAmount))
       .limit(5),
 
@@ -143,8 +154,8 @@ export async function getDashboardStats() {
   const totalDocuments = totalDocumentsResult[0]?.count || 0;
 
   const uniqueUserProjects = Array.from(
-    new Map(userActiveProjects.map((p) => [p.id, p])).values()
-  ).filter((p) => p.user_role !== 'none');
+    new Map(userActiveProjects.map((p) => [p.id, p])).values(),
+  ).filter((p) => p.user_role !== "none");
 
   return {
     totalUsers,

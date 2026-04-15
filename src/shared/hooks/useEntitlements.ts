@@ -1,6 +1,6 @@
-import { useProfile } from './useProfile';
+import { useProfile } from "./useProfile";
 
-const PAID_TIERS = ['monthly', 'annual', 'pro'] as const;
+const PAID_TIERS = ["monthly", "annual", "pro"] as const;
 
 /**
  * Entitlements configuration.
@@ -36,9 +36,10 @@ export function useEntitlements(): Entitlements {
     : false;
 
   // Admin-elevated or moderator/staff accounts bypass tier check
-  const hasElevatedRole = profile?.roleNames?.some(
-    (r) => r === 'member' || r === 'moderator' || r === 'admin'
-  ) ?? false;
+  const hasElevatedRole =
+    profile?.roleNames?.some(
+      (r) => r === "member" || r === "moderator" || r === "admin",
+    ) ?? false;
 
   // Any authenticated user (including free/observer)
   const isAuthenticated = !!profile;

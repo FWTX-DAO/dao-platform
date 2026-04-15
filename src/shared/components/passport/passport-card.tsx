@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
-import Image from 'next/image';
-import type { PassportData } from './types';
+import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
+import Image from "next/image";
+import type { PassportData } from "./types";
 
 function truncateWallet(addr: string | null): string {
-  if (!addr) return '';
+  if (!addr) return "";
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
@@ -20,18 +20,27 @@ export function PassportCard({ data }: PassportCardProps) {
   const displayName =
     data.firstName && data.lastName
       ? `${data.firstName} ${data.lastName}`
-      : data.username || 'Member';
+      : data.username || "Member";
 
   return (
     <Link href="/passport">
       <motion.div
-        whileHover={shouldReduceMotion ? undefined : { rotateX: -3, rotateY: 5, scale: 1.02 }}
-        transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 20 }}
+        whileHover={
+          shouldReduceMotion
+            ? undefined
+            : { rotateX: -3, rotateY: 5, scale: 1.02 }
+        }
+        transition={
+          shouldReduceMotion
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 300, damping: 20 }
+        }
         className="relative w-40 h-52 rounded-md overflow-hidden cursor-pointer border border-dao-gold/20"
         style={{
-          perspective: '600px',
-          background: 'linear-gradient(145deg, #1a2744 0%, #0f1b33 50%, #1a2744 100%)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+          perspective: "600px",
+          background:
+            "linear-gradient(145deg, #1a2744 0%, #0f1b33 50%, #1a2744 100%)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
         }}
       >
         {/* Inner border */}
@@ -50,7 +59,7 @@ export function PassportCard({ data }: PassportCardProps) {
 
           {/* Membership badge */}
           <span className="mt-1.5 px-2 py-0.5 text-[8px] uppercase tracking-widest text-dao-gold bg-dao-gold/10 rounded-full">
-            {data.tierDisplayName || data.membershipType || 'Member'}
+            {data.tierDisplayName || data.membershipType || "Member"}
           </span>
 
           {/* Wallet */}

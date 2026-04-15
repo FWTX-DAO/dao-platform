@@ -1,17 +1,22 @@
-'use server';
+"use server";
 
-import { requireAuth } from '@/app/_lib/auth';
-import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
-import { updateUserProfile } from '@core/database/queries/users';
-import { db, users } from '@core/database';
-import { eq } from 'drizzle-orm';
-import { validateUsernameFormat } from '@utils/onboarding';
-import { membersService } from '@services/members';
-import { revalidatePath } from 'next/cache';
+import { requireAuth } from "@/app/_lib/auth";
+import {
+  type ActionResult,
+  actionSuccess,
+  actionError,
+} from "@/app/_lib/action-utils";
+import { updateUserProfile } from "@core/database/queries/users";
+import { db, users } from "@core/database";
+import { eq } from "drizzle-orm";
+import { validateUsernameFormat } from "@utils/onboarding";
+import { membersService } from "@services/members";
+import { revalidatePath } from "next/cache";
 
-export async function onboardUser(
-  data: { username: string; bio: string | null },
-): Promise<ActionResult<{ user: any; memberId: string }>> {
+export async function onboardUser(data: {
+  username: string;
+  bio: string | null;
+}): Promise<ActionResult<{ user: any; memberId: string }>> {
   try {
     const { user } = await requireAuth();
 
@@ -29,8 +34,12 @@ export async function onboardUser(
       .where(eq(users.username, trimmedUsername))
       .limit(1);
 
-    if (existingUser.length > 0 && existingUser[0] && existingUser[0].id !== user.id) {
-      return { success: false, error: 'Username is already taken' };
+    if (
+      existingUser.length > 0 &&
+      existingUser[0] &&
+      existingUser[0].id !== user.id
+    ) {
+      return { success: false, error: "Username is already taken" };
     }
 
     // Update user profile
@@ -64,7 +73,7 @@ export async function updateProfile(data: {
     bio: data.bio,
     avatarUrl: data.avatarUrl,
   });
-  revalidatePath('/passport');
-  revalidatePath('/settings');
+  revalidatePath("/passport");
+  revalidatePath("/settings");
   return updated;
 }

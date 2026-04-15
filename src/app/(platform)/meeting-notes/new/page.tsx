@@ -187,9 +187,7 @@ export default function NewMeetingNotePage() {
             disabled={createMutation.isPending}
             className="px-6 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden"
           >
-            {createMutation.isPending
-              ? "Creating…"
-              : "Create Meeting Note"}
+            {createMutation.isPending ? "Creating…" : "Create Meeting Note"}
           </button>
           <button
             type="button"

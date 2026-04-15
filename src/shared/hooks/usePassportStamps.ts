@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@shared/constants';
-import { useAuthReady } from './useAuthReady';
-import { getMyStamps, getMemberStamps, issueStamps } from '@actions/stamps';
-import type { IssueStampsInput } from '@services/stamps/types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@shared/constants";
+import { useAuthReady } from "./useAuthReady";
+import { getMyStamps, getMemberStamps, issueStamps } from "@actions/stamps";
+import type { IssueStampsInput } from "@services/stamps/types";
 
 export const useMyStamps = () => {
   const authReady = useAuthReady();

@@ -27,7 +27,10 @@ export function ProjectsClient() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Innovation Lab" subtitle="Civic innovation projects powered by the community">
+      <PageHeader
+        title="Innovation Lab"
+        subtitle="Civic innovation projects powered by the community"
+      >
         <UpgradeCTA allowed={can.createProject} feature="create projects">
           <Link
             href="/innovation-lab/new"
@@ -52,7 +55,11 @@ export function ProjectsClient() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Lightbulb />}
-          title={statusFilter !== "all" ? "No projects match this filter" : "No projects found"}
+          title={
+            statusFilter !== "all"
+              ? "No projects match this filter"
+              : "No projects found"
+          }
           description={
             statusFilter !== "all"
               ? "Try selecting a different status filter."

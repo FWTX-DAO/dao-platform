@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMemberProfile, updateMemberProfile } from '@/app/_actions/members';
-import { queryKeys } from '@shared/constants/query-keys';
-import { useAuthReady } from './useAuthReady';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getMemberProfile, updateMemberProfile } from "@/app/_actions/members";
+import { queryKeys } from "@shared/constants/query-keys";
+import { useAuthReady } from "./useAuthReady";
 
 export interface MemberProfile {
   id: string;
@@ -81,7 +81,8 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateProfileInput) => updateMemberProfile(data as Record<string, unknown>),
+    mutationFn: (data: UpdateProfileInput) =>
+      updateMemberProfile(data as Record<string, unknown>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.stats() });

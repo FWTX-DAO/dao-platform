@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
-import { useProfile } from '@shared/hooks/useProfile';
-import { usePrivy } from '@privy-io/react-auth';
-import { PassportFull } from '@components/passport';
-import type { PassportData, PassportStamp } from '@components/passport';
-import { useMyStamps } from '@shared/hooks/usePassportStamps';
-import { queryKeys } from '@shared/constants/query-keys';
-import { Calendar, Award } from 'lucide-react';
-import ActivityFeed from '@components/ActivityFeed';
-import { StatCard } from '@components/ui/stat-card';
-import { ErrorState } from '@components/ui/error-state';
-import { EmptyState } from '@components/ui/empty-state';
-import { Skeleton } from '@components/ui/skeleton';
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useProfile } from "@shared/hooks/useProfile";
+import { usePrivy } from "@privy-io/react-auth";
+import { PassportFull } from "@components/passport";
+import type { PassportData, PassportStamp } from "@components/passport";
+import { useMyStamps } from "@shared/hooks/usePassportStamps";
+import { queryKeys } from "@shared/constants/query-keys";
+import { Calendar, Award } from "lucide-react";
+import ActivityFeed from "@components/ActivityFeed";
+import { StatCard } from "@components/ui/stat-card";
+import { ErrorState } from "@components/ui/error-state";
+import { EmptyState } from "@components/ui/empty-state";
+import { Skeleton } from "@components/ui/skeleton";
 
 export default function PassportPage() {
   const searchParams = useSearchParams();
@@ -23,26 +23,36 @@ export default function PassportPage() {
   const { data: stamps } = useMyStamps();
   const { user } = usePrivy();
 
-  const success = searchParams.get('success') === 'true';
+  const success = searchParams.get("success") === "true";
 
   // Invalidate + poll caches when returning from Stripe checkout
   useEffect(() => {
     if (!success) return;
 
     const invalidateAll = () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.active() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.active(),
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.membership() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.membership(),
+      });
     };
 
     invalidateAll();
-    const timers = [2000, 5000, 10000].map((ms) => setTimeout(invalidateAll, ms));
+    const timers = [2000, 5000, 10000].map((ms) =>
+      setTimeout(invalidateAll, ms),
+    );
     return () => timers.forEach(clearTimeout);
   }, [success, queryClient]);
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto py-4 space-y-8" role="status" aria-label="Loading passport">
+      <div
+        className="max-w-4xl mx-auto py-4 space-y-8"
+        role="status"
+        aria-label="Loading passport"
+      >
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
@@ -71,7 +81,7 @@ export default function PassportPage() {
   }
 
   const walletAccount = user?.linkedAccounts?.find(
-    (a: any) => a.type === 'wallet'
+    (a: any) => a.type === "wallet",
   ) as any;
 
   const passportStamps: PassportStamp[] = (stamps || []).map((s: any) => ({
@@ -108,12 +118,15 @@ export default function PassportPage() {
       {success && (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-6">
           <p className="text-sm font-medium text-green-800">
-            Welcome aboard! Your membership is being activated. It may take a moment to reflect on your passport.
+            Welcome aboard! Your membership is being activated. It may take a
+            moment to reflect on your passport.
           </p>
         </div>
       )}
 
-      <h1 className="font-display text-3xl text-gray-900 mb-2">Your Passport</h1>
+      <h1 className="font-display text-3xl text-gray-900 mb-2">
+        Your Passport
+      </h1>
       <p className="text-gray-500 text-sm mb-8">
         Your Fort Worth DAO identity document
       </p>
@@ -124,15 +137,23 @@ export default function PassportPage() {
 
       {/* Member stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Contribution Points" value={profile.contributionPoints} />
+        <StatCard
+          label="Contribution Points"
+          value={profile.contributionPoints}
+        />
         <StatCard label="Voting Power" value={profile.votingPower} />
-        <StatCard label="Profile Complete" value={`${profile.profileCompleteness}%`} />
+        <StatCard
+          label="Profile Complete"
+          value={`${profile.profileCompleteness}%`}
+        />
         <StatCard label="Roles" value={profile.roleNames.length} />
       </div>
 
       {/* Stamps section */}
       <div className="mt-10">
-        <h2 className="font-display text-xl text-gray-900 mb-4">Event Stamps</h2>
+        <h2 className="font-display text-xl text-gray-900 mb-4">
+          Event Stamps
+        </h2>
         {passportStamps.length === 0 ? (
           <EmptyState
             icon={<Award />}
@@ -147,16 +168,25 @@ export default function PassportPage() {
                 key={stamp.id}
                 className="flex items-center gap-4 bg-white rounded-lg border border-gray-200 p-4"
               >
-                <div className="shrink-0 w-10 h-10 rounded-full bg-dao-gold/10 flex items-center justify-center" aria-hidden="true">
+                <div
+                  className="shrink-0 w-10 h-10 rounded-full bg-dao-gold/10 flex items-center justify-center"
+                  aria-hidden="true"
+                >
                   <Calendar className="w-5 h-5 text-dao-gold" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{stamp.eventName}</div>
+                  <div className="font-medium text-gray-900 truncate">
+                    {stamp.eventName}
+                  </div>
                   <div className="text-xs text-gray-500">
-                    {stamp.eventType.charAt(0).toUpperCase() + stamp.eventType.slice(1)}
+                    {stamp.eventType.charAt(0).toUpperCase() +
+                      stamp.eventType.slice(1)}
                     {stamp.eventDate && (
-                      <time dateTime={new Date(stamp.eventDate).toISOString()} suppressHydrationWarning>
-                        {` \u00B7 ${new Date(stamp.eventDate).toLocaleDateString('en-US')}`}
+                      <time
+                        dateTime={new Date(stamp.eventDate).toISOString()}
+                        suppressHydrationWarning
+                      >
+                        {` \u00B7 ${new Date(stamp.eventDate).toLocaleDateString("en-US")}`}
                       </time>
                     )}
                   </div>

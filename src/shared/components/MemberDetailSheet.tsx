@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
+import Image from "next/image";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@components/ui/sheet';
+} from "@components/ui/sheet";
 import {
   User,
   Shield,
@@ -21,9 +21,9 @@ import {
   ExternalLink,
   Copy,
   Check,
-} from 'lucide-react';
-import { useState, useCallback } from 'react';
-import type { Member } from '@hooks/useMembers';
+} from "lucide-react";
+import { useState, useCallback } from "react";
+import type { Member } from "@hooks/useMembers";
 
 interface MemberDetailSheetProps {
   member: Member | null;
@@ -34,12 +34,15 @@ interface MemberDetailSheetProps {
 function parseJsonField(val: unknown): string[] {
   if (!val) return [];
   if (Array.isArray(val)) return val.map(String);
-  if (typeof val === 'string') {
+  if (typeof val === "string") {
     try {
       const parsed = JSON.parse(val);
       return Array.isArray(parsed) ? parsed.map(String) : [val];
     } catch {
-      return val.split(',').map((s) => s.trim()).filter(Boolean);
+      return val
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
   }
   return [];
@@ -59,37 +62,48 @@ function SocialLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-export function MemberDetailSheet({ member, open, onOpenChange }: MemberDetailSheetProps) {
+export function MemberDetailSheet({
+  member,
+  open,
+  onOpenChange,
+}: MemberDetailSheetProps) {
   const [copied, setCopied] = useState(false);
 
+  const walletAddress = member?.walletAddress;
   const copyWallet = useCallback(() => {
-    if (!member?.walletAddress) return;
-    navigator.clipboard.writeText(member.walletAddress);
+    if (!walletAddress) return;
+    navigator.clipboard.writeText(walletAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [member?.walletAddress]);
+  }, [walletAddress]);
 
   if (!member) return null;
 
   const displayName =
     member.firstName && member.lastName
       ? `${member.firstName} ${member.lastName}`
-      : member.username || 'Anonymous Member';
-  const subtitle = member.username && member.firstName ? `@${member.username}` : null;
-  const location = [member.city, member.state].filter(Boolean).join(', ');
-  const jobLine = [member.jobTitle, member.employer].filter(Boolean).join(' at ');
+      : member.username || "Anonymous Member";
+  const subtitle =
+    member.username && member.firstName ? `@${member.username}` : null;
+  const location = [member.city, member.state].filter(Boolean).join(", ");
+  const jobLine = [member.jobTitle, member.employer]
+    .filter(Boolean)
+    .join(" at ");
   const skills = parseJsonField(member.skills);
   const interests = parseJsonField(member.civicInterests);
   const socials = [
-    member.linkedinUrl && { href: member.linkedinUrl, label: 'LinkedIn' },
-    member.twitterUrl && { href: member.twitterUrl, label: 'Twitter' },
-    member.githubUrl && { href: member.githubUrl, label: 'GitHub' },
-    member.websiteUrl && { href: member.websiteUrl, label: 'Website' },
+    member.linkedinUrl && { href: member.linkedinUrl, label: "LinkedIn" },
+    member.twitterUrl && { href: member.twitterUrl, label: "Twitter" },
+    member.githubUrl && { href: member.githubUrl, label: "GitHub" },
+    member.websiteUrl && { href: member.websiteUrl, label: "Website" },
   ].filter(Boolean) as { href: string; label: string }[];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-white">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md overflow-y-auto bg-white"
+      >
         <SheetHeader className="sr-only">
           <SheetTitle>{displayName}</SheetTitle>
           <SheetDescription>Member profile details</SheetDescription>
@@ -117,11 +131,14 @@ export function MemberDetailSheet({ member, open, onOpenChange }: MemberDetailSh
           </div>
 
           <h2 className="text-lg font-semibold text-gray-900">{displayName}</h2>
-          {subtitle && <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>
+          )}
 
           {/* Standing indicators */}
           <div className="flex items-center gap-2 mt-3">
-            {(member.standingTier === 'monthly' || member.standingTier === 'annual') ? (
+            {member.standingTier === "monthly" ||
+            member.standingTier === "annual" ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                 <Crown className="w-3.5 h-3.5 text-amber-500" />
@@ -132,13 +149,13 @@ export function MemberDetailSheet({ member, open, onOpenChange }: MemberDetailSh
                 Observer
               </span>
             )}
-            {member.highestRole === 'admin' && (
+            {member.highestRole === "admin" && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
                 <Shield className="w-3 h-3" />
                 Admin
               </span>
             )}
-            {member.highestRole === 'moderator' && (
+            {member.highestRole === "moderator" && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
                 <Shield className="w-3 h-3" />
                 Moderator
@@ -162,10 +179,13 @@ export function MemberDetailSheet({ member, open, onOpenChange }: MemberDetailSh
             <p className="text-[11px] text-gray-500 mt-0.5">Voting Power</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold text-gray-900 tabular-nums" suppressHydrationWarning>
-              {new Date(member.joinedAt).toLocaleDateString('en-US', {
-                month: 'short',
-                year: 'numeric',
+            <p
+              className="text-lg font-semibold text-gray-900 tabular-nums"
+              suppressHydrationWarning
+            >
+              {new Date(member.joinedAt).toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
               })}
             </p>
             <p className="text-[11px] text-gray-500 mt-0.5">Joined</p>
@@ -177,8 +197,12 @@ export function MemberDetailSheet({ member, open, onOpenChange }: MemberDetailSh
           {/* Bio */}
           {member.bio && (
             <div>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">About</p>
-              <p className="text-sm text-gray-600 leading-relaxed">{member.bio}</p>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+                About
+              </p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {member.bio}
+              </p>
             </div>
           )}
 
@@ -205,7 +229,9 @@ export function MemberDetailSheet({ member, open, onOpenChange }: MemberDetailSh
             {member.availability && (
               <div className="flex items-center gap-3 text-sm">
                 <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                <span className="text-gray-700 capitalize">{member.availability}</span>
+                <span className="text-gray-700 capitalize">
+                  {member.availability}
+                </span>
               </div>
             )}
           </div>

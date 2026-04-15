@@ -282,9 +282,7 @@ export async function getBountyById(id: string) {
     ...publicFields
   } = b;
 
-  const safeData = canSeeSensitive
-    ? b
-    : publicFields;
+  const safeData = canSeeSensitive ? b : publicFields;
 
   return {
     ...safeData,

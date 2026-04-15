@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
-import { db, users, members, type NewUser, type User } from '../index';
-import { generateId } from '../../../shared/utils/id-generator';
+import { eq } from "drizzle-orm";
+import { db, users, members, type NewUser, type User } from "../index";
+import { generateId } from "../../../shared/utils/id-generator";
 
 /**
  * Simple in-memory cache for user lookups
@@ -91,7 +91,9 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
 
       if (updated.length > 0) {
         const user = updated[0]!;
-        console.log(`[auth] Email dedup: linked new Privy DID to existing user ${user.id} via email ${email}`);
+        console.log(
+          `[auth] Email dedup: linked new Privy DID to existing user ${user.id} via email ${email}`,
+        );
         setCachedUser(privyDid, user);
         return user;
       }
@@ -102,7 +104,7 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
   const newUser: NewUser = {
     id: generateId(),
     privyDid,
-    username: email?.split('@')[0] || `user_${generateId().slice(0, 8)}`,
+    username: email?.split("@")[0] || `user_${generateId().slice(0, 8)}`,
     bio: null,
     avatarUrl: null,
   };
@@ -118,18 +120,28 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
  * Called during auth when a wallet address is available.
  */
 export async function syncWalletAddress(userId: string, walletAddress: string) {
-  const existing = await db.select({ walletAddress: users.walletAddress }).from(users).where(eq(users.id, userId)).limit(1);
+  const existing = await db
+    .select({ walletAddress: users.walletAddress })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   if (existing[0]?.walletAddress === walletAddress) return;
 
-  invalidateUserCache(''); // Clear all since we're looking up by id, not privyDid
-  await db.update(users).set({ walletAddress, updatedAt: new Date() }).where(eq(users.id, userId));
+  invalidateUserCache(""); // Clear all since we're looking up by id, not privyDid
+  await db
+    .update(users)
+    .set({ walletAddress, updatedAt: new Date() })
+    .where(eq(users.id, userId));
 }
 
 /**
  * Save a verified wallet address (after signature verification).
  */
-export async function saveVerifiedWallet(userId: string, walletAddress: string) {
-  invalidateUserCache('');
+export async function saveVerifiedWallet(
+  userId: string,
+  walletAddress: string,
+) {
+  invalidateUserCache("");
   await db
     .update(users)
     .set({ walletAddress, walletVerifiedAt: new Date(), updatedAt: new Date() })
@@ -140,7 +152,7 @@ export async function saveVerifiedWallet(userId: string, walletAddress: string) 
  * Remove wallet address from a user.
  */
 export async function removeWalletAddress(userId: string) {
-  invalidateUserCache('');
+  invalidateUserCache("");
   await db
     .update(users)
     .set({ walletAddress: null, walletVerifiedAt: null, updatedAt: new Date() })
@@ -156,7 +168,7 @@ export async function updateUserProfile(
     username?: string;
     bio?: string;
     avatarUrl?: string;
-  }
+  },
 ) {
   invalidateUserCache(privyDid);
 

@@ -1,41 +1,56 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { PrivyClient } from '@privy-io/server-auth';
-import { getOrCreateUser, syncWalletAddress } from '@core/database/queries/users';
-import { db } from '@core/database';
-import { members, memberRoles, roles } from '@core/database/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { PrivyClient } from "@privy-io/server-auth";
+import {
+  getOrCreateUser,
+  syncWalletAddress,
+} from "@core/database/queries/users";
+import { db } from "@core/database";
+import { members, memberRoles, roles } from "@core/database/schema";
+import { eq, and, or } from "drizzle-orm";
 
 const privy = new PrivyClient(
   process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!
+  process.env.PRIVY_APP_SECRET!,
 );
 
 export async function getAuthUser() {
-  const token = (await cookies()).get('privy-token')?.value;
+  const token = (await cookies()).get("privy-token")?.value;
   if (!token) return null;
   try {
     const claims = await privy.verifyAuthToken(token);
     const user = await getOrCreateUser(claims.userId, (claims as any).email);
 
     // Sync wallet address from Privy (non-blocking)
-    privy.getUser(claims.userId).then((privyUser) => {
-      const wallet = privyUser?.linkedAccounts?.find(
-        (a: any) => a.type === 'wallet' && a.chainType === 'ethereum'
-      ) as any;
-      if (wallet?.address && user) {
-        syncWalletAddress(user.id, wallet.address).catch(() => {});
-      }
-    }).catch(() => {});
+    privy
+      .getUser(claims.userId)
+      .then((privyUser) => {
+        const wallet = privyUser?.linkedAccounts?.find(
+          (a: any) => a.type === "wallet" && a.chainType === "ethereum",
+        ) as any;
+        if (wallet?.address && user) {
+          syncWalletAddress(user.id, wallet.address).catch((err) => {
+            console.error("[auth] wallet sync DB write failed:", err);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error(
+          "[auth] privy.getUser failed for wallet sync:",
+          err?.message || err,
+        );
+      });
 
     return { claims, user: user! };
   } catch (err) {
     // Log non-token errors (token expiry is expected, DB errors are not)
-    const isTokenError = err instanceof Error && (
-      err.message.includes('jwt') || err.message.includes('token') || err.message.includes('expired')
-    );
+    const isTokenError =
+      err instanceof Error &&
+      (err.message.includes("jwt") ||
+        err.message.includes("token") ||
+        err.message.includes("expired"));
     if (!isTokenError) {
-      console.error('[auth] getAuthUser failed:', err);
+      console.error("[auth] getAuthUser failed:", err);
     }
     return null;
   }
@@ -43,7 +58,7 @@ export async function getAuthUser() {
 
 export async function requireAuth() {
   const auth = await getAuthUser();
-  if (!auth) redirect('/');
+  if (!auth) redirect("/");
   return auth;
 }
 
@@ -57,8 +72,12 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
       and(
         eq(members.userId, userId),
         eq(memberRoles.isActive, true),
-        or(eq(roles.name, 'admin'), eq(roles.name, 'council_member'), eq(roles.name, 'screener'))
-      )
+        or(
+          eq(roles.name, "admin"),
+          eq(roles.name, "council_member"),
+          eq(roles.name, "screener"),
+        ),
+      ),
     )
     .limit(1);
   return adminRoles.length > 0;
@@ -71,7 +90,7 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
 export async function requireAdmin() {
   const auth = await requireAuth();
   const admin = await isUserAdmin(auth.user.id);
-  if (!admin) redirect('/');
+  if (!admin) redirect("/");
   return { ...auth, isAdmin: true as const };
 }
 

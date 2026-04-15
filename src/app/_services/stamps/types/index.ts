@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const EVENT_TYPES = [
-  'meetup',
-  'workshop',
-  'townhall',
-  'hackathon',
-  'conference',
-  'social',
+  "meetup",
+  "workshop",
+  "townhall",
+  "hackathon",
+  "conference",
+  "social",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

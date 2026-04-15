@@ -1,2 +1,2 @@
-export * from './activities.repository';
-export * from './activities.service';
+export * from "./activities.repository";
+export * from "./activities.service";

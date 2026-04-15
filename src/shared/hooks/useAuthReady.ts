@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy } from "@privy-io/react-auth";
 
 /**
  * Returns true when the Privy SDK has initialized and the user is authenticated.

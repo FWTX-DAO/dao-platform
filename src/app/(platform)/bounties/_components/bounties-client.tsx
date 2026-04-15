@@ -24,7 +24,12 @@ export function BountiesClient() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  const { data: bounties = [], isLoading, isError, refetch } = useBounties({
+  const {
+    data: bounties = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useBounties({
     status: statusFilter !== "all" ? statusFilter : undefined,
     category: categoryFilter !== "all" ? categoryFilter : undefined,
     search: search || undefined,
@@ -67,7 +72,9 @@ export function BountiesClient() {
           onChange={setStatusFilter}
           ariaLabel="Filter by status"
         />
-        <label className="sr-only" htmlFor="bounty-category">Category</label>
+        <label className="sr-only" htmlFor="bounty-category">
+          Category
+        </label>
         <select
           id="bounty-category"
           value={categoryFilter}
@@ -96,9 +103,13 @@ export function BountiesClient() {
           title="No bounties match your filters"
           description="Try adjusting your search or filters to find what you're looking for."
           action={
-            (search || statusFilter !== "all" || categoryFilter !== "all") ? (
+            search || statusFilter !== "all" || categoryFilter !== "all" ? (
               <button
-                onClick={() => { setSearch(""); setStatusFilter("all"); setCategoryFilter("all"); }}
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                  setCategoryFilter("all");
+                }}
                 className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium text-sm min-h-[44px]"
               >
                 Clear all filters

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { cn } from '../../utils/cn';
+import { cn } from "../../utils/cn";
 
 interface FilterPillsProps<T extends string> {
   options: readonly T[];
@@ -17,16 +17,20 @@ export function FilterPills<T extends string>({
   onChange,
   labelFn,
   className,
-  ariaLabel = 'Filter options',
+  ariaLabel = "Filter options",
 }: FilterPillsProps<T>) {
   const getLabel = (opt: T) => {
     if (labelFn) return labelFn(opt);
-    if (opt === 'all') return 'All';
-    return opt.charAt(0).toUpperCase() + opt.slice(1).replace(/-/g, ' ');
+    if (opt === "all") return "All";
+    return opt.charAt(0).toUpperCase() + opt.slice(1).replace(/-/g, " ");
   };
 
   return (
-    <div role="group" aria-label={ariaLabel} className={cn('flex flex-wrap gap-2', className)}>
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className={cn("flex flex-wrap gap-2", className)}
+    >
       {options.map((opt) => (
         <button
           key={opt}
@@ -34,12 +38,12 @@ export function FilterPills<T extends string>({
           onClick={() => onChange(opt)}
           aria-pressed={value === opt}
           className={cn(
-            'px-4 py-2.5 rounded-full text-sm font-medium transition-colors',
-            'focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden',
-            'min-h-[44px]',
+            "px-4 py-2.5 rounded-full text-sm font-medium transition-colors",
+            "focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden",
+            "min-h-[44px]",
             value === opt
-              ? 'bg-violet-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+              ? "bg-violet-600 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200",
           )}
         >
           {getLabel(opt)}

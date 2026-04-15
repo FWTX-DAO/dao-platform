@@ -54,7 +54,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         setIsLoading(false);
       }
     },
-    [addSessionSigners]
+    [addSessionSigners],
   );
 
   const removeSessionSigner = useCallback(
@@ -68,7 +68,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         setIsLoading(false);
       }
     },
-    [removeSessionSigners]
+    [removeSessionSigners],
   );
 
   const handleClientSign = useCallback(async () => {
@@ -81,7 +81,7 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         signature = result.signature;
       } else if (wallet.chainType === "solana") {
         const solanaWallet = solanaWallets.find(
-          (w) => w.address === wallet.address
+          (w) => w.address === wallet.address,
         );
         if (!solanaWallet) throw new Error("Solana wallet not connected");
         const result = await signMessageSolana({
@@ -117,14 +117,14 @@ export default function WalletCard({ wallet }: WalletCardProps) {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
       const data = response.data;
 
       if (response.status === 200) {
         console.log(
-          "Message signed on server! Signature: " + data.data.signature
+          "Message signed on server! Signature: " + data.data.signature,
         );
       } else {
         throw new Error(data.error || "Failed to sign message");
@@ -140,7 +140,8 @@ export default function WalletCard({ wallet }: WalletCardProps) {
     <div className="flex flex-col gap-4 p-4 border border-gray-200 rounded-lg">
       <div className="text-sm text-violet-700">
         {wallet.walletClientType === "privy" ? "Embedded " : ""}Wallet:{" "}
-        {wallet.address.slice(0, 6)}{'…'}
+        {wallet.address.slice(0, 6)}
+        {"…"}
         {wallet.address.slice(-4)}
       </div>
 

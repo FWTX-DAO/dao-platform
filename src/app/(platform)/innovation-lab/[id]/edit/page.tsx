@@ -36,9 +36,7 @@ export default function EditProjectPage() {
   }, [project]);
 
   if (isLoading)
-    return (
-      <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
-    );
+    return <div className="py-8 text-center text-gray-500">Loading{"…"}</div>;
   if (!project)
     return (
       <div className="py-8 text-center text-gray-500">Project not found</div>

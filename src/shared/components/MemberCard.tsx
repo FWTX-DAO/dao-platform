@@ -1,7 +1,15 @@
-import { memo } from 'react';
-import Image from 'next/image';
-import { User, Shield, Crown, MapPin, Briefcase, Wallet, Star } from 'lucide-react';
-import type { Member } from '@hooks/useMembers';
+import { memo } from "react";
+import Image from "next/image";
+import {
+  User,
+  Shield,
+  Crown,
+  MapPin,
+  Briefcase,
+  Wallet,
+  Star,
+} from "lucide-react";
+import type { Member } from "@hooks/useMembers";
 
 interface MemberCardProps {
   member: Member;
@@ -15,39 +23,49 @@ function truncateWallet(address: string) {
 function parseSkills(skills: unknown): string[] {
   if (!skills) return [];
   if (Array.isArray(skills)) return skills.map(String);
-  if (typeof skills === 'string') {
+  if (typeof skills === "string") {
     try {
       const parsed = JSON.parse(skills);
       return Array.isArray(parsed) ? parsed.map(String) : [skills];
     } catch {
-      return skills.split(',').map((s) => s.trim()).filter(Boolean);
+      return skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
   }
   return [];
 }
 
 function isPaidMember(member: Member) {
-  return member.standingTier === 'monthly' || member.standingTier === 'annual';
+  return member.standingTier === "monthly" || member.standingTier === "annual";
 }
 
-export const MemberCard = memo(function MemberCard({ member, onClick }: MemberCardProps) {
-  const displayName = member.firstName && member.lastName
-    ? `${member.firstName} ${member.lastName}`
-    : member.username || 'Anonymous Member';
-  const subtitle = member.username && member.firstName ? `@${member.username}` : null;
-  const location = [member.city, member.state].filter(Boolean).join(', ');
-  const jobLine = [member.jobTitle, member.employer].filter(Boolean).join(' at ');
+export const MemberCard = memo(function MemberCard({
+  member,
+  onClick,
+}: MemberCardProps) {
+  const displayName =
+    member.firstName && member.lastName
+      ? `${member.firstName} ${member.lastName}`
+      : member.username || "Anonymous Member";
+  const subtitle =
+    member.username && member.firstName ? `@${member.username}` : null;
+  const location = [member.city, member.state].filter(Boolean).join(", ");
+  const jobLine = [member.jobTitle, member.employer]
+    .filter(Boolean)
+    .join(" at ");
   const skills = parseSkills(member.skills).slice(0, 3);
   const paid = isPaidMember(member);
-  const isAdmin = member.highestRole === 'admin';
-  const isMod = member.highestRole === 'moderator';
+  const isAdmin = member.highestRole === "admin";
+  const isMod = member.highestRole === "moderator";
 
   return (
     <button
       type="button"
       onClick={onClick}
       className="w-full text-left bg-white rounded-xl border border-gray-100 p-5 hover:border-violet-200 hover:shadow-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden group"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "0 200px" }}
     >
       <div className="flex items-start gap-4">
         {/* Avatar */}
@@ -61,7 +79,10 @@ export const MemberCard = memo(function MemberCard({ member, onClick }: MemberCa
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-indigo-600" aria-hidden="true">
+            <div
+              className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-indigo-600"
+              aria-hidden="true"
+            >
               <User className="w-6 h-6 text-white" />
             </div>
           )}
@@ -70,18 +91,42 @@ export const MemberCard = memo(function MemberCard({ member, onClick }: MemberCa
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-semibold text-gray-900 truncate">{displayName}</h3>
-            {paid && <Star className="w-4 h-4 shrink-0 text-amber-500 fill-amber-400" aria-label="Paid member" />}
-            {paid && <Crown className="w-4 h-4 shrink-0 text-amber-500" aria-label="DAO member" />}
-            {isAdmin && <Shield className="w-4 h-4 shrink-0 text-red-500" aria-label="Admin" />}
-            {isMod && !isAdmin && <Shield className="w-4 h-4 shrink-0 text-purple-500" aria-label="Moderator" />}
+            <h3 className="text-sm font-semibold text-gray-900 truncate">
+              {displayName}
+            </h3>
+            {paid && (
+              <Star
+                className="w-4 h-4 shrink-0 text-amber-500 fill-amber-400"
+                aria-label="Paid member"
+              />
+            )}
+            {paid && (
+              <Crown
+                className="w-4 h-4 shrink-0 text-amber-500"
+                aria-label="DAO member"
+              />
+            )}
+            {isAdmin && (
+              <Shield
+                className="w-4 h-4 shrink-0 text-red-500"
+                aria-label="Admin"
+              />
+            )}
+            {isMod && !isAdmin && (
+              <Shield
+                className="w-4 h-4 shrink-0 text-purple-500"
+                aria-label="Moderator"
+              />
+            )}
           </div>
 
           {subtitle && (
             <p className="text-xs text-gray-400 mt-0.5 truncate">{subtitle}</p>
           )}
           {!paid && (
-            <span className="inline-block mt-1 text-[10px] text-gray-400 tracking-wide uppercase">Observer</span>
+            <span className="inline-block mt-1 text-[10px] text-gray-400 tracking-wide uppercase">
+              Observer
+            </span>
           )}
 
           {/* Job + Location row */}

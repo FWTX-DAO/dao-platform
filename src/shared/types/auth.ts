@@ -1,5 +1,5 @@
-import type { AuthTokenClaims } from '@privy-io/server-auth';
-import type { User } from './database';
+import type { AuthTokenClaims } from "@privy-io/server-auth";
+import type { User } from "./database";
 
 export interface AuthContext {
   user: User;

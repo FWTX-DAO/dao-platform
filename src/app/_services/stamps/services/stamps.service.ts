@@ -1,9 +1,9 @@
-import { db } from '@core/database';
-import { members } from '@core/database/schema';
-import { eq, sql } from 'drizzle-orm';
-import { StampsRepository } from './stamps.repository';
-import { ValidationError } from '@core/errors';
-import type { IssueStampsInput, IssueStampsResult } from '../types';
+import { db } from "@core/database";
+import { members } from "@core/database/schema";
+import { eq, sql } from "drizzle-orm";
+import { StampsRepository } from "./stamps.repository";
+import { ValidationError } from "@core/errors";
+import type { IssueStampsInput, IssueStampsResult } from "../types";
 
 export class StampsService {
   constructor(private repository: StampsRepository) {}
@@ -44,11 +44,12 @@ export class StampsService {
     const normalizedEmails = input.emails.map((e) => e.toLowerCase().trim());
 
     if (normalizedEmails.length === 0) {
-      throw new ValidationError('At least one email is required');
+      throw new ValidationError("At least one email is required");
     }
 
     // Look up members by email
-    const matchedMembers = await this.repository.findMembersByEmails(normalizedEmails);
+    const matchedMembers =
+      await this.repository.findMembersByEmails(normalizedEmails);
     const matchedEmailSet = new Set(
       matchedMembers.map((m) => m.email?.toLowerCase()),
     );

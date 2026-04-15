@@ -1,4 +1,4 @@
-import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 import {
   users,
   forumPosts,
@@ -22,7 +22,7 @@ import {
   rolePermissions,
   memberRoles,
   memberActivities,
-} from '../../core/database/schema';
+} from "../../core/database/schema";
 
 export type User = InferSelectModel<typeof users>;
 export type InsertUser = InferInsertModel<typeof users>;
@@ -40,7 +40,9 @@ export type Member = InferSelectModel<typeof members>;
 export type InsertMember = InferInsertModel<typeof members>;
 
 export type ProjectCollaborator = InferSelectModel<typeof projectCollaborators>;
-export type InsertProjectCollaborator = InferInsertModel<typeof projectCollaborators>;
+export type InsertProjectCollaborator = InferInsertModel<
+  typeof projectCollaborators
+>;
 
 export type ProjectUpdate = InferSelectModel<typeof projectUpdates>;
 export type InsertProjectUpdate = InferInsertModel<typeof projectUpdates>;
@@ -52,13 +54,17 @@ export type Document = InferSelectModel<typeof documents>;
 export type InsertDocument = InferInsertModel<typeof documents>;
 
 export type DocumentAuditTrail = InferSelectModel<typeof documentAuditTrail>;
-export type InsertDocumentAuditTrail = InferInsertModel<typeof documentAuditTrail>;
+export type InsertDocumentAuditTrail = InferInsertModel<
+  typeof documentAuditTrail
+>;
 
 export type DocumentShare = InferSelectModel<typeof documentShares>;
 export type InsertDocumentShare = InferInsertModel<typeof documentShares>;
 
 export type InnovationBounty = InferSelectModel<typeof innovationBounties>;
-export type InsertInnovationBounty = InferInsertModel<typeof innovationBounties>;
+export type InsertInnovationBounty = InferInsertModel<
+  typeof innovationBounties
+>;
 
 export type BountyProposal = InferSelectModel<typeof bountyProposals>;
 export type InsertBountyProposal = InferInsertModel<typeof bountyProposals>;
@@ -74,7 +80,9 @@ export type Subscription = InferSelectModel<typeof subscriptions>;
 export type InsertSubscription = InferInsertModel<typeof subscriptions>;
 
 export type PaymentHistoryRecord = InferSelectModel<typeof paymentHistory>;
-export type InsertPaymentHistoryRecord = InferInsertModel<typeof paymentHistory>;
+export type InsertPaymentHistoryRecord = InferInsertModel<
+  typeof paymentHistory
+>;
 
 // RBAC types
 export type Role = InferSelectModel<typeof roles>;

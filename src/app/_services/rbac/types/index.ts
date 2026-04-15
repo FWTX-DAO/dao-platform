@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import { ROLE_NAMES } from '@shared/constants';
-import type { Role, Permission } from '@core/database/schema';
+import { z } from "zod";
+import { ROLE_NAMES } from "@shared/constants";
+import type { Role, Permission } from "@core/database/schema";
 
 // Schemas
 export const AssignRoleSchema = z.object({

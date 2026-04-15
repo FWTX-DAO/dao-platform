@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
+import Image from "next/image";
 
 const sizes = {
-  sm: 'w-40 h-52',
-  md: 'w-56 h-72',
-  lg: 'w-72 h-96',
+  sm: "w-40 h-52",
+  md: "w-56 h-72",
+  lg: "w-72 h-96",
 } as const;
 
 interface PassportCoverProps {
@@ -13,14 +13,18 @@ interface PassportCoverProps {
   className?: string;
 }
 
-export function PassportCover({ size = 'md', className = '' }: PassportCoverProps) {
+export function PassportCover({
+  size = "md",
+  className = "",
+}: PassportCoverProps) {
   return (
     <div
       className={`relative flex flex-col items-center justify-center rounded-md overflow-hidden ${sizes[size]} ${className}`}
       style={{
         background: `
           linear-gradient(145deg, #1a2744 0%, #0f1b33 50%, #1a2744 100%)`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.4)',
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.4)",
       }}
     >
       {/* Leather-like texture noise overlay */}
@@ -28,7 +32,7 @@ export function PassportCover({ size = 'md', className = '' }: PassportCoverProp
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundSize: '150px',
+          backgroundSize: "150px",
         }}
       />
 

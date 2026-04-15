@@ -1,8 +1,8 @@
-import { db } from '@core/database';
-import { memberActivities, members, users } from '@core/database/schema';
-import { eq, and, desc, sql, gte, lte } from 'drizzle-orm';
-import { generateId } from '@shared/utils';
-import type { ActivityFilters } from '../types';
+import { db } from "@core/database";
+import { memberActivities, members, users } from "@core/database/schema";
+import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
+import { generateId } from "@shared/utils";
+import type { ActivityFilters } from "../types";
 
 export class ActivitiesRepository {
   async create(data: {
@@ -37,10 +37,14 @@ export class ActivitiesRepository {
       conditions.push(eq(memberActivities.activityType, filters.activityType));
     }
     if (filters?.startDate) {
-      conditions.push(gte(memberActivities.createdAt, new Date(filters.startDate)));
+      conditions.push(
+        gte(memberActivities.createdAt, new Date(filters.startDate)),
+      );
     }
     if (filters?.endDate) {
-      conditions.push(lte(memberActivities.createdAt, new Date(filters.endDate)));
+      conditions.push(
+        lte(memberActivities.createdAt, new Date(filters.endDate)),
+      );
     }
 
     return db

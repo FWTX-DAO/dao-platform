@@ -1,9 +1,9 @@
-import { db } from '@core/database';
-import { members } from '@core/database/schema';
-import { eq, sql } from 'drizzle-orm';
-import { ACTIVITY_POINTS, type ACTIVITY_TYPES } from '@shared/constants';
-import { ActivitiesRepository } from './activities.repository';
-import type { ActivityFilters } from '../types';
+import { db } from "@core/database";
+import { members } from "@core/database/schema";
+import { eq, sql } from "drizzle-orm";
+import { ACTIVITY_POINTS, type ACTIVITY_TYPES } from "@shared/constants";
+import { ActivitiesRepository } from "./activities.repository";
+import type { ActivityFilters } from "../types";
 
 type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
@@ -72,4 +72,6 @@ export class ActivitiesService {
   }
 }
 
-export const activitiesService = new ActivitiesService(new ActivitiesRepository());
+export const activitiesService = new ActivitiesService(
+  new ActivitiesRepository(),
+);

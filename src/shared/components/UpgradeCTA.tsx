@@ -1,20 +1,25 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Lock } from 'lucide-react';
+import Link from "next/link";
+import { Lock } from "lucide-react";
 
 interface UpgradeCTAProps {
   allowed: boolean;
   children: React.ReactNode;
   /** Describes what action is gated, e.g. "create projects" */
   feature: string;
-  mode?: 'inline' | 'banner';
+  mode?: "inline" | "banner";
 }
 
-export function UpgradeCTA({ allowed, children, feature, mode = 'inline' }: UpgradeCTAProps) {
+export function UpgradeCTA({
+  allowed,
+  children,
+  feature,
+  mode = "inline",
+}: UpgradeCTAProps) {
   if (allowed) return <>{children}</>;
 
-  if (mode === 'banner') {
+  if (mode === "banner") {
     return (
       <div className="rounded-lg border border-dao-gold/20 bg-dao-gold/5 p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

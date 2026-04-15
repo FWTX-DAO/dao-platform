@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import ActivityFeed from '@components/ActivityFeed';
-import { PageHeader } from '@components/ui/page-header';
+import ActivityFeed from "@components/ActivityFeed";
+import { PageHeader } from "@components/ui/page-header";
 
 export function ActivityPageClient() {
   return (
@@ -12,11 +12,15 @@ export function ActivityPageClient() {
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <section aria-label="Platform activity">
-          <h2 className="font-display text-lg text-gray-900 mb-4">Platform Activity</h2>
+          <h2 className="font-display text-lg text-gray-900 mb-4">
+            Platform Activity
+          </h2>
           <ActivityFeed variant="platform" limit={20} />
         </section>
         <section aria-label="Your activity">
-          <h2 className="font-display text-lg text-gray-900 mb-4">Your Activity</h2>
+          <h2 className="font-display text-lg text-gray-900 mb-4">
+            Your Activity
+          </h2>
           <ActivityFeed variant="personal" limit={20} />
         </section>
       </div>

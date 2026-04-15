@@ -1,7 +1,9 @@
 /**
  * Format a date string for display
  */
-export const formatDate = (dateInput: string | Date | null | undefined): string => {
+export const formatDate = (
+  dateInput: string | Date | null | undefined,
+): string => {
   if (!dateInput) return "Unknown date";
   try {
     const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
@@ -19,7 +21,9 @@ export const formatDate = (dateInput: string | Date | null | undefined): string 
 /**
  * Format a date string as short (month + year only)
  */
-export const formatDateShort = (dateInput: string | Date | null | undefined): string => {
+export const formatDateShort = (
+  dateInput: string | Date | null | undefined,
+): string => {
   if (!dateInput) return "Unknown date";
   try {
     const date = dateInput instanceof Date ? dateInput : new Date(dateInput);

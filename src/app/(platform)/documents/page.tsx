@@ -109,9 +109,7 @@ export default function DocumentsPage() {
 
       {/* Document List */}
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">
-          Loading{"…"}
-        </div>
+        <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
       ) : docs.length === 0 ? (
         <div className="py-8 text-center text-gray-500">
           No documents found.

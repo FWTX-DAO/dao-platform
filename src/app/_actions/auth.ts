@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { getAuthUser } from '@/app/_lib/auth';
+import { getAuthUser } from "@/app/_lib/auth";
 
 export async function verifySession() {
   const auth = await getAuthUser();

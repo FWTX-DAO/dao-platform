@@ -12,9 +12,7 @@ export default function MeetingNoteDetailPage() {
   const deleteMutation = useDeleteMeetingNote();
 
   if (isLoading)
-    return (
-      <div className="py-8 text-center text-gray-500">Loading{"…"}</div>
-    );
+    return <div className="py-8 text-center text-gray-500">Loading{"…"}</div>;
   if (!note)
     return (
       <div className="py-8 text-center text-gray-500">

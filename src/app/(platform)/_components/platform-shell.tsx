@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { type ReactNode } from 'react';
-import Navbar from '@components/navbar';
-import Sidebar from '@components/Sidebar';
-import { useSidebar } from '@shared/contexts/SidebarContext';
+import { type ReactNode } from "react";
+import Navbar from "@components/navbar";
+import Sidebar from "@components/Sidebar";
+import { useSidebar } from "@shared/contexts/SidebarContext";
 
 export function PlatformShell({ children }: { children: ReactNode }) {
   const { isOpen } = useSidebar();
@@ -21,7 +21,7 @@ export function PlatformShell({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         className={`pt-20 sm:pt-22 lg:pt-24 pb-8 transition-[margin] duration-300 ease-in-out ${
-          isOpen ? 'md:ml-64' : 'md:ml-0'
+          isOpen ? "md:ml-64" : "md:ml-0"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>

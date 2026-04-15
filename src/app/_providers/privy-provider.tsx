@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, type ReactNode } from 'react';
-import { PrivyProvider, usePrivy } from '@privy-io/react-auth';
-import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { createQueryClient } from '@utils/query-client';
-import { SidebarProvider } from '@shared/contexts/SidebarContext';
+import { useState, useEffect, useRef, type ReactNode } from "react";
+import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
+import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { createQueryClient } from "@utils/query-client";
+import { SidebarProvider } from "@shared/contexts/SidebarContext";
 
 const ReactQueryDevtools = dynamic(
-  () => import('@tanstack/react-query-devtools').then((mod) => mod.ReactQueryDevtools),
-  { ssr: false }
+  () =>
+    import("@tanstack/react-query-devtools").then(
+      (mod) => mod.ReactQueryDevtools,
+    ),
+  { ssr: false },
 );
 
 /**
@@ -32,7 +35,7 @@ function AuthCleanup() {
       // Transitioned from authenticated → unauthenticated
       wasAuthenticated.current = false;
       queryClient.clear();
-      router.replace('/');
+      router.replace("/");
     }
   }, [ready, authenticated, queryClient, router]);
 
@@ -45,18 +48,20 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <PrivyProvider
-        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
+        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
         config={{
           embeddedWallets: {
-            ethereum: { createOnLogin: 'all-users' },
-            solana: { createOnLogin: 'all-users' },
+            ethereum: { createOnLogin: "all-users" },
+            solana: { createOnLogin: "all-users" },
           },
         }}
       >
         <AuthCleanup />
         <SidebarProvider>
           {children}
-          {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+          {process.env.NODE_ENV === "development" && (
+            <ReactQueryDevtools initialIsOpen={false} />
+          )}
         </SidebarProvider>
       </PrivyProvider>
     </QueryClientProvider>

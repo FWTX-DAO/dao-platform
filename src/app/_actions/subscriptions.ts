@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import { requireAuth } from '@/app/_lib/auth';
-import { membersService } from '@services/members';
-import { subscriptionsService } from '@services/subscriptions';
+import { requireAuth } from "@/app/_lib/auth";
+import { membersService } from "@services/members";
+import { subscriptionsService } from "@services/subscriptions";
 
 export async function getSubscriptionTiers() {
   return subscriptionsService.getActiveTiers();

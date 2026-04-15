@@ -1,7 +1,7 @@
-import { db } from '@core/database';
-import { passportStamps, members } from '@core/database/schema';
-import { eq, desc, inArray } from 'drizzle-orm';
-import { generateId } from '@shared/utils';
+import { db } from "@core/database";
+import { passportStamps, members } from "@core/database/schema";
+import { eq, desc, inArray } from "drizzle-orm";
+import { generateId } from "@shared/utils";
 
 export class StampsRepository {
   async create(data: {

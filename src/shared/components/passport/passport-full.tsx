@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { PassportCover } from './passport-cover';
-import { PassportInside } from './passport-inside';
-import type { PassportData } from './types';
+import { useState, useCallback } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { PassportCover } from "./passport-cover";
+import { PassportInside } from "./passport-inside";
+import type { PassportData } from "./types";
 
 interface PassportFullProps {
   data: PassportData;
@@ -19,12 +19,12 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         toggle();
       }
     },
-    [toggle]
+    [toggle],
   );
 
   return (
@@ -33,22 +33,25 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
       <div className="hidden sm:block">
         <div
           className="relative cursor-pointer"
-          style={{ perspective: '1200px' }}
+          style={{ perspective: "1200px" }}
           onClick={toggle}
           onKeyDown={handleKeyDown}
           role="button"
           tabIndex={0}
           aria-label="Toggle passport view"
         >
-          <div className="relative" style={{ transformStyle: 'preserve-3d' }}>
+          <div className="relative" style={{ transformStyle: "preserve-3d" }}>
             {/* Cover (front) */}
             <motion.div
               animate={{ rotateY: isOpen ? -180 : 0 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: [0.4, 0, 0.2, 1] }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.8,
+                ease: [0.4, 0, 0.2, 1],
+              }}
               style={{
-                transformStyle: 'preserve-3d',
-                backfaceVisibility: 'hidden',
-                transformOrigin: 'left center',
+                transformStyle: "preserve-3d",
+                backfaceVisibility: "hidden",
+                transformOrigin: "left center",
               }}
               className="relative z-10"
             >
@@ -58,7 +61,10 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
             {/* Inside (back) — positioned behind cover */}
             <motion.div
               animate={{ opacity: isOpen ? 1 : 0 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.3, delay: isOpen ? (shouldReduceMotion ? 0 : 0.4) : 0 }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.3,
+                delay: isOpen ? (shouldReduceMotion ? 0 : 0.4) : 0,
+              }}
               className="absolute top-0 left-0"
             >
               <PassportInside data={data} className="w-[480px]" />
@@ -66,7 +72,7 @@ export function PassportFull({ data, defaultOpen = false }: PassportFullProps) {
           </div>
 
           <p className="mt-4 text-center text-xs text-dao-cool/50">
-            {isOpen ? 'Click to close' : 'Click to open passport'}
+            {isOpen ? "Click to close" : "Click to open passport"}
           </p>
         </div>
       </div>

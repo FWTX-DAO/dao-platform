@@ -1,5 +1,5 @@
-import { db } from './index';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { db } from "./index";
+import { eq, and, desc, sql } from "drizzle-orm";
 import {
   users,
   members,
@@ -16,20 +16,36 @@ import {
   type NewProject,
   type NewMeetingNote,
   type NewDocument,
-  type NewDocumentAuditTrail
-} from './schema';
-import { generateId } from '../../shared/utils/id-generator';
+  type NewDocumentAuditTrail,
+} from "./schema";
+import { generateId } from "../../shared/utils/id-generator";
 
-async function trackActivity(userId: string, activityType: string, resourceType: string, resourceId: string) {
-  const { activitiesService } = await import('../../app/_services/activities/services/activities.service');
-  await activitiesService.trackActivity(userId, activityType as any, resourceType, resourceId);
+async function trackActivity(
+  userId: string,
+  activityType: string,
+  resourceType: string,
+  resourceId: string,
+) {
+  const { activitiesService } =
+    await import("../../app/_services/activities/services/activities.service");
+  await activitiesService.trackActivity(
+    userId,
+    activityType as any,
+    resourceType,
+    resourceId,
+  );
 }
 
 // User operations
 export const userOperations = {
   async upsertFromPrivy(privyDid: string, email?: string) {
     const userId = generateId();
-    const existingUser = await db.select().from(users).where(eq(users.privyDid, privyDid)).limit(1).then(r => r[0]);
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.privyDid, privyDid))
+      .limit(1)
+      .then((r) => r[0]);
 
     if (existingUser) {
       return existingUser;
@@ -38,7 +54,7 @@ export const userOperations = {
     const newUser: NewUser = {
       id: userId,
       privyDid,
-      username: email?.split('@')[0] || `user_${userId.slice(0, 8)}`,
+      username: email?.split("@")[0] || `user_${userId.slice(0, 8)}`,
     };
 
     await db.insert(users).values(newUser);
@@ -47,36 +63,53 @@ export const userOperations = {
     const newMember: NewMember = {
       id: generateId(),
       userId,
-      membershipType: 'basic',
+      membershipType: "basic",
       contributionPoints: 0,
       votingPower: 1,
-      status: 'active',
+      status: "active",
     };
 
     await db.insert(members).values(newMember);
 
-    return db.select().from(users).where(eq(users.id, userId)).limit(1).then(r => r[0]);
+    return db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .then((r) => r[0]);
   },
 
   async getByPrivyDid(privyDid: string) {
-    return db.select().from(users).where(eq(users.privyDid, privyDid)).limit(1).then(r => r[0]);
+    return db
+      .select()
+      .from(users)
+      .where(eq(users.privyDid, privyDid))
+      .limit(1)
+      .then((r) => r[0]);
   },
 
   async updateProfile(userId: string, updates: Partial<NewUser>) {
-    await db.update(users)
+    await db
+      .update(users)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(users.id, userId));
-  }
+  },
 };
 
 // Member operations
 export const memberOperations = {
   async getMembershipStatus(userId: string) {
-    return db.select().from(members).where(eq(members.userId, userId)).limit(1).then(r => r[0]);
+    return db
+      .select()
+      .from(members)
+      .where(eq(members.userId, userId))
+      .limit(1)
+      .then((r) => r[0]);
   },
 
   async updateMembership(userId: string, updates: Partial<NewMember>) {
-    await db.update(members)
+    await db
+      .update(members)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(members.userId, userId));
   },
@@ -84,19 +117,20 @@ export const memberOperations = {
   async addContributionPoints(userId: string, points: number) {
     const member = await this.getMembershipStatus(userId);
     if (member) {
-      await db.update(members)
+      await db
+        .update(members)
         .set({
           contributionPoints: member.contributionPoints + points,
           updatedAt: new Date(),
         })
         .where(eq(members.userId, userId));
     }
-  }
+  },
 };
 
 // Forum operations
 export const forumOperations = {
-  async createPost(post: Omit<NewForumPost, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createPost(post: Omit<NewForumPost, "id" | "createdAt" | "updatedAt">) {
     const newPost: NewForumPost = {
       ...post,
       id: generateId(),
@@ -105,7 +139,7 @@ export const forumOperations = {
     await db.insert(forumPosts).values(newPost);
 
     // Track activity + award contribution points
-    await trackActivity(post.authorId, 'forum_post', 'forum_post', newPost.id);
+    await trackActivity(post.authorId, "forum_post", "forum_post", newPost.id);
 
     return newPost;
   },
@@ -136,28 +170,26 @@ export const forumOperations = {
     const existingVote = await db
       .select()
       .from(forumVotes)
-      .where(and(
-        eq(forumVotes.postId, postId),
-        eq(forumVotes.userId, userId)
-      ))
-      .limit(1).then(r => r[0]);
+      .where(and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)))
+      .limit(1)
+      .then((r) => r[0]);
 
     if (existingVote) {
       if (existingVote.voteType === voteType) {
         // Remove vote if same type
-        await db.delete(forumVotes)
-          .where(and(
-            eq(forumVotes.postId, postId),
-            eq(forumVotes.userId, userId)
-          ));
+        await db
+          .delete(forumVotes)
+          .where(
+            and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)),
+          );
       } else {
         // Update vote type
-        await db.update(forumVotes)
+        await db
+          .update(forumVotes)
           .set({ voteType })
-          .where(and(
-            eq(forumVotes.postId, postId),
-            eq(forumVotes.userId, userId)
-          ));
+          .where(
+            and(eq(forumVotes.postId, postId), eq(forumVotes.userId, userId)),
+          );
       }
     } else {
       // Create new vote
@@ -167,12 +199,14 @@ export const forumOperations = {
         voteType,
       });
     }
-  }
+  },
 };
 
 // Project operations
 export const projectOperations = {
-  async createProject(project: Omit<NewProject, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createProject(
+    project: Omit<NewProject, "id" | "createdAt" | "updatedAt">,
+  ) {
     const newProject: NewProject = {
       ...project,
       id: generateId(),
@@ -184,11 +218,16 @@ export const projectOperations = {
     await db.insert(projectCollaborators).values({
       projectId: newProject.id,
       userId: project.creatorId,
-      role: 'owner',
+      role: "owner",
     });
 
     // Track activity + award contribution points
-    await trackActivity(project.creatorId, 'project_created', 'project', newProject.id);
+    await trackActivity(
+      project.creatorId,
+      "project_created",
+      "project",
+      newProject.id,
+    );
 
     return newProject;
   },
@@ -213,7 +252,7 @@ export const projectOperations = {
     return projectList;
   },
 
-  async joinProject(projectId: string, userId: string, role = 'contributor') {
+  async joinProject(projectId: string, userId: string, role = "contributor") {
     await db.insert(projectCollaborators).values({
       projectId,
       userId,
@@ -221,13 +260,15 @@ export const projectOperations = {
     });
 
     // Track activity + award contribution points
-    await trackActivity(userId, 'project_joined', 'project', projectId);
-  }
+    await trackActivity(userId, "project_joined", "project", projectId);
+  },
 };
 
 // Meeting notes operations
 export const meetingNotesOperations = {
-  async createMeetingNote(note: Omit<NewMeetingNote, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createMeetingNote(
+    note: Omit<NewMeetingNote, "id" | "createdAt" | "updatedAt">,
+  ) {
     const newNote: NewMeetingNote = {
       ...note,
       id: generateId(),
@@ -236,7 +277,12 @@ export const meetingNotesOperations = {
     await db.insert(meetingNotes).values(newNote);
 
     // Track activity + award contribution points
-    await trackActivity(note.authorId, 'meeting_created', 'meeting_note', newNote.id);
+    await trackActivity(
+      note.authorId,
+      "meeting_created",
+      "meeting_note",
+      newNote.id,
+    );
 
     return newNote;
   },
@@ -262,18 +308,22 @@ export const meetingNotesOperations = {
       })
       .from(meetingNotes)
       .leftJoin(users, eq(meetingNotes.authorId, users.id))
-      .where(sql`
-        ${meetingNotes.title} ILIKE ${'%' + searchTerm + '%'} OR
-        ${meetingNotes.notes} ILIKE ${'%' + searchTerm + '%'} OR
-        ${meetingNotes.tags} ILIKE ${'%' + searchTerm + '%'}
-      `)
+      .where(
+        sql`
+        ${meetingNotes.title} ILIKE ${"%" + searchTerm + "%"} OR
+        ${meetingNotes.notes} ILIKE ${"%" + searchTerm + "%"} OR
+        ${meetingNotes.tags} ILIKE ${"%" + searchTerm + "%"}
+      `,
+      )
       .orderBy(desc(meetingNotes.date));
-  }
+  },
 };
 
 // Document operations
 export const documentOperations = {
-  async createDocument(document: Omit<NewDocument, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createDocument(
+    document: Omit<NewDocument, "id" | "createdAt" | "updatedAt">,
+  ) {
     const newDocument: NewDocument = {
       ...document,
       id: generateId(),
@@ -282,14 +332,24 @@ export const documentOperations = {
     await db.insert(documents).values(newDocument);
 
     // Create audit trail entry for upload
-    await this.createAuditEntry(newDocument.id, document.uploaderId, 'uploaded', {
-      pinataId: document.pinataId,
-      cid: document.cid,
-      size: document.fileSize,
-    });
+    await this.createAuditEntry(
+      newDocument.id,
+      document.uploaderId,
+      "uploaded",
+      {
+        pinataId: document.pinataId,
+        cid: document.cid,
+        size: document.fileSize,
+      },
+    );
 
     // Track activity + award contribution points
-    await trackActivity(document.uploaderId, 'document_uploaded', 'document', newDocument.id);
+    await trackActivity(
+      document.uploaderId,
+      "document_uploaded",
+      "document",
+      newDocument.id,
+    );
 
     return newDocument;
   },
@@ -302,7 +362,7 @@ export const documentOperations = {
       })
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
-      .where(eq(documents.status, 'active'))
+      .where(eq(documents.status, "active"))
       .orderBy(desc(documents.createdAt))
       .limit(limit)
       .offset(offset);
@@ -316,10 +376,9 @@ export const documentOperations = {
       })
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
-      .where(and(
-        eq(documents.uploaderId, userId),
-        eq(documents.status, 'active')
-      ))
+      .where(
+        and(eq(documents.uploaderId, userId), eq(documents.status, "active")),
+      )
       .orderBy(desc(documents.createdAt))
       .limit(limit)
       .offset(offset);
@@ -333,10 +392,9 @@ export const documentOperations = {
       })
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
-      .where(and(
-        eq(documents.category, category),
-        eq(documents.status, 'active')
-      ))
+      .where(
+        and(eq(documents.category, category), eq(documents.status, "active")),
+      )
       .orderBy(desc(documents.createdAt))
       .limit(limit)
       .offset(offset);
@@ -351,11 +409,13 @@ export const documentOperations = {
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
       .where(eq(documents.id, id))
-      .limit(1).then(r => r[0]);
+      .limit(1)
+      .then((r) => r[0]);
 
     if (result) {
       // Update access count and timestamp
-      await db.update(documents)
+      await db
+        .update(documents)
         .set({
           accessCount: sql`${documents.accessCount} + 1`,
           lastAccessedAt: new Date(),
@@ -366,25 +426,31 @@ export const documentOperations = {
     return result;
   },
 
-  async updateDocument(id: string, updates: Partial<NewDocument>, userId: string) {
-    await db.update(documents)
+  async updateDocument(
+    id: string,
+    updates: Partial<NewDocument>,
+    userId: string,
+  ) {
+    await db
+      .update(documents)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(documents.id, id));
 
     // Create audit trail entry
-    await this.createAuditEntry(id, userId, 'updated', updates);
+    await this.createAuditEntry(id, userId, "updated", updates);
   },
 
   async deleteDocument(id: string, userId: string) {
-    await db.update(documents)
+    await db
+      .update(documents)
       .set({
-        status: 'deleted',
+        status: "deleted",
         updatedAt: new Date(),
       })
       .where(eq(documents.id, id));
 
     // Create audit trail entry
-    await this.createAuditEntry(id, userId, 'deleted');
+    await this.createAuditEntry(id, userId, "deleted");
   },
 
   async searchDocuments(searchTerm: string) {
@@ -395,16 +461,23 @@ export const documentOperations = {
       })
       .from(documents)
       .leftJoin(users, eq(documents.uploaderId, users.id))
-      .where(sql`
-        (${documents.name} ILIKE ${'%' + searchTerm + '%'} OR
-         ${documents.description} ILIKE ${'%' + searchTerm + '%'} OR
-         ${documents.tags} ILIKE ${'%' + searchTerm + '%'}) AND
+      .where(
+        sql`
+        (${documents.name} ILIKE ${"%" + searchTerm + "%"} OR
+         ${documents.description} ILIKE ${"%" + searchTerm + "%"} OR
+         ${documents.tags} ILIKE ${"%" + searchTerm + "%"}) AND
          ${documents.status} = 'active'
-      `)
+      `,
+      )
       .orderBy(desc(documents.updatedAt));
   },
 
-  async createAuditEntry(documentId: string, userId: string, action: string, metadata?: any) {
+  async createAuditEntry(
+    documentId: string,
+    userId: string,
+    action: string,
+    metadata?: any,
+  ) {
     const auditEntry: NewDocumentAuditTrail = {
       id: generateId(),
       documentId,
@@ -429,7 +502,7 @@ export const documentOperations = {
       .where(eq(documentAuditTrail.documentId, documentId))
       .orderBy(desc(documentAuditTrail.timestamp))
       .limit(limit);
-  }
+  },
 };
 
 // Export all operations

@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import type { Subscription, MembershipTier } from '@core/database/schema';
+import { z } from "zod";
+import type { Subscription, MembershipTier } from "@core/database/schema";
 
 export const CreateSubscriptionSchema = z.object({
   tierId: z.string().min(1),

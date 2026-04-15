@@ -2,12 +2,8 @@ export class AppError extends Error {
   public statusCode: number;
   public override message: string;
   public isOperational: boolean;
-  
-  constructor(
-    statusCode: number,
-    message: string,
-    isOperational = true
-  ) {
+
+  constructor(statusCode: number, message: string, isOperational = true) {
     super(message);
     this.statusCode = statusCode;
     this.message = message;
@@ -17,7 +13,10 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, public details?: unknown) {
+  constructor(
+    message: string,
+    public details?: unknown,
+  ) {
     super(400, message);
   }
 }
@@ -29,13 +28,13 @@ export class NotFoundError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Unauthorized') {
+  constructor(message = "Unauthorized") {
     super(401, message);
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Forbidden') {
+  constructor(message = "Forbidden") {
     super(403, message);
   }
 }

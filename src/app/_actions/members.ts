@@ -1,14 +1,31 @@
-'use server';
+"use server";
 
-import { requireAuth } from '@/app/_lib/auth';
-import { type ActionResult, actionSuccess, actionError } from '@/app/_lib/action-utils';
-import { membersService } from '@services/members';
-import { rbacService } from '@services/rbac';
-import { getOrCreateUser, syncWalletAddress, saveVerifiedWallet, removeWalletAddress } from '@core/database/queries/users';
-import { db, members, users, membershipTiers, memberRoles, roles } from '@core/database';
-import { eq, and, sql, desc, inArray } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { verifyMessage } from 'viem';
+import { requireAuth, requireAdmin } from "@/app/_lib/auth";
+import {
+  type ActionResult,
+  actionSuccess,
+  actionError,
+} from "@/app/_lib/action-utils";
+import { membersService } from "@services/members";
+import { rbacService } from "@services/rbac";
+import {
+  getOrCreateUser,
+  syncWalletAddress,
+  saveVerifiedWallet,
+  removeWalletAddress,
+} from "@core/database/queries/users";
+import {
+  db,
+  members,
+  users,
+  membershipTiers,
+  memberRoles,
+  roles,
+} from "@core/database";
+import { eq, and, sql, desc, inArray, isNull } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { verifyMessage } from "viem";
+import { PrivyClient } from "@privy-io/server-auth";
 
 export async function listMembers() {
   await requireAuth();
@@ -47,46 +64,57 @@ export async function listMembers() {
     .from(members)
     .innerJoin(users, eq(members.userId, users.id))
     .leftJoin(membershipTiers, eq(members.currentTierId, membershipTiers.id))
-    .where(eq(members.status, 'active'))
+    .where(eq(members.status, "active"))
     .orderBy(desc(members.contributionPoints));
 
   // Batch-fetch roles for all members in one query
   const memberIds = rows.map((r) => r.id);
-  const allRoles = memberIds.length > 0
-    ? await db
-        .select({
-          memberId: memberRoles.memberId,
-          roleName: roles.name,
-          roleDisplayName: roles.displayName,
-          roleLevel: roles.level,
-        })
-        .from(memberRoles)
-        .innerJoin(roles, eq(memberRoles.roleId, roles.id))
-        .where(and(
-          eq(memberRoles.isActive, true),
-          inArray(memberRoles.memberId, memberIds)
-        ))
-    : [];
+  const allRoles =
+    memberIds.length > 0
+      ? await db
+          .select({
+            memberId: memberRoles.memberId,
+            roleName: roles.name,
+            roleDisplayName: roles.displayName,
+            roleLevel: roles.level,
+          })
+          .from(memberRoles)
+          .innerJoin(roles, eq(memberRoles.roleId, roles.id))
+          .where(
+            and(
+              eq(memberRoles.isActive, true),
+              inArray(memberRoles.memberId, memberIds),
+            ),
+          )
+      : [];
 
   // Group roles by member
-  const rolesByMember = new Map<string, { name: string; displayName: string | null; level: number }[]>();
+  const rolesByMember = new Map<
+    string,
+    { name: string; displayName: string | null; level: number }[]
+  >();
   for (const r of allRoles) {
     const list = rolesByMember.get(r.memberId) || [];
-    list.push({ name: r.roleName, displayName: r.roleDisplayName, level: r.roleLevel });
+    list.push({
+      name: r.roleName,
+      displayName: r.roleDisplayName,
+      level: r.roleLevel,
+    });
     rolesByMember.set(r.memberId, list);
   }
 
   return rows.map((row) => {
     const memberRoleList = rolesByMember.get(row.id) || [];
-    const highestRole = memberRoleList.sort((a, b) => b.level - a.level)[0] || null;
+    const highestRole =
+      memberRoleList.sort((a, b) => b.level - a.level)[0] || null;
 
-    const isPaid = row.tierName === 'monthly' || row.tierName === 'annual';
+    const isPaid = row.tierName === "monthly" || row.tierName === "annual";
 
     return {
       ...row,
-      standingLabel: isPaid ? 'Member' : 'Observer',
-      standingTier: row.tierName || 'free',
-      highestRole: highestRole?.name || 'guest',
+      standingLabel: isPaid ? "Member" : "Observer",
+      standingTier: row.tierName || "free",
+      highestRole: highestRole?.name || "guest",
       roleNames: memberRoleList.map((r) => r.displayName || r.name),
     };
   });
@@ -101,7 +129,7 @@ export async function getMemberProfile() {
 export async function updateMemberProfile(data: Record<string, unknown>) {
   const { user } = await requireAuth();
   const result = await membersService.updateMemberProfile(user.id, data as any);
-  revalidatePath('/passport');
+  revalidatePath("/passport");
   return result;
 }
 
@@ -111,22 +139,34 @@ export async function getMemberStats() {
   // Ensure member exists
   await membersService.getOrCreateMember(user.id);
 
-  const [memberWithTier, forumPosts, projects, meetingNotes, votesReceived] = await Promise.all([
-    db
-      .select({
-        member: members,
-        tierDisplayName: membershipTiers.displayName,
-        tierName: membershipTiers.name,
-      })
-      .from(members)
-      .leftJoin(membershipTiers, eq(members.currentTierId, membershipTiers.id))
-      .where(eq(members.userId, user.id))
-      .limit(1),
-    db.execute(sql`SELECT COUNT(*) as count FROM forum_posts WHERE author_id = ${user.id} AND parent_id IS NULL`),
-    db.execute(sql`SELECT COUNT(*) as count FROM projects WHERE creator_id = ${user.id}`),
-    db.execute(sql`SELECT COUNT(*) as count FROM meeting_notes WHERE author_id = ${user.id}`),
-    db.execute(sql`SELECT COUNT(*) as count FROM forum_votes fv INNER JOIN forum_posts fp ON fv.post_id = fp.id WHERE fp.author_id = ${user.id} AND fv.vote_type = 1`),
-  ]);
+  const [memberWithTier, forumPosts, projects, meetingNotes, votesReceived] =
+    await Promise.all([
+      db
+        .select({
+          member: members,
+          tierDisplayName: membershipTiers.displayName,
+          tierName: membershipTiers.name,
+        })
+        .from(members)
+        .leftJoin(
+          membershipTiers,
+          eq(members.currentTierId, membershipTiers.id),
+        )
+        .where(eq(members.userId, user.id))
+        .limit(1),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM forum_posts WHERE author_id = ${user.id} AND parent_id IS NULL`,
+      ),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM projects WHERE creator_id = ${user.id}`,
+      ),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM meeting_notes WHERE author_id = ${user.id}`,
+      ),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM forum_votes fv INNER JOIN forum_posts fp ON fv.post_id = fp.id WHERE fp.author_id = ${user.id} AND fv.vote_type = 1`,
+      ),
+    ]);
 
   const row = memberWithTier[0];
   const memberData = row?.member;
@@ -137,7 +177,11 @@ export async function getMemberStats() {
       createdAt: user.createdAt,
     },
     membership: {
-      type: row?.tierDisplayName ?? row?.tierName ?? memberData?.membershipType ?? 'Free',
+      type:
+        row?.tierDisplayName ??
+        row?.tierName ??
+        memberData?.membershipType ??
+        "Free",
       contributionPoints: memberData?.contributionPoints ?? 0,
       votingPower: memberData?.votingPower ?? 1,
     },
@@ -178,7 +222,7 @@ export async function completeOnboarding(data: {
       // Assign guest RBAC role for new free members (idempotent)
       const existingRoles = await rbacService.getMemberRoles(member.id);
       if (existingRoles.length === 0) {
-        await rbacService.assignRole(member.id, 'guest');
+        await rbacService.assignRole(member.id, "guest");
       }
       // Stripe customer creation is handled in the checkout route (single owner)
     }
@@ -186,12 +230,12 @@ export async function completeOnboarding(data: {
     // Sync wallet address from Privy to users table
     if (data.walletAddress) {
       await syncWalletAddress(user.id, data.walletAddress).catch((err) => {
-        console.error('[onboarding] Failed to sync wallet address:', err);
+        console.error("[onboarding] Failed to sync wallet address:", err);
       });
     }
 
     const result = await membersService.completeOnboarding(user.id, data);
-    revalidatePath('/dashboard');
+    revalidatePath("/dashboard");
     return actionSuccess(result);
   } catch (err) {
     return actionError(err);
@@ -212,7 +256,8 @@ export async function searchMembers(filters: {
 
 // ── Wallet verification ──
 
-const WALLET_VERIFY_PREFIX = 'FWTX DAO Wallet Verification\n\nI am verifying ownership of this wallet for my FWTX DAO account.\n\nWallet: ';
+const WALLET_VERIFY_PREFIX =
+  "FWTX DAO Wallet Verification\n\nI am verifying ownership of this wallet for my FWTX DAO account.\n\nWallet: ";
 
 export async function verifyWallet(data: {
   walletAddress: string;
@@ -224,13 +269,16 @@ export async function verifyWallet(data: {
 
     // Validate message format to prevent replay attacks
     if (!data.message.startsWith(WALLET_VERIFY_PREFIX)) {
-      return actionError('Invalid verification message format');
+      return actionError("Invalid verification message format");
     }
 
     // Extract address from message and ensure it matches
-    const messageAddress = data.message.slice(WALLET_VERIFY_PREFIX.length).trim().toLowerCase();
+    const messageAddress = data.message
+      .slice(WALLET_VERIFY_PREFIX.length)
+      .trim()
+      .toLowerCase();
     if (messageAddress !== data.walletAddress.toLowerCase()) {
-      return actionError('Wallet address mismatch');
+      return actionError("Wallet address mismatch");
     }
 
     // Verify the signature using viem
@@ -241,13 +289,15 @@ export async function verifyWallet(data: {
     });
 
     if (!valid) {
-      return actionError('Invalid signature — wallet ownership could not be verified');
+      return actionError(
+        "Invalid signature — wallet ownership could not be verified",
+      );
     }
 
     // Save verified wallet
     await saveVerifiedWallet(user.id, data.walletAddress);
-    revalidatePath('/settings');
-    revalidatePath('/passport');
+    revalidatePath("/settings");
+    revalidatePath("/passport");
 
     return actionSuccess({ walletAddress: data.walletAddress });
   } catch (err) {
@@ -259,8 +309,8 @@ export async function disconnectWallet(): Promise<ActionResult<null>> {
   try {
     const { user } = await requireAuth();
     await removeWalletAddress(user.id);
-    revalidatePath('/settings');
-    revalidatePath('/passport');
+    revalidatePath("/settings");
+    revalidatePath("/passport");
     return actionSuccess(null);
   } catch (err) {
     return actionError(err);
@@ -270,7 +320,10 @@ export async function disconnectWallet(): Promise<ActionResult<null>> {
 export async function getWalletStatus() {
   const { user } = await requireAuth();
   const result = await db
-    .select({ walletAddress: users.walletAddress, walletVerifiedAt: users.walletVerifiedAt })
+    .select({
+      walletAddress: users.walletAddress,
+      walletVerifiedAt: users.walletVerifiedAt,
+    })
     .from(users)
     .where(eq(users.id, user.id))
     .limit(1);
@@ -284,4 +337,54 @@ export async function getWalletStatus() {
 
 export async function getWalletVerifyMessage(walletAddress: string) {
   return `${WALLET_VERIFY_PREFIX}${walletAddress}`;
+}
+
+// ── Admin: backfill wallet addresses from Privy ──
+
+export async function backfillWallets(): Promise<
+  ActionResult<{ synced: number; failed: number; skipped: number }>
+> {
+  try {
+    const { isAdmin } = await requireAdmin();
+    if (!isAdmin) return actionError("Admin access required");
+
+    const privy = new PrivyClient(
+      process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+      process.env.PRIVY_APP_SECRET!,
+    );
+
+    // Get all users missing a wallet address
+    const usersWithoutWallet = await db
+      .select({ id: users.id, privyDid: users.privyDid })
+      .from(users)
+      .where(isNull(users.walletAddress));
+
+    let synced = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    for (const u of usersWithoutWallet) {
+      try {
+        const privyUser = await privy.getUser(u.privyDid);
+        const wallet = privyUser?.linkedAccounts?.find(
+          (a: any) => a.type === "wallet" && a.chainType === "ethereum",
+        ) as any;
+
+        if (wallet?.address) {
+          await syncWalletAddress(u.id, wallet.address);
+          synced++;
+        } else {
+          skipped++;
+        }
+      } catch (err) {
+        console.error(`[backfill] Failed for user ${u.id}:`, err);
+        failed++;
+      }
+    }
+
+    revalidatePath("/members");
+    return actionSuccess({ synced, failed, skipped });
+  } catch (err) {
+    return actionError(err);
+  }
 }
