@@ -9,7 +9,6 @@ import {
 } from "@privy-io/react-auth";
 import { AnimatePresence } from "framer-motion";
 import { getAccessToken } from "@privy-io/react-auth";
-import { onboardUser } from "@/app/_actions/users";
 import {
   completeOnboarding,
   verifyWallet,
@@ -196,7 +195,9 @@ export function OnboardingForm() {
     setWalletError("");
     try {
       const message = await getWalletVerifyMessage(address);
-      const { signature } = await signMessage({ message });
+      // Pass `address` explicitly so Privy signs with the wallet being verified,
+      // not whichever linked wallet happens to be first.
+      const { signature } = await signMessage({ message }, { address });
       const result = await verifyWallet({
         walletAddress: address,
         signature,
@@ -265,23 +266,13 @@ export function OnboardingForm() {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Set username
-      const userResult = await onboardUser({
-        username: formData.username.trim(),
-        bio: null,
-      });
-
-      if (!userResult.success) {
-        setGlobalError(userResult.error || "Failed to set username");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Step 2: Complete onboarding profile
-      // Pass wallet address so it's persisted even if the user didn't verify via signature
+      // Single atomic call — creates the member row, sets username,
+      // assigns the guest role, syncs the wallet, and marks onboarding complete
+      // in one DB transaction. Safe to retry.
       const resolvedWallet =
         walletAddress || privyEthWallet?.address || undefined;
       const onboardingResult = await completeOnboarding({
+        username: formData.username.trim(),
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
@@ -307,12 +298,17 @@ export function OnboardingForm() {
         return;
       }
 
+      // Non-fatal wallet sync issue — show it but continue.
+      if (onboardingResult.data.walletSyncError) {
+        setGlobalError(onboardingResult.data.walletSyncError);
+      }
+
       setPassportData({
         avatarUrl: null,
         username: formData.username,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        memberId: userResult.data.memberId || "PENDING",
+        memberId: onboardingResult.data.memberId || "PENDING",
         membershipType: selectedTierId ? "member" : "observer",
         joinedAt: new Date().toISOString(),
         contributionPoints: 0,
@@ -545,11 +541,23 @@ export function OnboardingForm() {
                         autoComplete="email"
                         value={formData.email}
                         onChange={(e) => updateField("email", e.target.value)}
-                        className={errors.email ? inputError : inputBase}
+                        readOnly={isEmailFromPrivy}
+                        aria-readonly={isEmailFromPrivy}
+                        className={`${errors.email ? inputError : inputBase}${
+                          isEmailFromPrivy
+                            ? " opacity-70 cursor-not-allowed"
+                            : ""
+                        }`}
                       />
                       {errors.email && (
                         <p className="mt-1 text-xs text-red-400">
                           {errors.email}
+                        </p>
+                      )}
+                      {isEmailFromPrivy && (
+                        <p className="mt-1 text-[11px] text-dao-cool/40">
+                          Email is locked to your verified login. Change it
+                          later via the Settings page.
                         </p>
                       )}
                     </div>

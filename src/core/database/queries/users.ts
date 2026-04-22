@@ -47,6 +47,18 @@ export function invalidateUserCache(privyDid: string): void {
 }
 
 /**
+ * Invalidate cache entries matching a given database userId.
+ * Use after writes that only carry the DB uuid (not the privyDid).
+ */
+export function invalidateUserCacheByUserId(userId: string): void {
+  for (const [key, entry] of userCache.entries()) {
+    if (entry.user.id === userId) {
+      userCache.delete(key);
+    }
+  }
+}
+
+/**
  * Get or create a user based on Privy DID
  * This ensures we always have a user record that syncs with Privy authentication
  * Uses in-memory caching to reduce database lookups
@@ -73,6 +85,9 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
 
   // Email-based dedup: if a member with this email already exists,
   // link the new Privy DID to the existing user instead of creating a duplicate.
+  //
+  // Trust boundary: `email` here comes from Privy's verified auth token claims,
+  // so we treat its ownership as proven. Callers must not pass unverified input.
   if (email) {
     const existingMember = await db
       .select({ userId: members.userId })
@@ -82,20 +97,32 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
 
     if (existingMember.length > 0) {
       const existingUserId = existingMember[0]!.userId;
-      // Update the existing user's privy_did to the new one
-      const updated = await db
-        .update(users)
-        .set({ privyDid, updatedAt: new Date() })
-        .where(eq(users.id, existingUserId))
-        .returning();
+      try {
+        const updated = await db
+          .update(users)
+          .set({ privyDid, updatedAt: new Date() })
+          .where(eq(users.id, existingUserId))
+          .returning();
 
-      if (updated.length > 0) {
-        const user = updated[0]!;
-        console.log(
-          `[auth] Email dedup: linked new Privy DID to existing user ${user.id} via email ${email}`,
-        );
-        setCachedUser(privyDid, user);
-        return user;
+        if (updated.length > 0) {
+          const user = updated[0]!;
+          console.log(
+            `[auth] Email dedup: linked new Privy DID to existing user ${user.id} via email ${email}`,
+          );
+          setCachedUser(privyDid, user);
+          return user;
+        }
+      } catch (err: any) {
+        // 23505 = unique violation on privy_did — the new DID already points
+        // at a different user row. Fall through and create a duplicate so
+        // auth doesn't break, but log loudly so we can merge manually.
+        if (err?.code === "23505") {
+          console.error(
+            `[auth] DUP_USER: cannot merge — privy_did ${privyDid} already exists separately from member email ${email} (existing user ${existingUserId}). Manual reconciliation required.`,
+          );
+        } else {
+          throw err;
+        }
       }
     }
   }
@@ -123,6 +150,8 @@ export async function getOrCreateUser(privyDid: string, email?: string) {
  * for intentional wallet changes.
  */
 export async function syncWalletAddress(userId: string, walletAddress: string) {
+  const normalized = walletAddress.toLowerCase();
+
   const existing = await db
     .select({ walletAddress: users.walletAddress })
     .from(users)
@@ -132,41 +161,63 @@ export async function syncWalletAddress(userId: string, walletAddress: string) {
   const storedAddress = existing[0]?.walletAddress;
 
   // Already current — nothing to do
-  if (storedAddress === walletAddress) return;
+  if (storedAddress === normalized) return;
 
-  // Don't overwrite an existing different wallet address
+  // Don't overwrite an existing different wallet address.
+  // Intentional wallet changes must go through saveVerifiedWallet
+  // (which requires a fresh ownership signature).
   if (storedAddress !== null) return;
 
-  invalidateUserCache("");
   await db
     .update(users)
-    .set({ walletAddress, updatedAt: new Date() })
+    .set({ walletAddress: normalized, updatedAt: new Date() })
     .where(eq(users.id, userId));
+  invalidateUserCacheByUserId(userId);
 }
 
 /**
  * Save a verified wallet address (after signature verification).
+ * Normalizes the address to lowercase and rejects claims on a wallet
+ * already verified by a different user.
  */
 export async function saveVerifiedWallet(
   userId: string,
   walletAddress: string,
 ) {
-  invalidateUserCache("");
+  const normalized = walletAddress.toLowerCase();
+
+  const existing = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.walletAddress, normalized))
+    .limit(1);
+
+  if (existing[0] && existing[0].id !== userId) {
+    throw new Error(
+      "This wallet is already verified on another account. Disconnect it there first.",
+    );
+  }
+
   await db
     .update(users)
-    .set({ walletAddress, walletVerifiedAt: new Date(), updatedAt: new Date() })
+    .set({
+      walletAddress: normalized,
+      walletVerifiedAt: new Date(),
+      updatedAt: new Date(),
+    })
     .where(eq(users.id, userId));
+  invalidateUserCacheByUserId(userId);
 }
 
 /**
  * Remove wallet address from a user.
  */
 export async function removeWalletAddress(userId: string) {
-  invalidateUserCache("");
   await db
     .update(users)
     .set({ walletAddress: null, walletVerifiedAt: null, updatedAt: new Date() })
     .where(eq(users.id, userId));
+  invalidateUserCacheByUserId(userId);
 }
 
 /**

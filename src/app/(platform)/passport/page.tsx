@@ -4,13 +4,11 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useProfile } from "@shared/hooks/useProfile";
-import { usePrivy } from "@privy-io/react-auth";
 import { PassportFull } from "@components/passport";
 import type { PassportData, PassportStamp } from "@components/passport";
 import { useMyStamps } from "@shared/hooks/usePassportStamps";
 import { queryKeys } from "@shared/constants/query-keys";
 import { Calendar, Award } from "lucide-react";
-import { getPreferredEthWallet } from "@utils/wallet";
 import ActivityFeed from "@components/ActivityFeed";
 import { StatCard } from "@components/ui/stat-card";
 import { ErrorState } from "@components/ui/error-state";
@@ -22,7 +20,6 @@ export default function PassportPage() {
   const queryClient = useQueryClient();
   const { data: profile, isLoading, isError, refetch } = useProfile();
   const { data: stamps } = useMyStamps();
-  const { user } = usePrivy();
 
   const success = searchParams.get("success") === "true";
 
@@ -81,7 +78,11 @@ export default function PassportPage() {
     );
   }
 
-  const walletAccount = getPreferredEthWallet(user?.linkedAccounts);
+  // Only show a verified wallet on the passport. An unverified Privy-linked
+  // wallet doesn't prove ownership — users must sign from Settings to be displayed here.
+  const verifiedWallet = profile.walletVerifiedAt
+    ? profile.walletAddress
+    : null;
 
   const passportStamps: PassportStamp[] = (stamps || []).map((s: any) => ({
     id: s.id,
@@ -106,7 +107,7 @@ export default function PassportPage() {
     civicInterests: profile.civicInterests,
     city: profile.city,
     state: profile.state,
-    walletAddress: walletAccount?.address || null,
+    walletAddress: verifiedWallet,
     tierDisplayName: profile.tierDisplayName,
     roleNames: profile.roleNames,
     stamps: passportStamps,

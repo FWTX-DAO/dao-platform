@@ -27,7 +27,9 @@ export async function getAuthUser() {
     privy
       .getUser(claims.userId)
       .then((privyUser) => {
-        const wallet = getPreferredEthWalletFromAccounts(privyUser?.linkedAccounts);
+        const wallet = getPreferredEthWalletFromAccounts(
+          privyUser?.linkedAccounts,
+        );
         if (wallet?.address && user) {
           syncWalletAddress(user.id, wallet.address).catch((err) => {
             console.error("[auth] wallet sync DB write failed:", err);

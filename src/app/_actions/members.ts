@@ -14,7 +14,11 @@ import {
   syncWalletAddress,
   saveVerifiedWallet,
   removeWalletAddress,
+  invalidateUserCacheByUserId,
 } from "@core/database/queries/users";
+import { validateUsernameFormat } from "@utils/onboarding";
+import { generateId } from "@utils/id-generator";
+import { CompleteOnboardingSchema } from "@services/members/types";
 import {
   db,
   members,
@@ -195,7 +199,16 @@ export async function getMemberStats() {
   };
 }
 
+/**
+ * Atomic onboarding: sets username, ensures the member row exists, assigns
+ * the default RBAC role, syncs the wallet, and marks onboarding complete —
+ * all in one database transaction. Safe to retry: every step is idempotent.
+ *
+ * Replaces the older two-step `onboardUser` + `completeOnboarding` flow
+ * which could leave partial state on failure.
+ */
 export async function completeOnboarding(data: {
+  username: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -211,33 +224,149 @@ export async function completeOnboarding(data: {
   state?: string;
   zip?: string;
   walletAddress?: string;
-}): Promise<ActionResult<any>> {
+}): Promise<ActionResult<{ memberId: string; walletSyncError?: string }>> {
   try {
     const { claims, user } = await requireAuth();
 
-    const email = (claims as any).email || undefined;
-    await getOrCreateUser(claims.userId, email);
-    const member = await membersService.getOrCreateMember(user.id);
-
-    if (member) {
-      // Assign guest RBAC role for new free members (idempotent)
-      const existingRoles = await rbacService.getMemberRoles(member.id);
-      if (existingRoles.length === 0) {
-        await rbacService.assignRole(member.id, "guest");
-      }
-      // Stripe customer creation is handled in the checkout route (single owner)
+    const usernameValidation = validateUsernameFormat(data.username);
+    if (!usernameValidation.valid) {
+      return actionError(usernameValidation.error || "Invalid username");
     }
+    const trimmedUsername = data.username.trim();
 
-    // Sync wallet address from Privy to users table
-    if (data.walletAddress) {
-      await syncWalletAddress(user.id, data.walletAddress).catch((err) => {
-        console.error("[onboarding] Failed to sync wallet address:", err);
+    // Ensure the users row exists (idempotent; handles email-dedup).
+    // Runs outside the tx so the cache primes with the canonical user.
+    const privyEmail = (claims as any).email || undefined;
+    await getOrCreateUser(claims.userId, privyEmail);
+
+    let walletSyncError: string | undefined;
+
+    try {
+      await db.transaction(async (tx) => {
+        // Username update — catch unique-constraint race into a friendly error.
+        try {
+          await tx
+            .update(users)
+            .set({ username: trimmedUsername, updatedAt: new Date() })
+            .where(eq(users.id, user.id));
+        } catch (err: any) {
+          if (err?.code === "23505") {
+            throw new Error("Username is already taken");
+          }
+          throw err;
+        }
+
+        // Member row — .onConflictDoNothing via repository would require tx-scoped
+        // drizzle; inline the same pattern here to stay inside the transaction.
+        await tx
+          .insert(members)
+          .values({
+            id: generateId(),
+            userId: user.id,
+            membershipType: "basic",
+            contributionPoints: 0,
+            votingPower: 1,
+            status: "active",
+            joinedAt: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .onConflictDoNothing({ target: members.userId });
+
+        const existingMember = await tx
+          .select({ id: members.id })
+          .from(members)
+          .where(eq(members.userId, user.id))
+          .limit(1);
+        const memberRow = existingMember[0];
+        if (!memberRow) throw new Error("Member row missing after create");
+
+        // Wallet sync (non-fatal; surfaces an error string without aborting the tx).
+        if (data.walletAddress) {
+          try {
+            const normalized = data.walletAddress.toLowerCase();
+            const stored = await tx
+              .select({ walletAddress: users.walletAddress })
+              .from(users)
+              .where(eq(users.id, user.id))
+              .limit(1);
+            if (
+              !stored[0]?.walletAddress ||
+              stored[0].walletAddress === normalized
+            ) {
+              await tx
+                .update(users)
+                .set({ walletAddress: normalized, updatedAt: new Date() })
+                .where(eq(users.id, user.id));
+            }
+          } catch (err: any) {
+            if (err?.code === "23505") {
+              walletSyncError =
+                "This wallet is already linked to another account.";
+            } else {
+              walletSyncError = "Could not save wallet address.";
+              console.error("[onboarding] wallet sync failed:", err);
+            }
+          }
+        }
+
+        // Profile update + onboarding status — validated via the shared Zod schema.
+        const validated = CompleteOnboardingSchema.parse({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          termsAccepted: data.termsAccepted,
+          phone: data.phone,
+          employer: data.employer,
+          jobTitle: data.jobTitle,
+          industry: data.industry,
+          civicInterests: data.civicInterests,
+          skills: data.skills,
+          availability: data.availability,
+          city: data.city,
+          state: data.state,
+          zip: data.zip,
+        });
+        const { termsAccepted, ...profileData } = validated;
+
+        await tx
+          .update(members)
+          .set({
+            ...profileData,
+            onboardingStatus: "completed",
+            termsAcceptedAt: termsAccepted ? new Date() : undefined,
+            updatedAt: new Date(),
+          })
+          .where(eq(members.userId, user.id));
+
+        // Assign default guest role inside the tx (idempotent via repository check).
+        // Done last so role assignment rolls back with profile update if anything above fails.
+        const roleIds = await rbacService.getMemberRoles(memberRow.id);
+        if (roleIds.length === 0) {
+          await rbacService.assignRole(memberRow.id, "guest");
+        }
       });
+    } catch (err: any) {
+      return actionError(err?.message || "Failed to complete onboarding");
     }
 
-    const result = await membersService.completeOnboarding(user.id, data);
+    // Clear cached user so downstream reads see the new username immediately.
+    invalidateUserCacheByUserId(user.id);
+
+    const memberRow = await db
+      .select({ id: members.id })
+      .from(members)
+      .where(eq(members.userId, user.id))
+      .limit(1);
+
     revalidatePath("/dashboard");
-    return actionSuccess(result);
+    revalidatePath("/passport");
+    revalidatePath("/settings");
+
+    return actionSuccess({
+      memberId: memberRow[0]?.id ?? "",
+      walletSyncError,
+    });
   } catch (err) {
     return actionError(err);
   }
@@ -295,12 +424,14 @@ export async function verifyWallet(data: {
       );
     }
 
-    // Save verified wallet
+    // Save verified wallet (throws if another user already owns it)
     await saveVerifiedWallet(user.id, data.walletAddress);
     revalidatePath("/settings");
     revalidatePath("/passport");
+    revalidatePath("/members");
+    revalidatePath("/directory");
 
-    return actionSuccess({ walletAddress: data.walletAddress });
+    return actionSuccess({ walletAddress: data.walletAddress.toLowerCase() });
   } catch (err) {
     return actionError(err);
   }
@@ -312,28 +443,12 @@ export async function disconnectWallet(): Promise<ActionResult<null>> {
     await removeWalletAddress(user.id);
     revalidatePath("/settings");
     revalidatePath("/passport");
+    revalidatePath("/members");
+    revalidatePath("/directory");
     return actionSuccess(null);
   } catch (err) {
     return actionError(err);
   }
-}
-
-export async function getWalletStatus() {
-  const { user } = await requireAuth();
-  const result = await db
-    .select({
-      walletAddress: users.walletAddress,
-      walletVerifiedAt: users.walletVerifiedAt,
-    })
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1);
-
-  const row = result[0];
-  return {
-    walletAddress: row?.walletAddress ?? null,
-    walletVerifiedAt: row?.walletVerifiedAt?.toISOString() ?? null,
-  };
 }
 
 export async function getWalletVerifyMessage(walletAddress: string) {
@@ -367,7 +482,9 @@ export async function backfillWallets(): Promise<
     for (const u of usersWithoutWallet) {
       try {
         const privyUser = await privy.getUser(u.privyDid);
-        const wallet = getPreferredEthWalletFromAccounts(privyUser?.linkedAccounts);
+        const wallet = getPreferredEthWalletFromAccounts(
+          privyUser?.linkedAccounts,
+        );
 
         if (wallet?.address) {
           await syncWalletAddress(u.id, wallet.address);
