@@ -40,6 +40,8 @@ export interface MemberProfile {
   username: string | null;
   avatarUrl: string | null;
   bio: string | null;
+  walletAddress: string | null;
+  walletVerifiedAt: string | null;
   tierName: string | null;
   tierDisplayName: string | null;
   roleNames: string[];

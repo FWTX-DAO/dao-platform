@@ -15,6 +15,13 @@
       "when": 1773062867627,
       "tag": "0001_huge_hercules",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776880388337,
+      "tag": "0002_regular_jackpot",
+      "breakpoints": true
     }
   ]
 }

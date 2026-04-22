@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   usePrivy,
   useSignMessage,
@@ -14,11 +15,11 @@ import {
 import {
   verifyWallet,
   disconnectWallet,
-  getWalletStatus,
   getWalletVerifyMessage,
 } from "@/app/_actions/members";
 import { getPreferredEthWallet } from "@utils/wallet";
 import { updateProfile } from "@/app/_actions/users";
+import { queryKeys } from "@shared/constants/query-keys";
 import { PageHeader } from "@components/ui/page-header";
 import IndustrySelect from "@components/IndustrySelect";
 import {
@@ -77,29 +78,28 @@ function Section({
 // 2. Has Privy wallet but not verified in our DB → sign to verify
 // 3. Verified → show green status with disconnect option
 function WalletSection() {
-  const { user: privyUser, linkWallet } = usePrivy();
+  const { user: privyUser, linkWallet, unlinkWallet } = usePrivy();
   const { createWallet } = useCreateWallet();
   const { signMessage } = useSignMessage();
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [walletVerifiedAt, setWalletVerifiedAt] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: profile, refetch: refetchProfile } = useProfile();
+
+  const walletAddress = profile?.walletAddress ?? null;
+  const walletVerifiedAt = profile?.walletVerifiedAt ?? null;
+
   const [isCreating, setIsCreating] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Load wallet status from our DB
-  useEffect(() => {
-    getWalletStatus()
-      .then((status) => {
-        setWalletAddress(status.walletAddress);
-        setWalletVerifiedAt(status.walletVerifiedAt);
-      })
-      .catch(() => {});
-  }, []);
-
   // Find the user's ETH wallet — prefer external (MetaMask, etc.) over embedded
   const privyWallet = getPreferredEthWallet(privyUser?.linkedAccounts);
+
+  const invalidateWalletConsumers = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.members.all() });
+  }, [queryClient]);
 
   const handleCreateWallet = useCallback(async () => {
     setIsCreating(true);
@@ -131,7 +131,9 @@ function WalletSection() {
 
     try {
       const message = await getWalletVerifyMessage(address);
-      const { signature } = await signMessage({ message });
+      // Explicitly pass `address` so Privy signs with the wallet the user is verifying,
+      // not the first wallet in linkedAccounts (critical during relink).
+      const { signature } = await signMessage({ message }, { address });
 
       const result = await verifyWallet({
         walletAddress: address,
@@ -142,8 +144,8 @@ function WalletSection() {
       if (!result.success) {
         setError(result.error || "Verification failed");
       } else {
-        setWalletAddress(result.data.walletAddress);
-        setWalletVerifiedAt(new Date().toISOString());
+        invalidateWalletConsumers();
+        await refetchProfile();
         setSuccess("Wallet verified and connected!");
       }
     } catch (err: any) {
@@ -158,19 +160,34 @@ function WalletSection() {
     } finally {
       setIsVerifying(false);
     }
-  }, [privyWallet?.address, signMessage]);
+  }, [
+    privyWallet?.address,
+    signMessage,
+    invalidateWalletConsumers,
+    refetchProfile,
+  ]);
 
   const handleDisconnect = useCallback(async () => {
     setIsDisconnecting(true);
     setError("");
     setSuccess("");
     try {
+      // Unlink from Privy first so linkedAccounts stays in sync.
+      // Swallow errors — Privy may have already lost the link — then always clear the DB row.
+      if (walletAddress) {
+        try {
+          await unlinkWallet(walletAddress);
+        } catch (err) {
+          console.warn("[settings] Privy unlinkWallet failed:", err);
+        }
+      }
+
       const result = await disconnectWallet();
       if (!result.success) {
         setError(result.error || "Failed to disconnect wallet");
       } else {
-        setWalletAddress(null);
-        setWalletVerifiedAt(null);
+        invalidateWalletConsumers();
+        await refetchProfile();
         setSuccess("Wallet disconnected");
       }
     } catch {
@@ -178,16 +195,25 @@ function WalletSection() {
     } finally {
       setIsDisconnecting(false);
     }
-  }, []);
+  }, [walletAddress, unlinkWallet, invalidateWalletConsumers, refetchProfile]);
 
   const isVerified = !!walletAddress && !!walletVerifiedAt;
   const hasPrivyWallet = !!privyWallet?.address;
 
+  // If Privy currently holds a wallet that differs from the verified one in our DB,
+  // the verified wallet is unusable here — force a re-verify for the new wallet.
+  const verifiedMatchesPrivy =
+    isVerified &&
+    !!privyWallet?.address &&
+    privyWallet.address.toLowerCase() === walletAddress?.toLowerCase();
+  const showVerifiedState =
+    isVerified && (verifiedMatchesPrivy || !hasPrivyWallet);
+
   return (
     <Section title="ETH Wallet" icon={<Wallet className="w-5 h-5" />}>
       <div className="space-y-4">
-        {/* State 1: Verified wallet in our DB */}
-        {isVerified ? (
+        {/* State 1: Verified wallet matches the currently-linked Privy wallet */}
+        {showVerifiedState ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
               <Shield className="w-4 h-4 text-green-600 shrink-0" />
@@ -209,14 +235,24 @@ function WalletSection() {
                 year: "numeric",
               })}
             </p>
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              disabled={isDisconnecting}
-              className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-            >
-              {isDisconnecting ? "Disconnecting..." : "Disconnect wallet"}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleLinkWallet}
+                className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors min-h-[44px]"
+              >
+                <Globe className="w-4 h-4" />
+                Link a different wallet
+              </button>
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+                className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+              >
+                {isDisconnecting ? "Disconnecting..." : "Disconnect wallet"}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -225,7 +261,7 @@ function WalletSection() {
               ownership. No gas fees required.
             </p>
 
-            {/* State 2: Has Privy wallet but not verified yet → show address + verify button */}
+            {/* State 2: Has Privy wallet but not verified yet (or Privy wallet diverged from verified one) */}
             {hasPrivyWallet ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
@@ -234,13 +270,27 @@ function WalletSection() {
                     <p className="text-xs text-gray-400">
                       {privyWallet?.walletClientType === "privy"
                         ? "Embedded wallet"
-                        : "External wallet"} detected
+                        : "External wallet"}{" "}
+                      detected
                     </p>
                     <p className="text-sm font-mono text-gray-600 truncate">
                       {privyWallet.address}
                     </p>
                   </div>
                 </div>
+                {isVerified && !verifiedMatchesPrivy && (
+                  <div className="flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="text-xs text-amber-700 min-w-0">
+                      <p className="font-medium">Wallet changed</p>
+                      <p className="truncate">
+                        Previously verified:{" "}
+                        <span className="font-mono">{walletAddress}</span>. Sign
+                        to verify the new wallet and update your member card.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {walletAddress && !walletVerifiedAt && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                     <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -261,7 +311,11 @@ function WalletSection() {
                     ) : (
                       <Pen className="w-4 h-4" />
                     )}
-                    {isVerifying ? "Sign to verify..." : "Sign & verify wallet"}
+                    {isVerifying
+                      ? "Sign to verify..."
+                      : isVerified
+                        ? "Sign & re-verify wallet"
+                        : "Sign & verify wallet"}
                   </button>
                   <button
                     type="button"
@@ -271,6 +325,18 @@ function WalletSection() {
                     <Globe className="w-4 h-4" />
                     Link different wallet
                   </button>
+                  {isVerified && (
+                    <button
+                      type="button"
+                      onClick={handleDisconnect}
+                      disabled={isDisconnecting}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                    >
+                      {isDisconnecting
+                        ? "Disconnecting..."
+                        : "Disconnect current wallet"}
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (

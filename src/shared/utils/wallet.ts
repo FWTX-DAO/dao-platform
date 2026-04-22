@@ -34,7 +34,15 @@ export function walletLabel(wallet: WalletWithMetadata): string {
  * Returns null when no Ethereum wallet is linked.
  */
 export function getPreferredEthWallet(
-  linkedAccounts: ReadonlyArray<{ type: string; chainType?: string; walletClientType?: string; address?: string }> | undefined | null,
+  linkedAccounts:
+    | ReadonlyArray<{
+        type: string;
+        chainType?: string;
+        walletClientType?: string;
+        address?: string;
+      }>
+    | undefined
+    | null,
 ): WalletWithMetadata | null {
   const ethWallets = (linkedAccounts ?? []).filter(
     (a) => a.type === "wallet" && a.chainType === "ethereum",
@@ -52,11 +60,24 @@ export function getPreferredEthWallet(
  * Returns { address, walletClientType } or null.
  */
 export function getPreferredEthWalletFromAccounts(
-  linkedAccounts: ReadonlyArray<{ type: string; chainType?: string; walletClientType?: string; address?: string }> | undefined | null,
+  linkedAccounts:
+    | ReadonlyArray<{
+        type: string;
+        chainType?: string;
+        walletClientType?: string;
+        address?: string;
+      }>
+    | undefined
+    | null,
 ): { address: string; walletClientType?: string } | null {
   const ethWallets = (linkedAccounts ?? []).filter(
     (a) => a.type === "wallet" && a.chainType === "ethereum",
-  ) as Array<{ address: string; walletClientType?: string; type: string; chainType: string }>;
+  ) as Array<{
+    address: string;
+    walletClientType?: string;
+    type: string;
+    chainType: string;
+  }>;
   return (
     ethWallets.find((w) => w.walletClientType !== "privy") ??
     ethWallets[0] ??

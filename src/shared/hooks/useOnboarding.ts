@@ -3,6 +3,7 @@ import { completeOnboarding as completeOnboardingAction } from "@/app/_actions/m
 import { queryKeys } from "@shared/constants/query-keys";
 
 export interface CompleteOnboardingInput {
+  username: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -17,6 +18,7 @@ export interface CompleteOnboardingInput {
   city?: string;
   state?: string;
   zip?: string;
+  walletAddress?: string;
 }
 
 export const useCompleteOnboarding = () => {

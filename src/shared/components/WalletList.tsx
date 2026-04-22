@@ -40,7 +40,8 @@ export default function WalletList() {
 
   const handleCreateWallet = useCallback(
     async (type: "ethereum" | "solana") => {
-      const setCreating = type === "ethereum" ? setIsCreatingEth : setIsCreatingSol;
+      const setCreating =
+        type === "ethereum" ? setIsCreatingEth : setIsCreatingSol;
       setCreating(true);
       setCreateError("");
       try {
@@ -51,7 +52,9 @@ export default function WalletList() {
         }
       } catch (error: any) {
         console.error("Error creating wallet:", error);
-        setCreateError(error?.message || "Failed to create wallet. Please try again.");
+        setCreateError(
+          error?.message || "Failed to create wallet. Please try again.",
+        );
       } finally {
         setCreating(false);
       }

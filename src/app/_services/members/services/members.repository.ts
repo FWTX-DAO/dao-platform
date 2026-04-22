@@ -66,17 +66,23 @@ export class MembersRepository {
 
   async create(userId: string, membershipType: string = "basic") {
     const id = generateId();
-    await db.insert(members).values({
-      id,
-      userId,
-      membershipType,
-      contributionPoints: 0,
-      votingPower: 1,
-      status: "active",
-      joinedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    // ON CONFLICT DO NOTHING: race-safe when two requests try to create a member
+    // for the same userId concurrently (double-submit, retry, etc.). The second
+    // insert is a no-op; findByUserId returns the row the first insert produced.
+    await db
+      .insert(members)
+      .values({
+        id,
+        userId,
+        membershipType,
+        contributionPoints: 0,
+        votingPower: 1,
+        status: "active",
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoNothing({ target: members.userId });
 
     return this.findByUserId(userId);
   }
@@ -190,6 +196,8 @@ export class MembersRepository {
         username: users.username,
         avatarUrl: users.avatarUrl,
         bio: users.bio,
+        walletAddress: users.walletAddress,
+        walletVerifiedAt: users.walletVerifiedAt,
         tierName: membershipTiers.name,
         tierDisplayName: membershipTiers.displayName,
       })
