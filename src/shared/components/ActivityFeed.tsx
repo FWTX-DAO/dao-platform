@@ -41,6 +41,7 @@ const ACTIVITY_META: Record<
   profile_updated: { label: "Updated profile", icon: UserCog },
   role_granted: { label: "Received a role", icon: Shield },
   subscription_created: { label: "Started a subscription", icon: CreditCard },
+  event_attended: { label: "Checked in to an event", icon: Calendar },
 };
 
 function timeAgo(dateStr: string): string {

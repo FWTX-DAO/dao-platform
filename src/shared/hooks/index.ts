@@ -1,6 +1,7 @@
 export * from "./useActivities";
 export * from "./useAdmin";
 export * from "./useBounties";
+export * from "./useCheckIn";
 export * from "./useDashboard";
 export * from "./useDocuments";
 export * from "./useForumPosts";

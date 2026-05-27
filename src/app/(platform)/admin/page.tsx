@@ -78,6 +78,29 @@ export default function AdminPage() {
             </p>
           )}
         </div>
+        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-100">
+          <h3 className="font-semibold text-gray-900">Voting Census</h3>
+          <p className="text-sm text-gray-500 mt-1 mb-3">
+            Paid + active + has wallet — export for spreadsheet
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/api/admin/census?format=csv"
+              className="px-4 py-2 bg-violet-600 text-white text-sm rounded-md hover:bg-violet-700 transition-colors"
+              download
+            >
+              Download CSV
+            </a>
+            <a
+              href="/api/admin/census"
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2 border border-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors"
+            >
+              View JSON
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Roles */}

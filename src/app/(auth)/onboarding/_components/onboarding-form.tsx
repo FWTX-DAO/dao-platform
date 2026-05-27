@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   usePrivy,
@@ -21,7 +21,13 @@ import type { PassportData } from "@components/passport";
 import { PlanSelector } from "./plan-selector";
 import { useSubscriptionTiers } from "@shared/hooks/useSubscriptions";
 
-const STEPS = ["Identity", "Professional", "Community", "Membership"] as const;
+const DEFAULT_STEPS = [
+  "Identity",
+  "Professional",
+  "Community",
+  "Membership",
+] as const;
+const CHECK_IN_STEPS = ["Identity", "Professional", "Community"] as const;
 
 interface FormData {
   username: string;
@@ -75,6 +81,13 @@ const labelBase = "block text-sm text-dao-cool mb-1.5";
 const selectBase =
   "w-full px-4 py-2.5 bg-dao-surface border border-dao-border rounded-sm text-dao-warm focus-visible:outline-hidden focus-visible:border-dao-gold/50 focus-visible:ring-1 focus-visible:ring-dao-gold/30 transition text-sm";
 
+function getSafeReturnTo(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/dashboard";
+  }
+  return value;
+}
+
 function validateUsernameFormat(username: string) {
   if (!username || username.trim().length < 3)
     return { valid: false, error: "Username must be at least 3 characters" };
@@ -91,6 +104,7 @@ function validateUsernameFormat(username: string) {
 
 export function OnboardingForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { ready, authenticated, user, linkWallet } = usePrivy();
   const { createWallet } = useCreateWallet();
   const { signMessage } = useSignMessage();
@@ -104,6 +118,9 @@ export function OnboardingForm() {
   const [passportData, setPassportData] = useState<PassportData | null>(null);
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const { data: tiers = [] } = useSubscriptionTiers();
+  const isCheckInFlow = searchParams.get("intent") === "check-in";
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
+  const steps = isCheckInFlow ? CHECK_IN_STEPS : DEFAULT_STEPS;
 
   // Wallet verification state
   const [walletVerified, setWalletVerified] = useState(false);
@@ -160,7 +177,7 @@ export function OnboardingForm() {
 
   const handleNext = () => {
     if (step === 0 && !validateStep1()) return;
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStep((s) => Math.min(s + 1, steps.length - 1));
   };
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
@@ -224,6 +241,13 @@ export function OnboardingForm() {
   };
 
   const handlePostOnboarding = async () => {
+    if (isCheckInFlow) {
+      const target = new URL(returnTo, window.location.origin);
+      target.searchParams.set("auto", "1");
+      router.push(`${target.pathname}${target.search}${target.hash}`);
+      return;
+    }
+
     if (selectedTierId) {
       // Paid tier selected — redirect to Stripe Checkout
       try {
@@ -309,7 +333,8 @@ export function OnboardingForm() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         memberId: onboardingResult.data.memberId || "PENDING",
-        membershipType: selectedTierId ? "member" : "observer",
+        membershipType:
+          selectedTierId && !isCheckInFlow ? "member" : "observer",
         joinedAt: new Date().toISOString(),
         contributionPoints: 0,
         votingPower: 0,
@@ -318,10 +343,12 @@ export function OnboardingForm() {
         city: formData.city || null,
         state: formData.state || null,
         walletAddress: walletAddress || privyEthWallet?.address || null,
-        tierDisplayName: selectedTierId
-          ? tiers.find((t) => t.id === selectedTierId)?.displayName || "Member"
-          : "Observer",
-        roleNames: [selectedTierId ? "member" : "guest"],
+        tierDisplayName:
+          selectedTierId && !isCheckInFlow
+            ? tiers.find((t) => t.id === selectedTierId)?.displayName ||
+              "Member"
+            : "Observer",
+        roleNames: [selectedTierId && !isCheckInFlow ? "member" : "guest"],
       });
       setShowPassportReveal(true);
     } catch (err: any) {
@@ -385,16 +412,18 @@ export function OnboardingForm() {
               <div className="bg-dao-dark/80 backdrop-blur-xs border border-dao-border/60 rounded-lg p-6 sm:p-8 md:p-10">
                 <div className="mb-8">
                   <h1 className="font-display text-3xl md:text-4xl text-dao-warm mb-2">
-                    Join the DAO
+                    {isCheckInFlow ? "Roundtable Check-In" : "Join the DAO"}
                   </h1>
                   <p className="text-sm text-dao-cool/60">
-                    Complete your profile to become a member
+                    {isCheckInFlow
+                      ? "Create your DAO passport before attendance is recorded"
+                      : "Complete your profile to become a member"}
                   </p>
                 </div>
 
                 {/* Step indicator */}
                 <div className="flex items-center mb-8">
-                  {STEPS.map((label, i) => (
+                  {steps.map((label, i) => (
                     <div
                       key={label}
                       className="flex items-center flex-1 last:flex-none"
@@ -439,7 +468,7 @@ export function OnboardingForm() {
                           {label}
                         </span>
                       </div>
-                      {i < STEPS.length - 1 && (
+                      {i < steps.length - 1 && (
                         <div
                           className={`flex-1 h-px mx-3 mb-5 transition-colors duration-300 ${
                             i < step ? "bg-dao-gold/40" : "bg-dao-border"
@@ -881,7 +910,7 @@ export function OnboardingForm() {
                 )}
 
                 {/* Step 4: Membership */}
-                {step === 3 && (
+                {!isCheckInFlow && step === 3 && (
                   <PlanSelector
                     selectedTierId={selectedTierId}
                     onSelect={setSelectedTierId}
@@ -906,7 +935,7 @@ export function OnboardingForm() {
                     Back
                   </button>
 
-                  {step < STEPS.length - 1 ? (
+                  {step < steps.length - 1 ? (
                     <button
                       onClick={handleNext}
                       className="group px-6 py-2.5 bg-dao-gold hover:bg-dao-gold-light text-dao-charcoal text-sm font-semibold rounded-sm transition-colors active:scale-[0.98]"
@@ -945,6 +974,8 @@ export function OnboardingForm() {
                           </svg>
                           Completing{"…"}
                         </span>
+                      ) : isCheckInFlow ? (
+                        "Create Passport & Check In"
                       ) : selectedTierId ? (
                         "Join DAO & Subscribe"
                       ) : (

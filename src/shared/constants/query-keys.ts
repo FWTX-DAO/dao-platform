@@ -83,4 +83,9 @@ export const queryKeys = {
     my: () => [...queryKeys.stamps.all(), "my"] as const,
     member: (id: string) => [...queryKeys.stamps.all(), "member", id] as const,
   },
+  checkIn: {
+    all: () => ["check-in"] as const,
+    roundtable: (authState?: "auth" | "guest") =>
+      [...queryKeys.checkIn.all(), "roundtable", authState] as const,
+  },
 } as const;

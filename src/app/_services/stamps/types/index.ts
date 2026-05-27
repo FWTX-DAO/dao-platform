@@ -6,6 +6,7 @@ export const EVENT_TYPES = [
   "townhall",
   "hackathon",
   "conference",
+  "roundtable",
   "social",
 ] as const;
 
