@@ -1,6 +1,18 @@
 export const REFERRAL_COOKIE = "fwtx_referral";
 export const REFERRAL_SIGNUP_POINTS = 5;
 
+/** Hosting proxies may expose a deploy hostname in request.url. Keep the cookie on the public app. */
+export function referralLandingUrl(
+  requestUrl: string,
+  configuredAppUrl: string | undefined,
+  production: boolean,
+): URL {
+  return new URL(
+    "/",
+    configuredAppUrl || (production ? "https://dao.fwtx.city" : requestUrl),
+  );
+}
+
 export function normalizeReferralCode(value: string): string | null {
   const code = value.trim().toUpperCase();
   return /^[A-F0-9]{32}$/.test(code) ? code : null;

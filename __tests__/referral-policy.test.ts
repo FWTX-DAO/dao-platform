@@ -8,6 +8,7 @@ import {
 import {
   membershipReferralPoints,
   normalizeReferralCode,
+  referralLandingUrl,
 } from "../src/shared/utils/referrals";
 import { referralInvoiceAmount } from "../src/app/_services/subscriptions/services/referral-invoice";
 import { databaseConnectionOptions } from "../src/core/database/connection-options";
@@ -110,6 +111,25 @@ describe("verified onboarding identity", () => {
 });
 
 describe("referral reward policy", () => {
+  test("production invitations stay on the public origin behind a Netlify deploy proxy", () => {
+    expect(
+      referralLandingUrl(
+        "https://deploy-id--fwdao.netlify.app/r/code",
+        undefined,
+        true,
+      ).href,
+    ).toBe("https://dao.fwtx.city/");
+    expect(
+      referralLandingUrl(
+        "http://internal-proxy/r/code",
+        "https://dao.fwtx.city",
+        true,
+      ).href,
+    ).toBe("https://dao.fwtx.city/");
+    expect(
+      referralLandingUrl("http://localhost:3000/r/code", undefined, false).href,
+    ).toBe("http://localhost:3000/");
+  });
   test("monthly earns 10 and annual earns 120; discounted invoices scale down", () => {
     expect(membershipReferralPoints(500, 500, "month")).toBe(10);
     expect(membershipReferralPoints(4900, 4900, "year")).toBe(120);
