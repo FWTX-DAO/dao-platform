@@ -6,6 +6,7 @@ import {
   usePrivy,
   useSignMessage,
   useCreateWallet,
+  useLinkAccount,
 } from "@privy-io/react-auth";
 import { AnimatePresence } from "framer-motion";
 import { getAccessToken } from "@privy-io/react-auth";
@@ -19,6 +20,8 @@ import IndustrySelect from "@components/IndustrySelect";
 import { PassportCreationReveal } from "@components/passport";
 import type { PassportData } from "@components/passport";
 import { PlanSelector } from "./plan-selector";
+import { getVerifiedEmail } from "@utils/verified-email";
+import { validateUsernameFormat } from "@utils/onboarding";
 import { useSubscriptionTiers } from "@shared/hooks/useSubscriptions";
 
 const DEFAULT_STEPS = [
@@ -29,7 +32,7 @@ const DEFAULT_STEPS = [
 ] as const;
 const CHECK_IN_STEPS = ["Identity", "Professional", "Community"] as const;
 
-interface FormData {
+export interface OnboardingFormData {
   username: string;
   firstName: string;
   lastName: string;
@@ -46,6 +49,8 @@ interface FormData {
   state: string;
   zip: string;
 }
+
+type FormData = OnboardingFormData;
 
 const INITIAL_FORM: FormData = {
   username: "",
@@ -88,28 +93,39 @@ function getSafeReturnTo(value: string | null) {
   return value;
 }
 
-function validateUsernameFormat(username: string) {
-  if (!username || username.trim().length < 3)
-    return { valid: false, error: "Username must be at least 3 characters" };
-  if (username.length > 30)
-    return { valid: false, error: "Username must be 30 characters or less" };
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(username))
-    return {
-      valid: false,
-      error:
-        "Must start with a letter or number. Letters, numbers, underscores, hyphens only",
-    };
-  return { valid: true, error: null };
-}
-
-export function OnboardingForm() {
+export function OnboardingForm({
+  initialReferralCode = "",
+  initialProfile = {},
+  isProfileRepair = false,
+}: {
+  initialReferralCode?: string;
+  initialProfile?: Partial<OnboardingFormData>;
+  isProfileRepair?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { ready, authenticated, user, linkWallet } = usePrivy();
   const { createWallet } = useCreateWallet();
   const { signMessage } = useSignMessage();
+  const [referralCode, setReferralCode] = useState(initialReferralCode);
+  const verifiedEmail = getVerifiedEmail(user?.linkedAccounts);
+  const { linkEmail } = useLinkAccount({
+    onSuccess: ({ user: linkedUser }) => {
+      const email = getVerifiedEmail(linkedUser.linkedAccounts);
+      if (email) setFormData((previous) => ({ ...previous, email }));
+      setErrors((previous) => ({ ...previous, email: "" }));
+    },
+    onError: () =>
+      setErrors((previous) => ({
+        ...previous,
+        email: "Email verification was not completed. Please try again.",
+      })),
+  });
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [formData, setFormData] = useState<FormData>({
+    ...INITIAL_FORM,
+    ...initialProfile,
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [globalError, setGlobalError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,7 +136,11 @@ export function OnboardingForm() {
   const { data: tiers = [] } = useSubscriptionTiers();
   const isCheckInFlow = searchParams.get("intent") === "check-in";
   const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
-  const steps = isCheckInFlow ? CHECK_IN_STEPS : DEFAULT_STEPS;
+  const steps = isProfileRepair
+    ? ["Verify email"]
+    : isCheckInFlow
+      ? CHECK_IN_STEPS
+      : DEFAULT_STEPS;
 
   // Wallet verification state
   const [walletVerified, setWalletVerified] = useState(false);
@@ -141,12 +161,8 @@ export function OnboardingForm() {
   }, [ready, authenticated, router]);
 
   useEffect(() => {
-    if (!user) return;
-    const privyEmail = user.email?.address || (user.google as any)?.email || "";
-    if (privyEmail && !formData.email) {
-      setFormData((prev) => ({ ...prev, email: privyEmail }));
-    }
-  }, [user, formData.email]);
+    setFormData((previous) => ({ ...previous, email: verifiedEmail ?? "" }));
+  }, [verifiedEmail]);
 
   const updateField = (field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -166,7 +182,9 @@ export function OnboardingForm() {
     if (!formData.firstName.trim())
       newErrors.firstName = "First name is required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!verifiedEmail)
+      newErrors.email = "Verify your email with Privy to continue.";
+    else if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = "Invalid email address";
     if (!formData.termsAccepted)
@@ -286,6 +304,11 @@ export function OnboardingForm() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    if (!validateStep1()) {
+      setStep(0);
+      return;
+    }
     setGlobalError("");
     setIsSubmitting(true);
 
@@ -312,6 +335,7 @@ export function OnboardingForm() {
         state: formData.state.trim() || undefined,
         zip: formData.zip.trim() || undefined,
         walletAddress: resolvedWallet,
+        referralCode,
       });
 
       if (!onboardingResult.success) {
@@ -327,6 +351,11 @@ export function OnboardingForm() {
         setGlobalError(onboardingResult.data.walletSyncError);
       }
 
+      if (isProfileRepair) {
+        router.push(returnTo);
+        router.refresh();
+        return;
+      }
       setPassportData({
         avatarUrl: null,
         username: formData.username,
@@ -359,10 +388,7 @@ export function OnboardingForm() {
 
   if (!ready || !authenticated) return null;
 
-  const isEmailFromPrivy =
-    !!formData.email &&
-    (formData.email === user?.email?.address ||
-      formData.email === (user?.google as any)?.email);
+  const isEmailFromPrivy = !!verifiedEmail;
 
   return (
     <>
@@ -412,7 +438,11 @@ export function OnboardingForm() {
               <div className="bg-dao-dark/80 backdrop-blur-xs border border-dao-border/60 rounded-lg p-6 sm:p-8 md:p-10">
                 <div className="mb-8">
                   <h1 className="font-display text-3xl md:text-4xl text-dao-warm mb-2">
-                    {isCheckInFlow ? "Roundtable Check-In" : "Join the DAO"}
+                    {isProfileRepair
+                      ? "Complete your profile"
+                      : isCheckInFlow
+                        ? "Roundtable Check-In"
+                        : "Join the DAO"}
                   </h1>
                   <p className="text-sm text-dao-cool/60">
                     {isCheckInFlow
@@ -570,8 +600,8 @@ export function OnboardingForm() {
                         autoComplete="email"
                         value={formData.email}
                         onChange={(e) => updateField("email", e.target.value)}
-                        readOnly={isEmailFromPrivy}
-                        aria-readonly={isEmailFromPrivy}
+                        readOnly
+                        aria-readonly="true"
                         className={`${errors.email ? inputError : inputBase}${
                           isEmailFromPrivy
                             ? " opacity-70 cursor-not-allowed"
@@ -583,13 +613,51 @@ export function OnboardingForm() {
                           {errors.email}
                         </p>
                       )}
-                      {isEmailFromPrivy && (
-                        <p className="mt-1 text-[11px] text-dao-cool/40">
-                          Email is locked to your verified login. Change it
-                          later via the Settings page.
+                      {isEmailFromPrivy ? (
+                        <p className="mt-2 text-xs text-dao-cool">
+                          Verified through Privy. You can manage linked accounts
+                          in Settings.
                         </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => linkEmail()}
+                          className="mt-3 min-h-11 rounded-sm border border-dao-gold/50 px-4 py-2 text-sm text-dao-gold focus-visible:outline-2 focus-visible:outline-dao-gold"
+                        >
+                          Verify email with Privy
+                        </button>
                       )}
                     </div>
+                    {!isProfileRepair && (
+                      <div>
+                        <label htmlFor="referral-code" className={labelBase}>
+                          Referral code{" "}
+                          <span className="text-dao-cool/60">(optional)</span>
+                        </label>
+                        <input
+                          id="referral-code"
+                          value={referralCode}
+                          onChange={(event) =>
+                            setReferralCode(
+                              event.target.value.trim().toUpperCase(),
+                            )
+                          }
+                          maxLength={32}
+                          autoCapitalize="characters"
+                          spellCheck={false}
+                          className={inputBase}
+                          aria-describedby="referral-help"
+                        />
+                        <p
+                          id="referral-help"
+                          className="mt-2 text-xs text-dao-cool"
+                        >
+                          Have an invitation? Thank the member who brought you
+                          here. You can clear this field if the code is
+                          incorrect.
+                        </p>
+                      </div>
+                    )}
 
                     <div className="flex items-start gap-3 pt-1">
                       <input
@@ -910,7 +978,7 @@ export function OnboardingForm() {
                 )}
 
                 {/* Step 4: Membership */}
-                {!isCheckInFlow && step === 3 && (
+                {!isCheckInFlow && !isProfileRepair && step === 3 && (
                   <PlanSelector
                     selectedTierId={selectedTierId}
                     onSelect={setSelectedTierId}
@@ -974,6 +1042,8 @@ export function OnboardingForm() {
                           </svg>
                           Completing{"…"}
                         </span>
+                      ) : isProfileRepair ? (
+                        "Save verified profile"
                       ) : isCheckInFlow ? (
                         "Create Passport & Check In"
                       ) : selectedTierId ? (

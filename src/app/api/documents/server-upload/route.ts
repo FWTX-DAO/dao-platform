@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid auth token" }, { status: 401 });
   }
 
-  const user = await getOrCreateUser(claims.user_id, (claims as any).email);
+  const user = await getOrCreateUser(claims.user_id);
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }

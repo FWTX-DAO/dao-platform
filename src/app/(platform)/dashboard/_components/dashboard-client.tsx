@@ -12,6 +12,7 @@ import { Card, CardHeader, CardContent } from "@components/ui/card";
 import { EmptyState } from "@components/ui/empty-state";
 import { ErrorState } from "@components/ui/error-state";
 import { SkeletonStats, SkeletonCard } from "@components/ui/skeleton";
+import { ReferralCard } from "@components/ReferralCard";
 import {
   Users,
   FileText,
@@ -22,22 +23,7 @@ import {
   CheckCircle,
   Plus,
   Sparkles,
-  Video,
 } from "lucide-react";
-
-const WEEKLY_ROUNDTABLE = {
-  name: "Fort Worth DAO Roundtable",
-  when: "Wednesday 12:00 – 1:00pm",
-  timeZone: "America/Chicago",
-  meetUrl: "https://meet.google.com/ezt-uxsc-kwm",
-  dialDisplay: "(US) +1 636-324-2768",
-  dialHref: "tel:+16363242768",
-  pin: "516 761 226#",
-  morePhonesUrl: "https://tel.meet/ezt-uxsc-kwm?pin=7319286365734",
-} as const;
-
-const joinInfoLinkClassName =
-  "text-violet-600 hover:text-violet-700 font-medium break-all focus-visible:ring-2 focus-visible:ring-dao-gold focus-visible:outline-hidden";
 
 export function DashboardClient() {
   const { dashboardStats, membershipData, isLoading, isError, refetch } =
@@ -97,7 +83,7 @@ export function DashboardClient() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle="Fort Worth TX DAO Overview">
         <UpgradeCTA allowed={can.createProject} feature="create projects">
           <Link
@@ -117,6 +103,8 @@ export function DashboardClient() {
         </Link>
       </PageHeader>
 
+      <ReferralCard />
+
       {isError ? (
         <ErrorState
           title="Failed to load dashboard"
@@ -124,12 +112,12 @@ export function DashboardClient() {
           onRetry={() => refetch()}
         />
       ) : isLoading ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           <SkeletonStats count={3} />
           <SkeletonCard />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <SkeletonCard />
-            <div className="space-y-8">
+            <div className="space-y-6">
               <SkeletonCard />
               <SkeletonCard />
             </div>
@@ -488,7 +476,7 @@ export function DashboardClient() {
             </Card>
           </div>
 
-          {/* Bounties + Meeting Notes / Roundtable */}
+          {/* Bounties + Meeting Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <Card>
               <CardHeader
@@ -554,7 +542,7 @@ export function DashboardClient() {
               </CardContent>
             </Card>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
               <Card>
                 <CardHeader
                   title="Latest Meeting Notes"
@@ -607,61 +595,6 @@ export function DashboardClient() {
                       </p>
                     </Link>
                   )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader
-                  title="Remote Weekly Roundtable"
-                  icon={<Video className="h-5 w-5" />}
-                />
-                <CardContent>
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="font-medium text-gray-900">
-                      {WEEKLY_ROUNDTABLE.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {WEEKLY_ROUNDTABLE.when}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Time zone: {WEEKLY_ROUNDTABLE.timeZone}
-                    </p>
-                    <p className="text-sm font-medium text-gray-700 mt-3">
-                      Google Meet joining info
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Video call link:{" "}
-                      <a
-                        href={WEEKLY_ROUNDTABLE.meetUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={joinInfoLinkClassName}
-                      >
-                        {WEEKLY_ROUNDTABLE.meetUrl}
-                      </a>
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Or dial:{" "}
-                      <a
-                        href={WEEKLY_ROUNDTABLE.dialHref}
-                        className={joinInfoLinkClassName}
-                      >
-                        {WEEKLY_ROUNDTABLE.dialDisplay}
-                      </a>{" "}
-                      PIN: {WEEKLY_ROUNDTABLE.pin}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      More phone numbers:{" "}
-                      <a
-                        href={WEEKLY_ROUNDTABLE.morePhonesUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={joinInfoLinkClassName}
-                      >
-                        {WEEKLY_ROUNDTABLE.morePhonesUrl}
-                      </a>
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </div>

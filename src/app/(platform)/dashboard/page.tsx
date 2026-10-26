@@ -5,6 +5,7 @@ import { queryKeys } from "@shared/constants/query-keys";
 import { getDashboardStats } from "@/app/_actions/dashboard";
 import { getMemberStats } from "@/app/_actions/members";
 import { DashboardClient } from "./_components/dashboard-client";
+import { WeeklyRoundtable } from "./_components/weekly-roundtable";
 
 export const metadata: Metadata = {
   title: "Dashboard - Fort Worth TX DAO",
@@ -25,8 +26,11 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <DashboardClient />
-    </HydrationBoundary>
+    <div className="space-y-6">
+      <WeeklyRoundtable />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <DashboardClient />
+      </HydrationBoundary>
+    </div>
   );
 }

@@ -22,6 +22,20 @@
       "when": 1776880388337,
       "tag": "0002_regular_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793033333675,
+      "tag": "0003_verified_email_referrals",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793038743267,
+      "tag": "0004_reserved_usernames",
+      "breakpoints": true
     }
   ]
 }

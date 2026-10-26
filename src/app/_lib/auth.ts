@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { PrivyClient } from "@privy-io/node";
 import { getPreferredEthWalletFromAccounts } from "@utils/wallet";
@@ -9,42 +10,28 @@ import {
 import { db } from "@core/database";
 import { members, memberRoles, roles } from "@core/database/schema";
 import { eq, and, or } from "drizzle-orm";
+import { getVerifiedEmail } from "@utils/verified-email";
 
 const privy = new PrivyClient({
   appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   appSecret: process.env.PRIVY_APP_SECRET!,
 });
 
-export async function getAuthUser() {
+export const getAuthUser = cache(async () => {
   const token = (await cookies()).get("privy-token")?.value;
   if (!token) return null;
   try {
     const claims = await privy.utils().auth().verifyAccessToken(token);
-    const user = await getOrCreateUser(claims.user_id, (claims as any).email);
-
-    // Sync wallet address from Privy (non-blocking)
-    // Prefer external wallets (MetaMask, etc.) over embedded ones
-    privy
-      .users()
-      ._get(claims.user_id)
-      .then((privyUser) => {
-        const wallet = getPreferredEthWalletFromAccounts(
-          privyUser?.linked_accounts,
-        );
-        if (wallet?.address && user) {
-          syncWalletAddress(user.id, wallet.address).catch((err) => {
-            console.error("[auth] wallet sync DB write failed:", err);
-          });
-        }
-      })
-      .catch((err) => {
-        console.error(
-          "[auth] privy.getUser failed for wallet sync:",
-          err?.message || err,
-        );
+    const privyUser = await privy.users()._get(claims.user_id);
+    const verifiedEmail = getVerifiedEmail(privyUser.linked_accounts);
+    const user = await getOrCreateUser(claims.user_id);
+    const wallet = getPreferredEthWalletFromAccounts(privyUser.linked_accounts);
+    if (wallet?.address) {
+      await syncWalletAddress(user.id, wallet.address).catch(() => {
+        console.error("[auth] wallet sync failed");
       });
-
-    return { claims, user: user! };
+    }
+    return { claims, user, verifiedEmail, walletAddress: wallet?.address };
   } catch (err) {
     // Log non-token errors (token expiry is expected, DB errors are not)
     const isTokenError =
@@ -57,7 +44,7 @@ export async function getAuthUser() {
     }
     return null;
   }
-}
+});
 
 export async function requireAuth() {
   const auth = await getAuthUser();

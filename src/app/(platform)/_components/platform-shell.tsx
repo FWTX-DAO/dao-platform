@@ -20,11 +20,11 @@ export function PlatformShell({ children }: { children: ReactNode }) {
       <Sidebar />
       <main
         id="main-content"
-        className={`pt-20 sm:pt-22 lg:pt-24 pb-8 transition-[margin] duration-300 ease-in-out ${
+        className={`pt-5 sm:pt-6 pb-8 min-w-0 transition-[margin] duration-300 ease-in-out ${
           isOpen ? "md:ml-64" : "md:ml-0"
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
+        <div className="w-full px-4 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>
   );

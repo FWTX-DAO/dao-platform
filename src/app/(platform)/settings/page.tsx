@@ -492,11 +492,11 @@ export default function SettingsPage() {
     setUserSaving(true);
     setUserMsg("");
     try {
-      await updateProfile({
+      const result = await updateProfile({
         username: username.trim(),
         bio: bio.trim() || undefined,
       });
-      setUserMsg("Saved!");
+      setUserMsg(result.success ? "Saved!" : result.error);
     } catch {
       setUserMsg("Failed to save");
     } finally {

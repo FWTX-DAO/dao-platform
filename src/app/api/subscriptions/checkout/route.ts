@@ -5,6 +5,8 @@ import { membersService } from "@services/members";
 import { getOrCreateUser } from "@core/database/queries/users";
 import { db, membershipTiers, members } from "@core/database";
 import { eq } from "drizzle-orm";
+import { getVerifiedEmail } from "@utils/verified-email";
+import { hasCompletedOnboarding } from "@utils/onboarding";
 
 let _stripe: Stripe | null = null;
 function getStripe() {
@@ -65,7 +67,9 @@ export async function POST(request: Request) {
     console.log("[checkout] Auth OK, userId:", claims.user_id);
 
     // Step 3: User resolution
-    const user = await getOrCreateUser(claims.user_id, (claims as any).email);
+    const privyUser = await privy.users()._get(claims.user_id);
+    const verifiedEmail = getVerifiedEmail(privyUser.linked_accounts);
+    const user = await getOrCreateUser(claims.user_id);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -77,6 +81,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Could not create member" },
         { status: 500 },
+      );
+    }
+    if (!hasCompletedOnboarding(user.username, member, verifiedEmail)) {
+      return NextResponse.json(
+        {
+          error:
+            "Complete your profile and verify your email before subscribing.",
+        },
+        { status: 403 },
       );
     }
     console.log(
@@ -150,7 +163,7 @@ export async function POST(request: Request) {
       }
 
       const customer = await stripe.customers.create({
-        email: (claims as any).email || undefined,
+        email: verifiedEmail!,
         metadata: { userId: user.id, memberId: member.id },
       });
       console.log("[checkout] Stripe customer created:", customer.id);
@@ -180,6 +193,7 @@ export async function POST(request: Request) {
       success_url: `${appUrl}/passport?success=true`,
       cancel_url: `${appUrl}/billing?canceled=true`,
       metadata: { memberId: member.id, tierId },
+      subscription_data: { metadata: { memberId: member.id, tierId } },
     });
 
     console.log("[checkout] Session created, redirecting to:", session.url);

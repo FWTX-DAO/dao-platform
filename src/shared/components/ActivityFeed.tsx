@@ -42,6 +42,11 @@ const ACTIVITY_META: Record<
   role_granted: { label: "Received a role", icon: Shield },
   subscription_created: { label: "Started a subscription", icon: CreditCard },
   event_attended: { label: "Checked in to an event", icon: Calendar },
+  referral_signup: { label: "Invited a new member", icon: UserPlus },
+  referral_membership: {
+    label: "Earned membership referral points",
+    icon: CreditCard,
+  },
 };
 
 function timeAgo(dateStr: string): string {

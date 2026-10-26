@@ -13,11 +13,7 @@ export async function getOrCreateUser(
   let user = await dbOperations.users.getByPrivyDid(claims.user_id);
 
   if (!user) {
-    // Create new user if doesn't exist
-    // The email might be in different formats depending on the auth method
-    const email =
-      (claims as any).email?.address || (claims as any).email || undefined;
-    user = await dbOperations.users.upsertFromPrivy(claims.user_id, email);
+    user = await dbOperations.users.upsertFromPrivy(claims.user_id);
 
     if (!user) {
       throw new Error("Failed to create user");

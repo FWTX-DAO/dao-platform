@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { resolve } from "node:path";
+import { databaseConnectionOptions } from "./connection-options";
 
 async function runMigrations() {
   const url = process.env.DATABASE_URL;
@@ -10,10 +11,7 @@ async function runMigrations() {
     process.exit(1);
   }
 
-  const pool = new Pool({
-    connectionString: url,
-    ssl: { rejectUnauthorized: false },
-  });
+  const pool = new Pool(databaseConnectionOptions(url));
 
   const db = drizzle({ client: pool });
 

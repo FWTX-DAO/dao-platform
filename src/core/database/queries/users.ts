@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
-import { db, users, members, type NewUser, type User } from "../index";
+import { db, users, referralCodes, type User } from "../index";
 import { generateId } from "../../../shared/utils/id-generator";
+import { validateUsernameFormat } from "../../../shared/utils/onboarding";
+import { ValidationError } from "../../errors";
 
 /**
  * Simple in-memory cache for user lookups
@@ -63,81 +65,29 @@ export function invalidateUserCacheByUserId(userId: string): void {
  * This ensures we always have a user record that syncs with Privy authentication
  * Uses in-memory caching to reduce database lookups
  */
-export async function getOrCreateUser(privyDid: string, email?: string) {
-  // Check cache first
+export async function getOrCreateUser(privyDid: string) {
   const cachedUser = getCachedUser(privyDid);
-  if (cachedUser) {
-    return cachedUser;
-  }
-
-  // First try to find existing user
-  const existingUser = await db
-    .select()
-    .from(users)
-    .where(eq(users.privyDid, privyDid))
-    .limit(1);
-
-  if (existingUser.length > 0) {
-    const user = existingUser[0]!;
-    setCachedUser(privyDid, user);
-    return user;
-  }
-
-  // Email-based dedup: if a member with this email already exists,
-  // link the new Privy DID to the existing user instead of creating a duplicate.
-  //
-  // Trust boundary: `email` here comes from Privy's verified auth token claims,
-  // so we treat its ownership as proven. Callers must not pass unverified input.
-  if (email) {
-    const existingMember = await db
-      .select({ userId: members.userId })
-      .from(members)
-      .where(eq(members.email, email))
+  if (cachedUser) return cachedUser;
+  const user = await db.transaction(async (tx) => {
+    await tx
+      .insert(users)
+      .values({ id: generateId(), privyDid, username: null })
+      .onConflictDoNothing({ target: users.privyDid });
+    const [row] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.privyDid, privyDid))
       .limit(1);
-
-    if (existingMember.length > 0) {
-      const existingUserId = existingMember[0]!.userId;
-      try {
-        const updated = await db
-          .update(users)
-          .set({ privyDid, updatedAt: new Date() })
-          .where(eq(users.id, existingUserId))
-          .returning();
-
-        if (updated.length > 0) {
-          const user = updated[0]!;
-          console.log(
-            `[auth] Email dedup: linked new Privy DID to existing user ${user.id} via email ${email}`,
-          );
-          setCachedUser(privyDid, user);
-          return user;
-        }
-      } catch (err: any) {
-        // 23505 = unique violation on privy_did — the new DID already points
-        // at a different user row. Fall through and create a duplicate so
-        // auth doesn't break, but log loudly so we can merge manually.
-        if (err?.code === "23505") {
-          console.error(
-            `[auth] DUP_USER: cannot merge — privy_did ${privyDid} already exists separately from member email ${email} (existing user ${existingUserId}). Manual reconciliation required.`,
-          );
-        } else {
-          throw err;
-        }
-      }
-    }
-  }
-
-  // Create new user if no match by DID or email
-  const newUser: NewUser = {
-    id: generateId(),
-    privyDid,
-    username: email?.split("@")[0] || `user_${generateId().slice(0, 8)}`,
-    bio: null,
-    avatarUrl: null,
-  };
-
-  const createdUser = await db.insert(users).values(newUser).returning();
-  const user = createdUser[0]!;
+    if (!row) throw new Error("User could not be resolved");
+    await tx
+      .insert(referralCodes)
+      .values({
+        userId: row.id,
+        code: generateId().replaceAll("-", "").toUpperCase(),
+      })
+      .onConflictDoNothing({ target: referralCodes.userId });
+    return row;
+  });
   setCachedUser(privyDid, user);
   return user;
 }
@@ -231,6 +181,11 @@ export async function updateUserProfile(
     avatarUrl?: string;
   },
 ) {
+  if (data.username !== undefined) {
+    const validation = validateUsernameFormat(data.username);
+    if (!validation.valid) throw new ValidationError(validation.error!);
+    data = { ...data, username: data.username.trim() };
+  }
   invalidateUserCache(privyDid);
 
   const updated = await db

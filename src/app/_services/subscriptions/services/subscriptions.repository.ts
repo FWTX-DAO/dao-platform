@@ -154,6 +154,7 @@ export class SubscriptionsRepository {
   async createPayment(data: {
     subscriptionId: string;
     stripePaymentIntentId?: string;
+    stripeInvoiceId?: string;
     amountCents: number;
     currency?: string;
     status: string;
@@ -164,18 +165,22 @@ export class SubscriptionsRepository {
     const id = generateId();
     const now = new Date();
 
-    await db.insert(paymentHistory).values({
-      id,
-      subscriptionId: data.subscriptionId,
-      stripePaymentIntentId: data.stripePaymentIntentId ?? null,
-      amountCents: data.amountCents,
-      currency: data.currency ?? "usd",
-      status: data.status,
-      paidAt: data.paidAt ? new Date(data.paidAt) : null,
-      failureReason: data.failureReason ?? null,
-      receiptUrl: data.receiptUrl ?? null,
-      createdAt: now,
-    });
+    await db
+      .insert(paymentHistory)
+      .values({
+        id,
+        subscriptionId: data.subscriptionId,
+        stripePaymentIntentId: data.stripePaymentIntentId ?? null,
+        stripeInvoiceId: data.stripeInvoiceId ?? null,
+        amountCents: data.amountCents,
+        currency: data.currency ?? "usd",
+        status: data.status,
+        paidAt: data.paidAt ? new Date(data.paidAt) : null,
+        failureReason: data.failureReason ?? null,
+        receiptUrl: data.receiptUrl ?? null,
+        createdAt: now,
+      })
+      .onConflictDoNothing({ target: paymentHistory.stripeInvoiceId });
 
     return { id, ...data, createdAt: now };
   }

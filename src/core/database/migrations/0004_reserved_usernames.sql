@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD CONSTRAINT "users_no_default_username" CHECK ("users"."username" IS NULL OR btrim("users"."username") !~* '^user_');

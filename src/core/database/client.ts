@@ -18,7 +18,10 @@ import {
   type NewDocument,
   type NewDocumentAuditTrail,
 } from "./schema";
+import { getOrCreateUser } from "./queries/users";
 import { generateId } from "../../shared/utils/id-generator";
+import { validateUsernameFormat } from "../../shared/utils/onboarding";
+import { ValidationError } from "../errors";
 
 async function trackActivity(
   userId: string,
@@ -38,45 +41,13 @@ async function trackActivity(
 
 // User operations
 export const userOperations = {
-  async upsertFromPrivy(privyDid: string, email?: string) {
-    const userId = generateId();
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.privyDid, privyDid))
-      .limit(1)
-      .then((r) => r[0]);
-
-    if (existingUser) {
-      return existingUser;
-    }
-
-    const newUser: NewUser = {
-      id: userId,
-      privyDid,
-      username: email?.split("@")[0] || `user_${userId.slice(0, 8)}`,
-    };
-
-    await db.insert(users).values(newUser);
-
-    // Auto-create basic membership
-    const newMember: NewMember = {
-      id: generateId(),
-      userId,
-      membershipType: "basic",
-      contributionPoints: 0,
-      votingPower: 1,
-      status: "active",
-    };
-
-    await db.insert(members).values(newMember);
-
-    return db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1)
-      .then((r) => r[0]);
+  async upsertFromPrivy(privyDid: string) {
+    const user = await getOrCreateUser(privyDid);
+    await db
+      .insert(members)
+      .values({ id: generateId(), userId: user.id })
+      .onConflictDoNothing({ target: members.userId });
+    return user;
   },
 
   async getByPrivyDid(privyDid: string) {
@@ -89,6 +60,11 @@ export const userOperations = {
   },
 
   async updateProfile(userId: string, updates: Partial<NewUser>) {
+    if (updates.username !== undefined) {
+      const validation = validateUsernameFormat(updates.username ?? "");
+      if (!validation.valid) throw new ValidationError(validation.error!);
+      updates = { ...updates, username: updates.username!.trim() };
+    }
     await db
       .update(users)
       .set({ ...updates, updatedAt: new Date() })

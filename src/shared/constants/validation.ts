@@ -137,6 +137,8 @@ export const ACTIVITY_TYPES = [
   "subscription_created",
   "comment_posted",
   "event_attended",
+  "referral_signup",
+  "referral_membership",
 ] as const;
 
 // Points awarded per activity type
@@ -158,4 +160,7 @@ export const ACTIVITY_POINTS: Record<(typeof ACTIVITY_TYPES)[number], number> =
     subscription_created: 100,
     comment_posted: 2,
     event_attended: 5,
+    // Awarded only by the idempotent referral ledger, never by generic activity tracking.
+    referral_signup: 0,
+    referral_membership: 0,
   } as const;

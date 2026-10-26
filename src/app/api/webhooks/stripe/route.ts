@@ -27,7 +27,11 @@ export async function POST(request: Request) {
 
   try {
     const rawBody = await request.text();
-    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+    event = await stripe.webhooks.constructEventAsync(
+      rawBody,
+      sig,
+      endpointSecret,
+    );
   } catch (err: any) {
     console.error("Stripe webhook signature verification failed:", err.message);
     return NextResponse.json(
@@ -40,7 +44,10 @@ export async function POST(request: Request) {
     await subscriptionsService.updateFromWebhook(event);
   } catch (err) {
     console.error("Error processing Stripe webhook:", err);
-    // Still return 200 to prevent Stripe from retrying
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ received: true });

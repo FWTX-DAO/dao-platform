@@ -18,6 +18,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
+    "db:preflight": "bun src/core/database/production-preflight.ts",
+    "db:prune-defaults": "bun src/core/database/prune-default-users.ts",
+    "db:referral-migration": "bun src/core/database/referral-migration.ts",
     "db:seed": "dotenv -e .env.local -- tsx src/core/database/seed.ts",
     "db:seed-rbac": "dotenv -e .env.local -- tsx src/core/database/seed-rbac.ts",
     "privy:verify": "dotenv -e .env.production.local -- tsx src/core/database/verify-privy-prod.ts"

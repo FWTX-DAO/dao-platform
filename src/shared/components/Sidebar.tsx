@@ -19,6 +19,7 @@ import {
   FolderOpen,
   Trophy,
   Users,
+  UserPlus,
   Send,
   Activity,
   CreditCard,
@@ -268,6 +269,16 @@ function Sidebar() {
         <BookOpen className="mr-3 h-4 w-4" />
         Passport
       </Link>
+      <SidebarItem
+        item={{
+          id: "referrals",
+          name: "Invite a friend",
+          href: "/referrals",
+          icon: UserPlus,
+        }}
+        isActive={isActive("/referrals")}
+        onClick={() => handleNavigation("/referrals")}
+      />
       <Link
         href="/billing"
         className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface transition-colors duration-200"

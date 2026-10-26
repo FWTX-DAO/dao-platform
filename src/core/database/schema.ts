@@ -7,25 +7,35 @@ import {
   jsonb,
   primaryKey,
   index,
+  check,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // Users table - syncs with Privy authentication
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  privyDid: text("privy_did").unique().notNull(),
-  username: text("username").unique(),
-  bio: text("bio"),
-  avatarUrl: text("avatar_url"),
-  walletAddress: text("wallet_address").unique(),
-  walletVerifiedAt: timestamp("wallet_verified_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    privyDid: text("privy_did").unique().notNull(),
+    username: text("username").unique(),
+    bio: text("bio"),
+    avatarUrl: text("avatar_url"),
+    walletAddress: text("wallet_address").unique(),
+    walletVerifiedAt: timestamp("wallet_verified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "users_no_default_username",
+      sql`${table.username} IS NULL OR btrim(${table.username}) !~* '^user_'`,
+    ),
+  ],
+);
 
 // Forum posts table
 export const forumPosts = pgTable(
@@ -180,6 +190,7 @@ export const members = pgTable(
     firstName: text("first_name"),
     lastName: text("last_name"),
     email: text("email"),
+    emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     phone: text("phone"),
     preferredContactMethod: text("preferred_contact_method").default("email"),
 
@@ -217,6 +228,10 @@ export const members = pgTable(
     currentTierId: text("current_tier_id").references(() => membershipTiers.id),
   },
   (table) => [
+    check(
+      "members_completed_email_check",
+      sql`${table.onboardingStatus} <> 'completed' OR (${table.email} IS NOT NULL AND length(btrim(${table.email})) > 0)`,
+    ),
     index("idx_members_user_id").on(table.userId),
     index("idx_members_status").on(table.status),
     index("idx_members_onboarding_status").on(table.onboardingStatus),
@@ -225,6 +240,62 @@ export const members = pgTable(
     index("idx_members_stripe_customer_id").on(table.stripeCustomerId),
     index("idx_members_current_tier_id").on(table.currentTierId),
   ],
+);
+
+// Codes are public identifiers. Attribution is immutable after onboarding.
+export const referralCodes = pgTable("referral_codes", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id),
+  code: text("code").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const referrals = pgTable(
+  "referrals",
+  {
+    id: text("id").primaryKey(),
+    referrerMemberId: text("referrer_member_id")
+      .notNull()
+      .references(() => members.id),
+    referredMemberId: text("referred_member_id")
+      .notNull()
+      .unique()
+      .references(() => members.id),
+    // Prevent a second signup reward for the same verified email, without exposing it.
+    referredEmailHash: text("referred_email_hash").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "referrals_no_self_referral",
+      sql`${table.referrerMemberId} <> ${table.referredMemberId}`,
+    ),
+    index("idx_referrals_referrer").on(table.referrerMemberId),
+  ],
+);
+
+export const referralRewards = pgTable(
+  "referral_rewards",
+  {
+    id: text("id").primaryKey(),
+    referralId: text("referral_id")
+      .notNull()
+      .references(() => referrals.id),
+    sourceKey: text("source_key").notNull().unique(),
+    kind: text("kind").notNull(),
+    points: integer("points").notNull(),
+    amountCents: integer("amount_cents"),
+    stripeInvoiceId: text("stripe_invoice_id").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("idx_referral_rewards_referral").on(table.referralId)],
 );
 
 // Subscriptions table for Stripe subscription tracking
@@ -278,6 +349,7 @@ export const paymentHistory = pgTable(
       .notNull()
       .references(() => subscriptions.id),
     stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+    stripeInvoiceId: text("stripe_invoice_id").unique(),
     amountCents: integer("amount_cents").notNull(),
     currency: text("currency").notNull().default("usd"),
     status: text("status").notNull(),

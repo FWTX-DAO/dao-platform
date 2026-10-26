@@ -83,8 +83,11 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateProfileInput) =>
-      updateMemberProfile(data as Record<string, unknown>),
+    mutationFn: async (data: UpdateProfileInput) => {
+      const result = await updateMemberProfile(data as Record<string, unknown>);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.members.profile() });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.stats() });
