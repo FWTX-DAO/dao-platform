@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 import { getPreferredEthWalletFromAccounts } from "@utils/wallet";
 import {
   getOrCreateUser,
@@ -10,25 +10,26 @@ import { db } from "@core/database";
 import { members, memberRoles, roles } from "@core/database/schema";
 import { eq, and, or } from "drizzle-orm";
 
-const privy = new PrivyClient(
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-  process.env.PRIVY_APP_SECRET!,
-);
+const privy = new PrivyClient({
+  appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  appSecret: process.env.PRIVY_APP_SECRET!,
+});
 
 export async function getAuthUser() {
   const token = (await cookies()).get("privy-token")?.value;
   if (!token) return null;
   try {
-    const claims = await privy.verifyAuthToken(token);
-    const user = await getOrCreateUser(claims.userId, (claims as any).email);
+    const claims = await privy.utils().auth().verifyAccessToken(token);
+    const user = await getOrCreateUser(claims.user_id, (claims as any).email);
 
     // Sync wallet address from Privy (non-blocking)
     // Prefer external wallets (MetaMask, etc.) over embedded ones
     privy
-      .getUser(claims.userId)
+      .users()
+      ._get(claims.user_id)
       .then((privyUser) => {
         const wallet = getPreferredEthWalletFromAccounts(
-          privyUser?.linkedAccounts,
+          privyUser?.linked_accounts,
         );
         if (wallet?.address && user) {
           syncWalletAddress(user.id, wallet.address).catch((err) => {

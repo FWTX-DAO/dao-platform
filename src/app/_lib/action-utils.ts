@@ -1,8 +1,7 @@
 import { AppError } from "@core/errors/AppError";
 
 export type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+  { success: true; data: T } | { success: false; error: string };
 
 export function actionSuccess<T>(data: T): { success: true; data: T } {
   return { success: true, data };

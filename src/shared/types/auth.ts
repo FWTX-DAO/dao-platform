@@ -1,10 +1,10 @@
-import type { AuthTokenClaims } from "@privy-io/server-auth";
+import type { VerifyAccessTokenResponse } from "@privy-io/node";
 import type { User } from "./database";
 
 export interface AuthContext {
   user: User;
-  claims: AuthTokenClaims;
+  claims: VerifyAccessTokenResponse;
   isAuthenticated: boolean;
 }
 
-export { type AuthTokenClaims };
+export { type VerifyAccessTokenResponse };

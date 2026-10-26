@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 
 let _client: PrivyClient | null = null;
 function getClient() {
   if (!_client) {
-    _client = new PrivyClient(
-      process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-      process.env.PRIVY_APP_SECRET!,
-      {
-        walletApi: {
-          authorizationPrivateKey: process.env.SESSION_SIGNER_SECRET,
-        },
-      },
-    );
+    _client = new PrivyClient({
+      appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+      appSecret: process.env.PRIVY_APP_SECRET!,
+    });
   }
   return _client;
 }
@@ -27,8 +22,8 @@ export async function POST(request: Request) {
   const authToken = authHeader.replace(/^Bearer /, "");
   let claims;
   try {
-    claims = await client.verifyAuthToken(authToken);
-    if (!claims || !("appId" in claims)) {
+    claims = await client.utils().auth().verifyAccessToken(authToken);
+    if (!claims || !("app_id" in claims)) {
       return NextResponse.json(
         { error: "Invalid auth token." },
         { status: 401 },
@@ -50,9 +45,11 @@ export async function POST(request: Request) {
 
   // Verify wallet ownership: ensure the wallet belongs to the authenticated user
   try {
-    const privyUser = await client.getUser(claims.userId);
-    const ownedWalletIds = (privyUser.linkedAccounts ?? [])
-      .filter((a: any) => a.type === "wallet" && a.walletClientType === "privy")
+    const privyUser = await client.users()._get(claims.user_id);
+    const ownedWalletIds = (privyUser.linked_accounts ?? [])
+      .filter(
+        (a: any) => a.type === "wallet" && a.wallet_client_type === "privy",
+      )
       .map((a: any) => a.id);
     if (!ownedWalletIds.includes(wallet_id)) {
       return NextResponse.json(
@@ -68,15 +65,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { signature } = await client.walletApi.solana.signMessage({
-      walletId: wallet_id,
-      message,
-    });
+    const { signature } = await client
+      .wallets()
+      .solana()
+      .signMessage(wallet_id, {
+        message,
+        authorization_context: {
+          authorization_private_keys: process.env.SESSION_SIGNER_SECRET
+            ? [process.env.SESSION_SIGNER_SECRET]
+            : [],
+        },
+      });
 
     return NextResponse.json({
       method: "signMessage",
       data: {
-        signature: Buffer.from(signature).toString("base64"),
+        signature,
         encoding: "base64",
       },
     });

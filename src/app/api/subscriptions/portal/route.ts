@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 import { membersService } from "@services/members";
 import { getOrCreateUser } from "@core/database/queries/users";
 
@@ -8,7 +8,7 @@ let _stripe: Stripe | null = null;
 function getStripe() {
   if (!_stripe)
     _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2026-02-25.clover",
+      apiVersion: "2026-09-30.endive",
     });
   return _stripe;
 }
@@ -16,10 +16,10 @@ function getStripe() {
 let _privy: PrivyClient | null = null;
 function getPrivy() {
   if (!_privy)
-    _privy = new PrivyClient(
-      process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-      process.env.PRIVY_APP_SECRET!,
-    );
+    _privy = new PrivyClient({
+      appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+      appSecret: process.env.PRIVY_APP_SECRET!,
+    });
   return _privy;
 }
 
@@ -35,12 +35,12 @@ export async function POST(request: Request) {
   const authToken = authHeader.replace(/^Bearer /, "");
   let claims;
   try {
-    claims = await privy.verifyAuthToken(authToken);
+    claims = await privy.utils().auth().verifyAccessToken(authToken);
   } catch {
     return NextResponse.json({ error: "Invalid auth token" }, { status: 401 });
   }
 
-  const user = await getOrCreateUser(claims.userId, (claims as any).email);
+  const user = await getOrCreateUser(claims.user_id, (claims as any).email);
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }

@@ -14,7 +14,7 @@
  *   bun run db:backfill-wallets -- --csv ./wallets.csv
  */
 import { writeFileSync } from "node:fs";
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 import { eq } from "drizzle-orm";
 import { db, users } from "./index";
 import { getPreferredEthWalletFromAccounts } from "../../shared/utils/wallet";
@@ -67,9 +67,9 @@ async function processBatch(
         dbAddress: u.walletAddress,
       };
       try {
-        const privyUser = await privy.getUser(u.privyDid);
+        const privyUser = await privy.users()._get(u.privyDid);
         const wallet = getPreferredEthWalletFromAccounts(
-          privyUser?.linkedAccounts,
+          privyUser?.linked_accounts,
         );
 
         if (!wallet?.address) {
@@ -147,10 +147,10 @@ async function main() {
     process.exit(1);
   }
 
-  const privy = new PrivyClient(
-    process.env.NEXT_PUBLIC_PRIVY_APP_ID,
-    process.env.PRIVY_APP_SECRET,
-  );
+  const privy = new PrivyClient({
+    appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
+    appSecret: process.env.PRIVY_APP_SECRET,
+  });
 
   console.log(
     `Backfill mode: ${dry ? "DRY RUN (no writes)" : "APPLY"}, concurrency=${concurrency}`,
@@ -174,7 +174,7 @@ async function main() {
   const probe = allUsers[0];
   if (probe) {
     try {
-      await privy.getUser(probe.privyDid);
+      await privy.users()._get(probe.privyDid);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (/invalid app id|app secret|unauthorized/i.test(msg)) {

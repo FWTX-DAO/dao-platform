@@ -1,10 +1,13 @@
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 import { NextApiRequest } from "next";
 import { PinataSDK } from "pinata";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID!;
 const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET!;
-const client = new PrivyClient(PRIVY_APP_ID, PRIVY_APP_SECRET);
+const client = new PrivyClient({
+  appId: PRIVY_APP_ID,
+  appSecret: PRIVY_APP_SECRET,
+});
 
 const PINATA_JWT = process.env.PINATA_JWT;
 if (!PINATA_JWT) {
@@ -27,7 +30,7 @@ export async function authenticateRequest(req: NextApiRequest) {
   }
 
   try {
-    const claims = await client.verifyAuthToken(authToken);
+    const claims = await client.utils().auth().verifyAccessToken(authToken);
     return claims;
   } catch (error) {
     throw new Error("Invalid auth token");

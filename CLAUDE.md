@@ -8,7 +8,7 @@ Next.js 16 (App Router) DAO platform for Fort Worth civic innovation. Features m
 
 ## Development Commands
 
-**Always use `bun` (not npm/node).** `bun dev` works as shorthand for `bun run dev`.
+**Always use Bun 1.4.4 (not npm/node).** `bun dev` works as shorthand for `bun run dev`. Keep `bun.lock` committed. Netlify's Node.js tooling uses the patched Node.js 24.22.1 baseline.
 
 ```bash
 bun install          # Install deps

@@ -9,13 +9,13 @@
  *   bun run db:push-email -- --username denisoneil --apply       # execute
  *
  * Side effects when --apply:
- *   1. New Privy user created via importUser() with all prior linked accounts
+ *   1. New Privy user created via users().create() with all prior linked accounts
  *      PLUS the email from members.email.
  *   2. Old Privy account deleted.
  *   3. users.privy_did updated to the new DID.
  *   4. The user must re-authenticate (old tokens become invalid).
  */
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 import { eq } from "drizzle-orm";
 import { db, users, members } from "./index";
 
@@ -33,10 +33,10 @@ async function main() {
     process.exit(1);
   }
 
-  const privy = new PrivyClient(
-    process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-    process.env.PRIVY_APP_SECRET!,
-  );
+  const privy = new PrivyClient({
+    appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+    appSecret: process.env.PRIVY_APP_SECRET!,
+  });
 
   // Lookup user + email
   const rows = await db
@@ -69,8 +69,8 @@ async function main() {
   }
 
   // Fetch existing Privy linked accounts so we preserve them
-  const privyUser = await privy.getUser(u.privyDid);
-  const existing = (privyUser?.linkedAccounts ?? []) as any[];
+  const privyUser = await privy.users()._get(u.privyDid);
+  const existing = (privyUser?.linked_accounts ?? []) as any[];
   console.log(`\nExisting Privy linked accounts (${existing.length}):`);
   for (const a of existing) {
     console.log(`  - ${a.type} ${a.address ?? a.email ?? a.subject ?? ""}`);
@@ -91,7 +91,7 @@ async function main() {
       .map((a) => ({
         type: "wallet" as const,
         address: a.address,
-        chainType: a.chainType ?? "ethereum",
+        chain_type: a.chain_type ?? "ethereum",
       })),
   ];
 
@@ -107,23 +107,21 @@ async function main() {
     return;
   }
 
-  // Privy rejects importUser when the wallets are still linked to a live user,
+  // Privy rejects users().create when the wallets are still linked to a live user,
   // so order is: delete-then-import. The window between the two is the risk:
-  // if importUser fails, our DB row points to a deleted DID. We log the full
+  // if users().create fails, our DB row points to a deleted DID. We log the full
   // snapshot before deleting so manual recovery is possible.
   const snapshot = { oldDid: u.privyDid, accountsToImport };
   console.log(`\n1) Deleting old Privy DID ${u.privyDid}...`);
   console.log(`   recovery snapshot:`, JSON.stringify(snapshot));
-  await privy.deleteUser(u.privyDid);
+  await privy.users().delete(u.privyDid);
   console.log(`   ✓ Old DID deleted`);
 
   console.log("\n2) Importing new Privy user...");
   let newDid: string;
   try {
-    const imported = await privy.importUser({
-      linkedAccounts: accountsToImport as any,
-      createEthereumWallet: false,
-      createSolanaWallet: false,
+    const imported = await privy.users().create({
+      linked_accounts: accountsToImport as any,
     });
     newDid = imported.id;
     console.log(`   ✓ New DID: ${newDid}`);

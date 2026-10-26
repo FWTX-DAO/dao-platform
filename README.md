@@ -18,8 +18,8 @@ A Next.js application powering the Fort Worth Civic Innovation DAO platform. Ena
 ## Tech Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org/) with App Router
-- **Language**: TypeScript
-- **Runtime**: [Bun](https://bun.sh/)
+- **Language**: TypeScript 7 (with Microsoft's TypeScript 6 API compatibility package for ESLint)
+- **Runtime**: [Bun 1.4.4](https://bun.com/blog/bun-v1.4.4)
 - **Authentication**: [Privy Auth](https://www.privy.io/)
 - **Database**: PostgreSQL ([PlanetScale](https://planetscale.com/)) with [Drizzle ORM](https://orm.drizzle.team/)
 - **Payments**: [Stripe](https://stripe.com/) subscriptions and checkout
@@ -30,8 +30,8 @@ A Next.js application powering the Fort Worth Civic Innovation DAO platform. Ena
 
 ## Prerequisites
 
-- Node.js >= 20.9.0
-- [Bun](https://bun.sh/) runtime
+- [Bun 1.4.4](https://bun.com/blog/bun-v1.4.4) (required for package management and application commands)
+- Node.js 24.22.1 for Netlify build tooling; deployed functions use Netlify's managed Node.js 24 runtime
 - A Privy account for authentication
 - A PostgreSQL database (PlanetScale)
 
@@ -45,7 +45,7 @@ cd fwtx-dao-platform
 
 2. **Install dependencies**
 ```bash
-bun install
+bun install --frozen-lockfile
 ```
 
 3. **Set up environment variables**
@@ -94,7 +94,19 @@ bun run build        # Build for production
 bun run start        # Start production server
 bun run lint         # ESLint + Prettier check + TypeScript check
 bun run format       # Format code with Prettier
+bun run audit        # Check all locked dependencies for known advisories
+bun test             # Authentication, signing, and dependency compatibility regressions
 ```
+
+### Dependency updates
+
+Use `bun update --latest` for major upgrades, then run `bun test`, `bun run lint`, `bun run build`, and `bun audit`. Commit `package.json`, `bun.lock`, and any files in `patches/` together. Bun 1.4.4 is pinned in the package metadata, `.bun-version`, and Netlify configuration.
+
+The compiler follows [Microsoft's TypeScript 7 compatibility setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0): `@typescript/native` provides TypeScript 7's `tsc`, while `typescript` aliases `@typescript/typescript6` for tools that require the compiler API.
+
+The security overrides keep esbuild, query-string, UUID, WebSocket, and Zod on patched releases even when SDKs pin older versions. The x402 and Coinbase CDP Bun patches migrate their single-argument record schemas to Zod 4's explicit string-key form. Keep these patches until their upstream SDKs support Zod 4; the regression suite checks both schemas and the constrained-array denial-of-service fix.
+
+Server authentication uses `@privy-io/node`, including snake-case claims and linked accounts and per-request signing authorization. Stripe SDK 23 uses API version `2026-09-30.endive`; changing a deployed Stripe webhook endpoint's API version is a separate provider operation.
 
 ### Database Commands
 

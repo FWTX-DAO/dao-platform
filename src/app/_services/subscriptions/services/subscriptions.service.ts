@@ -15,7 +15,7 @@ export class SubscriptionsService {
   private getStripe(): Stripe {
     if (!this._stripe) {
       this._stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: "2026-02-25.clover",
+        apiVersion: "2026-09-30.endive",
       });
     }
     return this._stripe;

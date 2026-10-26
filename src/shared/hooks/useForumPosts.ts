@@ -150,17 +150,16 @@ export const useUpdateForumPost = () => {
 
       queryClient.setQueryData<ForumPost[]>(queryKeys.forum.posts(), (old) =>
         old
-          ? old.map(
-              (post): ForumPost =>
-                post.id === updatedPost.id
-                  ? {
-                      ...post,
-                      title: updatedPost.title,
-                      content: updatedPost.content,
-                      category: updatedPost.category,
-                      updatedAt: new Date().toISOString(),
-                    }
-                  : post,
+          ? old.map((post): ForumPost =>
+              post.id === updatedPost.id
+                ? {
+                    ...post,
+                    title: updatedPost.title,
+                    content: updatedPost.content,
+                    category: updatedPost.category,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : post,
             )
           : [],
       );

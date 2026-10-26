@@ -30,7 +30,7 @@ import {
 import { eq, and, sql, desc, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { verifyMessage } from "viem";
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 
 export async function listMembers() {
   await requireAuth();
@@ -237,7 +237,7 @@ export async function completeOnboarding(data: {
     // Ensure the users row exists (idempotent; handles email-dedup).
     // Runs outside the tx so the cache primes with the canonical user.
     const privyEmail = (claims as any).email || undefined;
-    await getOrCreateUser(claims.userId, privyEmail);
+    await getOrCreateUser(claims.user_id, privyEmail);
 
     let walletSyncError: string | undefined;
 
@@ -464,10 +464,10 @@ export async function backfillWallets(): Promise<
     const { isAdmin } = await requireAdmin();
     if (!isAdmin) return actionError("Admin access required");
 
-    const privy = new PrivyClient(
-      process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-      process.env.PRIVY_APP_SECRET!,
-    );
+    const privy = new PrivyClient({
+      appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+      appSecret: process.env.PRIVY_APP_SECRET!,
+    });
 
     // Get all users missing a wallet address
     const usersWithoutWallet = await db
@@ -481,9 +481,9 @@ export async function backfillWallets(): Promise<
 
     for (const u of usersWithoutWallet) {
       try {
-        const privyUser = await privy.getUser(u.privyDid);
+        const privyUser = await privy.users()._get(u.privyDid);
         const wallet = getPreferredEthWalletFromAccounts(
-          privyUser?.linkedAccounts,
+          privyUser?.linked_accounts,
         );
 
         if (wallet?.address) {

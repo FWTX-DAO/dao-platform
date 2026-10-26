@@ -63,24 +63,24 @@ export function getPreferredEthWalletFromAccounts(
   linkedAccounts:
     | ReadonlyArray<{
         type: string;
-        chainType?: string;
-        walletClientType?: string;
+        chain_type?: string;
+        wallet_client_type?: string;
         address?: string;
       }>
     | undefined
     | null,
 ): { address: string; walletClientType?: string } | null {
   const ethWallets = (linkedAccounts ?? []).filter(
-    (a) => a.type === "wallet" && a.chainType === "ethereum",
+    (a) => a.type === "wallet" && a.chain_type === "ethereum",
   ) as Array<{
     address: string;
-    walletClientType?: string;
+    wallet_client_type?: string;
     type: string;
-    chainType: string;
+    chain_type: string;
   }>;
-  return (
-    ethWallets.find((w) => w.walletClientType !== "privy") ??
-    ethWallets[0] ??
-    null
-  );
+  const wallet =
+    ethWallets.find((w) => w.wallet_client_type !== "privy") ?? ethWallets[0];
+  return wallet
+    ? { address: wallet.address, walletClientType: wallet.wallet_client_type }
+    : null;
 }

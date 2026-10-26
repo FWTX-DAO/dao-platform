@@ -1,0 +1,252 @@
+diff --git a/dist/cjs/client/index.js b/dist/cjs/client/index.js
+index fb929f76804c55f7b577163458da66df34148d72..6a8c68670dba774693495f7aba47d22e0b0da99b 100644
+--- a/dist/cjs/client/index.js
++++ b/dist/cjs/client/index.js
+@@ -332,11 +332,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -385,7 +385,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -425,7 +425,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)
+diff --git a/dist/cjs/facilitator/index.js b/dist/cjs/facilitator/index.js
+index 5254306474e9535cf9e42e36dfe18739ba357b21..32f0b963369630878859b16a125cde1abedeff25 100644
+--- a/dist/cjs/facilitator/index.js
++++ b/dist/cjs/facilitator/index.js
+@@ -1065,11 +1065,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -1118,7 +1118,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -1158,7 +1158,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)
+diff --git a/dist/cjs/index.js b/dist/cjs/index.js
+index c749a069aabf236541b2eaf3383c6f4385a39fc3..7c48e8dc9bccae1b448182e3341ecda30b79a152 100644
+--- a/dist/cjs/index.js
++++ b/dist/cjs/index.js
+@@ -1101,11 +1101,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -1154,7 +1154,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -1194,7 +1194,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)
+diff --git a/dist/cjs/schemes/index.js b/dist/cjs/schemes/index.js
+index b902e27efa8bfd7f64923b62fd93604c9343cee1..3fa3979ee5f7f9effdd7f7f6152d049d2465cfa3 100644
+--- a/dist/cjs/schemes/index.js
++++ b/dist/cjs/schemes/index.js
+@@ -1108,11 +1108,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -1161,7 +1161,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -1201,7 +1201,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)
+diff --git a/dist/cjs/shared/index.js b/dist/cjs/shared/index.js
+index be80b0ad50fa634d5afdcb5f18ab1445fbaa7de1..f1615884492bc30ea39eebecfe9a9059d5f051d5 100644
+--- a/dist/cjs/shared/index.js
++++ b/dist/cjs/shared/index.js
+@@ -364,11 +364,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -417,7 +417,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -457,7 +457,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)
+diff --git a/dist/cjs/types/index.js b/dist/cjs/types/index.js
+index c3a284ff1f3835877fa2907d0f101309310dec9c..a7358b9882e409c9835cf5923507a32c6ddc332b 100644
+--- a/dist/cjs/types/index.js
++++ b/dist/cjs/types/index.js
+@@ -1274,11 +1274,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -1327,7 +1327,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -1367,7 +1367,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)
+diff --git a/dist/cjs/verify/index.js b/dist/cjs/verify/index.js
+index 413d633c0f14b0cf55028ae1f4e58337f8f6add8..7e47fa1663fb8e16910963d61e5191e3485fecb0 100644
+--- a/dist/cjs/verify/index.js
++++ b/dist/cjs/verify/index.js
+@@ -197,11 +197,11 @@ var PaymentRequirementsSchema = import_zod3.z.object({
+   resource: import_zod3.z.string().url(),
+   description: import_zod3.z.string(),
+   mimeType: import_zod3.z.string(),
+-  outputSchema: import_zod3.z.record(import_zod3.z.any()).optional(),
++  outputSchema: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional(),
+   payTo: EvmOrSvmAddress,
+   maxTimeoutSeconds: import_zod3.z.number().int(),
+   asset: mixedAddressOrSvmAddress,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var ExactEvmPayloadAuthorizationSchema = import_zod3.z.object({
+   from: import_zod3.z.string().regex(EvmAddressRegex),
+@@ -250,7 +250,7 @@ var DiscoveredResourceSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   accepts: import_zod3.z.array(PaymentRequirementsSchema),
+   lastUpdated: import_zod3.z.date(),
+-  metadata: import_zod3.z.record(import_zod3.z.any()).optional()
++  metadata: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SettleRequestSchema = import_zod3.z.object({
+   paymentPayload: PaymentPayloadSchema,
+@@ -290,7 +290,7 @@ var SupportedPaymentKindSchema = import_zod3.z.object({
+   x402Version: import_zod3.z.number().refine((val) => x402Versions.includes(val)),
+   scheme: import_zod3.z.enum(schemes),
+   network: NetworkSchema,
+-  extra: import_zod3.z.record(import_zod3.z.any()).optional()
++  extra: import_zod3.z.record(import_zod3.z.string(), import_zod3.z.any()).optional()
+ });
+ var SupportedPaymentKindsResponseSchema = import_zod3.z.object({
+   kinds: import_zod3.z.array(SupportedPaymentKindSchema)

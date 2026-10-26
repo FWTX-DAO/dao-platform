@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { PrivyClient } from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/node";
 
 let _client: PrivyClient | null = null;
 function getClient() {
   if (!_client)
-    _client = new PrivyClient(
-      process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
-      process.env.PRIVY_APP_SECRET!,
-    );
+    _client = new PrivyClient({
+      appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+      appSecret: process.env.PRIVY_APP_SECRET!,
+    });
   return _client;
 }
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const claims = await client.verifyAuthToken(authToken);
+    const claims = await client.utils().auth().verifyAccessToken(authToken);
     return NextResponse.json({ claims });
   } catch {
     return NextResponse.json({ error: "Invalid auth token" }, { status: 401 });
