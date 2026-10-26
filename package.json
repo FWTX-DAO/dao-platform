@@ -19,7 +19,8 @@
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "db:seed": "dotenv -e .env.local -- tsx src/core/database/seed.ts",
-    "db:seed-rbac": "dotenv -e .env.local -- tsx src/core/database/seed-rbac.ts"
+    "db:seed-rbac": "dotenv -e .env.local -- tsx src/core/database/seed-rbac.ts",
+    "privy:verify": "dotenv -e .env.production.local -- tsx src/core/database/verify-privy-prod.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
