@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   BookOpen,
   Stamp,
+  UserSearch,
 } from "lucide-react";
 
 export type NavbarItem = {
@@ -231,6 +232,13 @@ function Sidebar() {
             >
               <Stamp className="mr-3 h-4 w-4" />
               Stamps
+            </Link>
+            <Link
+              href="/admin/talent"
+              className="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium text-dao-cool hover:text-white hover:bg-dao-surface/50 transition-colors duration-200"
+            >
+              <UserSearch className="mr-3 h-4 w-4" />
+              Talent Network
             </Link>
           </div>
         </CollapsibleSection>

@@ -83,6 +83,11 @@ export const queryKeys = {
     my: () => [...queryKeys.stamps.all(), "my"] as const,
     member: (id: string) => [...queryKeys.stamps.all(), "member", id] as const,
   },
+  talent: {
+    all: () => ["talent"] as const,
+    list: (params?: unknown) =>
+      [...queryKeys.talent.all(), "list", params] as const,
+  },
   checkIn: {
     all: () => ["check-in"] as const,
     roundtable: (authState?: "auth" | "guest") =>

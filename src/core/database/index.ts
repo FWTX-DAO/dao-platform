@@ -14,6 +14,7 @@ export const db = drizzle(pool, { schema });
 
 // Export schema for use in queries
 export * from "./schema";
+export * from "./talent-schema";
 
 // Export types
 export type Database = typeof db;

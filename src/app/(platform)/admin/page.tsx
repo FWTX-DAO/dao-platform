@@ -51,6 +51,15 @@ export default function AdminPage() {
           <h3 className="font-semibold text-gray-900">Passport Stamps</h3>
           <p className="text-sm text-gray-500 mt-2">Issue stamps to members</p>
         </Link>
+        <Link
+          href="/admin/talent"
+          className="bg-white shadow-sm rounded-lg p-6 hover:shadow-lg transition-shadow border border-gray-100 hover:border-violet-200"
+        >
+          <h3 className="font-semibold text-gray-900">Talent Network</h3>
+          <p className="text-sm text-gray-500 mt-2">
+            Search and review talent.fwtx.city profiles
+          </p>
+        </Link>
         <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-100">
           <h3 className="font-semibold text-gray-900">Roles</h3>
           <p className="text-3xl font-bold text-violet-600 mt-2">
